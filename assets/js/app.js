@@ -1961,6 +1961,7 @@
         const delimiter = detectCsvDelimiter(source);
         const records = parseCsvRecords(source.replace(/^\uFEFF/, ""), delimiter);
         const analysis = analyzeCsvRecords(records, delimiter);
+        dataInterpretationMessages.length = 0;
         dataWorkspaceState.page = 1;
         dataWorkspaceState.search = "";
         dataWorkspaceState.sortIndex = -1;
@@ -1974,6 +1975,8 @@
         if (analysisPanel) analysisPanel.hidden = false;
         if (empty) empty.hidden = true;
         renderDataAnalysis();
+        const interpretationStatus = document.getElementById("dataInterpretStatus");
+        if (interpretationStatus) interpretationStatus.textContent = "Dataset baru dimuat. Riwayat interpretasi sebelumnya dibersihkan dari sesi.";
         if (status) status.textContent = "Berhasil membaca " + file.name + ". Tidak ada data yang dikirim ke server.";
       } catch (error) {
         if (status) status.textContent = "Tidak dapat membaca CSV: " + (error.message || "format tidak valid");
