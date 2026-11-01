@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights })",
   vm.createContext({})
 );
 
@@ -108,6 +108,19 @@ const dailyTrend = api.buildDateTrendSummary([["2025-01-01", "4"], ["2026-01-01"
 assert.deepEqual(Array.from(dailyTrend.periods.map((item) => item.value)), [4, 8]);
 assert.equal(dailyTrend.periods[1].changePercent, 100);
 
+
+const trendHighlights = api.summarizeTrendHighlights(monthlyTrend.periods);
+assert.equal(trendHighlights.latest.period, "2026-02");
+assert.equal(trendHighlights.highest.value, 30);
+assert.equal(trendHighlights.lowest.value, 30);
+assert.equal(trendHighlights.netChange, 0);
+assert.equal(trendHighlights.direction, "stable");
+assert.equal(api.summarizeTrendHighlights([]).direction, "unavailable");
+assert.equal(api.summarizeTrendHighlights([{ period: "2026-01", value: 12 }]).direction, "single");
+const risingHighlights = api.summarizeTrendHighlights([{ period: "A", value: 5 }, { period: "B", value: 9 }]);
+assert.equal(risingHighlights.netChange, 4);
+assert.equal(risingHighlights.direction, "up");
+
 const bins = api.buildDataHistogram([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 assert.equal(bins.length, 8);
 assert.equal(bins.reduce((sum, bin) => sum + bin.count, 0), 9);
@@ -119,4 +132,4 @@ assert.throws(() => api.parseCsvRecords('Name,Score\n"Ada,10', ","), /kutip/);
 const tooManyRows = [["Name"], ...Array.from({ length: 10001 }, (_, index) => ["row-" + index])];
 assert.throws(() => api.analyzeCsvRecords(tooManyRows, ","), /10.000/);
 
-console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, explicit date formats and monthly/yearly trends, malformed quotes, and row limit.");
+console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, explicit date formats, monthly/yearly trends, trend highlights, malformed quotes, and row limit.");
