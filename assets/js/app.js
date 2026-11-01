@@ -951,7 +951,7 @@
         '<section class="data-panel data-group-panel"><div class="data-panel-heading"><div><span class="section-kicker">GROUPED ANALYSIS</span><b>Ringkasan kelompok</b></div><span class="data-panel-meta">Agregasi deterministik</span></div>' +
           '<div class="data-group-controls"><label>Kelompokkan berdasarkan<select id="dataGroupColumn" class="data-select"></select></label><label>Kolom nilai<select id="dataGroupMetric" class="data-select"></select></label><label>Perhitungan<select id="dataGroupOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div>' +
           '<div class="data-table-wrap" id="dataGroupResult"></div><p class="data-group-note" id="dataGroupNote">Pilih kolom kategori untuk mulai membuat ringkasan kelompok.</p></section>' +
-        '<section class="data-panel data-pivot-panel"><div class="data-panel-heading"><div><span class="section-kicker">PIVOT ANALYSIS</span><b>Pivot table</b></div><span class="data-panel-meta">Tabulasi silang</span></div><div class="data-group-controls data-pivot-controls"><label>Baris<select id="dataPivotRows" class="data-select"></select></label><label>Kolom<select id="dataPivotColumns" class="data-select"></select></label><label>Metrik numerik<select id="dataPivotMetric" class="data-select"></select></label><label>Agregasi<select id="dataPivotOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataPivotResult"></div><p class="data-group-note" id="dataPivotNote">Pilih kolom baris dan kolom untuk membentuk pivot table.</p></section><section class="data-panel data-trend-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATE & TREND ANALYSIS</span><b>Tren berdasarkan waktu</b></div><span class="data-panel-meta">Tanggal harus dipilih eksplisit</span></div><div class="data-group-controls data-trend-controls"><label>Kolom tanggal<select id="dataTrendDate" class="data-select"></select></label><label>Format tanggal<select id="dataTrendFormat" class="data-select"><option value="iso">YYYY-MM-DD</option><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></label><label>Kelompok waktu<select id="dataTrendGranularity" class="data-select"><option value="month">Bulanan</option><option value="day">Harian</option><option value="year">Tahunan</option></select></label><label>Metrik numerik<select id="dataTrendMetric" class="data-select"></select></label><label>Agregasi<select id="dataTrendOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataTrendResult"></div><p class="data-group-note" id="dataTrendNote">Pilih kolom tanggal dan format yang sesuai. Baris dengan tanggal tidak valid akan dihitung terpisah.</p></section><div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
+        '<section class="data-panel data-pivot-panel"><div class="data-panel-heading"><div><span class="section-kicker">PIVOT ANALYSIS</span><b>Pivot table</b></div><span class="data-panel-meta">Tabulasi silang</span></div><div class="data-group-controls data-pivot-controls"><label>Baris<select id="dataPivotRows" class="data-select"></select></label><label>Kolom<select id="dataPivotColumns" class="data-select"></select></label><label>Metrik numerik<select id="dataPivotMetric" class="data-select"></select></label><label>Agregasi<select id="dataPivotOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataPivotResult"></div><p class="data-group-note" id="dataPivotNote">Pilih kolom baris dan kolom untuk membentuk pivot table.</p></section><section class="data-panel data-trend-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATE & TREND ANALYSIS</span><b>Tren berdasarkan waktu</b></div><span class="data-panel-meta">Tanggal harus dipilih eksplisit</span></div><div class="data-group-controls data-trend-controls"><label>Kolom tanggal<select id="dataTrendDate" class="data-select"></select></label><label>Format tanggal<select id="dataTrendFormat" class="data-select"><option value="iso">YYYY-MM-DD</option><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></label><label>Kelompok waktu<select id="dataTrendGranularity" class="data-select"><option value="month">Bulanan</option><option value="day">Harian</option><option value="year">Tahunan</option></select></label><label>Metrik numerik<select id="dataTrendMetric" class="data-select"></select></label><label>Agregasi<select id="dataTrendOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-trend-summary" id="dataTrendSummary" aria-live="polite"></div><div class="data-trend-visual" id="dataTrendChart" role="img" aria-label="Grafik tren berdasarkan waktu"></div><div class="data-trend-chart-caption" id="dataTrendChartCaption"></div><div class="data-panel-heading data-trend-table-heading"><b>Rincian per periode</b><button class="data-export-button" id="dataTrendExport" type="button">Ekspor laporan CSV</button></div><div class="data-table-wrap" id="dataTrendResult"></div><p class="data-group-note" id="dataTrendNote">Pilih kolom tanggal dan format yang sesuai. Baris dengan tanggal tidak valid akan dihitung terpisah.</p></section><div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
       '</div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Evidence before decisions.</span></footer>' +
     '</div>';
@@ -1306,6 +1306,17 @@
     return { periods, validDates, invalidDates };
   }
 
+
+  function summarizeTrendHighlights(periods) {
+    const valid = periods.filter((item) => item.value !== null && Number.isFinite(item.value));
+    if (!valid.length) return { latest: null, highest: null, lowest: null, netChange: null, direction: "unavailable" };
+    const first = valid[0], latest = valid[valid.length - 1];
+    const highest = valid.reduce((best, item) => item.value > best.value ? item : best, valid[0]);
+    const lowest = valid.reduce((best, item) => item.value < best.value ? item : best, valid[0]);
+    const netChange = valid.length > 1 ? latest.value - first.value : null;
+    return { latest, highest, lowest, netChange, direction: netChange === null ? "single" : netChange > 0 ? "up" : netChange < 0 ? "down" : "stable" };
+  }
+
   function buildGroupedSummary(rows, groupIndex, metricIndex, operation, delimiter) {
     const groups = new Map();
     rows.forEach((row) => {
@@ -1408,14 +1419,20 @@
   }
 
 
+
   function renderDateTrend() {
     const state = dataWorkspaceState, analysis = state.analysis;
     const target = document.getElementById("dataTrendResult"), note = document.getElementById("dataTrendNote");
+    const summaryTarget = document.getElementById("dataTrendSummary"), chartTarget = document.getElementById("dataTrendChart");
+    const chartCaption = document.getElementById("dataTrendChartCaption");
     const dateSelect = document.getElementById("dataTrendDate"), formatSelect = document.getElementById("dataTrendFormat");
     const granularitySelect = document.getElementById("dataTrendGranularity"), metricSelect = document.getElementById("dataTrendMetric");
     const operationSelect = document.getElementById("dataTrendOperation");
     if (!analysis || !target || !dateSelect) return;
     target.replaceChildren();
+    if (summaryTarget) summaryTarget.replaceChildren();
+    if (chartTarget) chartTarget.replaceChildren();
+    if (chartCaption) chartCaption.textContent = "";
     if (dateSelect.value === "") { if (note) note.textContent = "Pilih kolom tanggal dan format yang sesuai. Tidak ada format yang ditebak otomatis."; return; }
     const format = formatSelect ? formatSelect.value : "iso";
     const operation = operationSelect ? operationSelect.value : "count";
@@ -1425,6 +1442,42 @@
     const rows = getFilteredDataRows().map((item) => item.row);
     const result = buildDateTrendSummary(rows, Number(dateSelect.value), metricIndex, operation, format, granularity, state.delimiter);
     if (!result.periods.length) { if (note) note.textContent = "Tidak ada tanggal valid pada baris yang cocok dengan filter aktif."; return; }
+    const highlights = summarizeTrendHighlights(result.periods);
+    if (summaryTarget) {
+      const cards = [
+        ["Periode terbaru", highlights.latest ? highlights.latest.period : "—", highlights.latest ? formatDataNumber(highlights.latest.value) : "Belum ada nilai numerik"],
+        ["Perubahan bersih", highlights.netChange === null ? "—" : (highlights.netChange > 0 ? "+" : "") + formatDataNumber(highlights.netChange), highlights.direction === "up" ? "Naik dari periode pertama" : highlights.direction === "down" ? "Turun dari periode pertama" : highlights.direction === "stable" ? "Tidak berubah" : "Belum cukup periode"],
+        ["Nilai tertinggi", highlights.highest ? formatDataNumber(highlights.highest.value) : "—", highlights.highest ? highlights.highest.period : "Tidak tersedia"],
+        ["Nilai terendah", highlights.lowest ? formatDataNumber(highlights.lowest.value) : "—", highlights.lowest ? highlights.lowest.period : "Tidak tersedia"]
+      ];
+      cards.forEach(([label, value, detail]) => {
+        const card = document.createElement("article"); card.className = "data-trend-kpi";
+        const title = document.createElement("span"); title.textContent = label;
+        const number = document.createElement("b"); number.textContent = value;
+        const caption = document.createElement("small"); caption.textContent = detail;
+        card.append(title, number, caption); summaryTarget.appendChild(card);
+      });
+    }
+    if (chartTarget) {
+      const valid = result.periods.filter((item) => item.value !== null && Number.isFinite(item.value));
+      if (valid.length) {
+        const ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", "0 0 720 250"); svg.setAttribute("role", "presentation");
+        const min = Math.min(...valid.map((item) => item.value)), max = Math.max(...valid.map((item) => item.value));
+        const range = max - min || Math.max(Math.abs(max) * 0.1, 1);
+        const points = valid.map((item, index) => ({ item, x: valid.length === 1 ? 360 : 48 + (index / (valid.length - 1)) * 624, y: 184 - ((item.value - min) / range) * 138 }));
+        [46, 92, 138, 184].forEach((y) => { const line = document.createElementNS(ns, "line"); line.setAttribute("x1", "42"); line.setAttribute("x2", "690"); line.setAttribute("y1", String(y)); line.setAttribute("y2", String(y)); line.setAttribute("class", "data-trend-gridline"); svg.appendChild(line); });
+        if (points.length > 1) { const path = document.createElementNS(ns, "polyline"); path.setAttribute("points", points.map((point) => point.x + "," + point.y).join(" ")); path.setAttribute("class", "data-trend-line"); svg.appendChild(path); }
+        points.forEach((point) => {
+          const circle = document.createElementNS(ns, "circle"); circle.setAttribute("cx", String(point.x)); circle.setAttribute("cy", String(point.y)); circle.setAttribute("r", "4.5"); circle.setAttribute("class", "data-trend-point");
+          const title = document.createElementNS(ns, "title"); title.textContent = point.item.period + ": " + formatDataNumber(point.item.value); circle.appendChild(title); svg.appendChild(circle);
+        });
+        const labels = points.filter((point, index) => index === 0 || index === points.length - 1 || index === Math.floor((points.length - 1) / 2));
+        labels.forEach((point) => { const label = document.createElementNS(ns, "text"); label.setAttribute("x", String(point.x)); label.setAttribute("y", "218"); label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "data-trend-axis-label"); label.textContent = point.item.period; svg.appendChild(label); });
+        chartTarget.appendChild(svg);
+        if (chartCaption) chartCaption.textContent = valid.length + " titik data valid dari " + result.periods.length + " periode. Arah garis menunjukkan perubahan nilai antarperiode yang memiliki nilai.";
+      } else if (chartCaption) chartCaption.textContent = "Periode ditemukan, tetapi tidak ada nilai numerik valid untuk digambarkan.";
+    }
     const table = document.createElement("table"); table.className = "data-preview-table data-trend-table";
     const head = document.createElement("tr");
     ["Periode", operation === "count" ? "Jumlah baris" : operation === "sum" ? "Total" : "Rata-rata", "Perubahan", "Perubahan (%)"].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
@@ -1437,6 +1490,39 @@
     });
     table.appendChild(body); target.appendChild(table);
     if (note) note.textContent = result.validDates + " tanggal valid · " + result.invalidDates + " tanggal kosong/tidak valid diabaikan · " + result.periods.length + " periode · perubahan dibanding periode valid sebelumnya · mengikuti pencarian dan filter aktif.";
+  }
+
+  function exportDateTrendReport() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    const dateSelect = document.getElementById("dataTrendDate"), formatSelect = document.getElementById("dataTrendFormat");
+    const granularitySelect = document.getElementById("dataTrendGranularity"), metricSelect = document.getElementById("dataTrendMetric");
+    const operationSelect = document.getElementById("dataTrendOperation");
+    if (!analysis || !dateSelect || dateSelect.value === "") return;
+    const operation = operationSelect ? operationSelect.value : "count";
+    const metricIndex = metricSelect && metricSelect.value !== "" ? Number(metricSelect.value) : -1;
+    if (operation !== "count" && metricIndex < 0) return;
+    const rows = getFilteredDataRows().map((item) => item.row);
+    const result = buildDateTrendSummary(rows, Number(dateSelect.value), metricIndex, operation, formatSelect.value, granularitySelect.value, state.delimiter);
+    const quote = (value) => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    const meta = [
+      ["Lokal AI SMALAN — Laporan Tren"],
+      ["Dataset", state.fileName],
+      ["Kolom tanggal", analysis.headers[Number(dateSelect.value)]],
+      ["Format tanggal", formatSelect.value],
+      ["Granularitas", granularitySelect.value],
+      ["Agregasi", operation],
+      ["Metrik", metricIndex < 0 ? "Jumlah baris" : analysis.headers[metricIndex]],
+      ["Tanggal valid", result.validDates],
+      ["Tanggal kosong/tidak valid", result.invalidDates],
+      []
+    ];
+    const rowsOut = [["Periode", "Nilai", "Perubahan", "Perubahan (%)", "Jumlah baris"], ...result.periods.map((item) => [item.period, item.value, item.change, item.changePercent, item.count])];
+    const csv = [...meta, ...rowsOut].map((row) => row.map(quote).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob), link = document.createElement("a");
+    link.href = url; link.download = (state.fileName.replace(/\.[^.]+$/, "") || "dataset") + "-trend-report.csv";
+    document.body.appendChild(link); link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function renderDataExplorer() {
@@ -1592,6 +1678,7 @@
     if (filterClear) filterClear.addEventListener("click", () => { dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = ""; dataWorkspaceState.page = 1; renderDataAnalysis(); });
     [pivotRows, pivotColumns, pivotMetric, pivotOperation].forEach((control) => { if (control) control.addEventListener("change", renderPivotTable); });
     trendControls.forEach((control) => { if (control) control.addEventListener("change", renderDateTrend); });
+    const trendExport = document.getElementById("dataTrendExport"); if (trendExport) trendExport.addEventListener("click", exportDateTrendReport);
     [groupColumn, groupMetric, groupOperation].forEach((control) => { if (control) control.addEventListener("change", renderGroupedData); });
     if (fileInput) fileInput.addEventListener("change", async () => {
       const file = fileInput.files && fileInput.files[0];
