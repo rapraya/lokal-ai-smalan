@@ -951,7 +951,7 @@
         '<section class="data-panel data-group-panel"><div class="data-panel-heading"><div><span class="section-kicker">GROUPED ANALYSIS</span><b>Ringkasan kelompok</b></div><span class="data-panel-meta">Agregasi deterministik</span></div>' +
           '<div class="data-group-controls"><label>Kelompokkan berdasarkan<select id="dataGroupColumn" class="data-select"></select></label><label>Kolom nilai<select id="dataGroupMetric" class="data-select"></select></label><label>Perhitungan<select id="dataGroupOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div>' +
           '<div class="data-table-wrap" id="dataGroupResult"></div><p class="data-group-note" id="dataGroupNote">Pilih kolom kategori untuk mulai membuat ringkasan kelompok.</p></section>' +
-        '<section class="data-panel data-pivot-panel"><div class="data-panel-heading"><div><span class="section-kicker">PIVOT ANALYSIS</span><b>Pivot table</b></div><span class="data-panel-meta">Tabulasi silang</span></div><div class="data-group-controls data-pivot-controls"><label>Baris<select id="dataPivotRows" class="data-select"></select></label><label>Kolom<select id="dataPivotColumns" class="data-select"></select></label><label>Metrik numerik<select id="dataPivotMetric" class="data-select"></select></label><label>Agregasi<select id="dataPivotOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataPivotResult"></div><p class="data-group-note" id="dataPivotNote">Pilih kolom baris dan kolom untuk membentuk pivot table.</p></section><section class="data-panel data-trend-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATE & TREND ANALYSIS</span><b>Tren berdasarkan waktu</b></div><span class="data-panel-meta">Tanggal harus dipilih eksplisit</span></div><div class="data-group-controls data-trend-controls"><label>Kolom tanggal<select id="dataTrendDate" class="data-select"></select></label><label>Format tanggal<select id="dataTrendFormat" class="data-select"><option value="iso">YYYY-MM-DD</option><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></label><label>Kelompok waktu<select id="dataTrendGranularity" class="data-select"><option value="month">Bulanan</option><option value="day">Harian</option><option value="year">Tahunan</option></select></label><label>Metrik numerik<select id="dataTrendMetric" class="data-select"></select></label><label>Agregasi<select id="dataTrendOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-trend-summary" id="dataTrendSummary" aria-live="polite"></div><div class="data-trend-visual" id="dataTrendChart" role="img" aria-label="Grafik tren berdasarkan waktu"></div><div class="data-trend-chart-caption" id="dataTrendChartCaption"></div><div class="data-panel-heading data-trend-table-heading"><b>Rincian per periode</b><button class="data-export-button" id="dataTrendExport" type="button">Ekspor laporan CSV</button></div><div class="data-table-wrap" id="dataTrendResult"></div><p class="data-group-note" id="dataTrendNote">Pilih kolom tanggal dan format yang sesuai. Baris dengan tanggal tidak valid akan dihitung terpisah.</p></section><div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
+        '<section class="data-panel data-pivot-panel"><div class="data-panel-heading"><div><span class="section-kicker">PIVOT ANALYSIS</span><b>Pivot table</b></div><span class="data-panel-meta">Tabulasi silang</span></div><div class="data-group-controls data-pivot-controls"><label>Baris<select id="dataPivotRows" class="data-select"></select></label><label>Kolom<select id="dataPivotColumns" class="data-select"></select></label><label>Metrik numerik<select id="dataPivotMetric" class="data-select"></select></label><label>Agregasi<select id="dataPivotOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataPivotResult"></div><p class="data-group-note" id="dataPivotNote">Pilih kolom baris dan kolom untuk membentuk pivot table.</p></section><section class="data-panel data-decision-panel"><div class="data-panel-heading"><div><span class="section-kicker">DECISION SUPPORT</span><b>Deteksi nilai ekstrem</b></div><span class="data-panel-meta">Metode IQR · data terfilter</span></div><p class="data-group-note">Pilih kolom numerik pada panel Distribusi untuk melihat nilai di luar pagar IQR. Nilai ekstrem bukan otomatis kesalahan data.</p><div id="dataOutlierSummary" class="data-decision-summary"></div><div class="data-table-wrap" id="dataOutlierResult"></div></section><section class="data-panel data-decision-panel"><div class="data-panel-heading"><div><span class="section-kicker">VARIABLE RELATIONSHIPS</span><b>Korelasi antarvariabel</b></div><span class="data-panel-meta">Pearson · pasangan lengkap</span></div><div class="data-table-wrap" id="dataCorrelationResult"></div><p class="data-group-note" id="dataCorrelationNote">Korelasi menunjukkan hubungan linear, bukan sebab-akibat. Minimal 3 pasangan valid diperlukan.</p></section><section class="data-panel data-trend-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATE & TREND ANALYSIS</span><b>Tren berdasarkan waktu</b></div><span class="data-panel-meta">Tanggal harus dipilih eksplisit</span></div><div class="data-group-controls data-trend-controls"><label>Kolom tanggal<select id="dataTrendDate" class="data-select"></select></label><label>Format tanggal<select id="dataTrendFormat" class="data-select"><option value="iso">YYYY-MM-DD</option><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></label><label>Kelompok waktu<select id="dataTrendGranularity" class="data-select"><option value="month">Bulanan</option><option value="day">Harian</option><option value="year">Tahunan</option></select></label><label>Metrik numerik<select id="dataTrendMetric" class="data-select"></select></label><label>Agregasi<select id="dataTrendOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-trend-summary" id="dataTrendSummary" aria-live="polite"></div><div class="data-trend-visual" id="dataTrendChart" role="img" aria-label="Grafik tren berdasarkan waktu"></div><div class="data-trend-chart-caption" id="dataTrendChartCaption"></div><div class="data-panel-heading data-trend-table-heading"><b>Rincian per periode</b><button class="data-export-button" id="dataTrendExport" type="button">Ekspor laporan CSV</button></div><div class="data-table-wrap" id="dataTrendResult"></div><p class="data-group-note" id="dataTrendNote">Pilih kolom tanggal dan format yang sesuai. Baris dengan tanggal tidak valid akan dihitung terpisah.</p></section><div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
       '</div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Evidence before decisions.</span></footer>' +
     '</div>';
@@ -1221,6 +1221,7 @@
       columnSelect.value = analysis.numericColumns.length ? String(analysis.numericColumns[0].index) : "";
     }
     renderSelectedDataColumn();
+    renderDecisionSupport();
   }
 
 
@@ -1315,6 +1316,111 @@
     const lowest = valid.reduce((best, item) => item.value < best.value ? item : best, valid[0]);
     const netChange = valid.length > 1 ? latest.value - first.value : null;
     return { latest, highest, lowest, netChange, direction: netChange === null ? "single" : netChange > 0 ? "up" : netChange < 0 ? "down" : "stable" };
+  }
+
+  function calculateQuantiles(values) {
+    const sorted = values.filter(Number.isFinite).slice().sort((a, b) => a - b);
+    if (!sorted.length) return { count: 0, min: null, q1: null, median: null, q3: null, max: null, mean: null, standardDeviation: null };
+    const quantile = (p) => {
+      const position = (sorted.length - 1) * p, lower = Math.floor(position), fraction = position - lower;
+      return sorted[lower] + (sorted[Math.min(lower + 1, sorted.length - 1)] - sorted[lower]) * fraction;
+    };
+    const mean = sorted.reduce((sum, value) => sum + value, 0) / sorted.length;
+    const variance = sorted.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / sorted.length;
+    return { count: sorted.length, min: sorted[0], q1: quantile(0.25), median: quantile(0.5), q3: quantile(0.75), max: sorted[sorted.length - 1], mean, standardDeviation: Math.sqrt(variance) };
+  }
+
+  function detectIqrOutliers(rows, columnIndex, delimiter) {
+    const observations = rows.map((row, index) => ({ rowIndex: index + 1, raw: row[columnIndex], value: parseDataNumber(row[columnIndex], delimiter) })).filter((item) => item.value !== null);
+    const stats = calculateQuantiles(observations.map((item) => item.value));
+    if (stats.count < 4) return { stats, lowerFence: null, upperFence: null, outliers: [], method: "IQR" };
+    const spread = stats.q3 - stats.q1, lowerFence = stats.q1 - 1.5 * spread, upperFence = stats.q3 + 1.5 * spread;
+    return { stats, lowerFence, upperFence, outliers: observations.filter((item) => item.value < lowerFence || item.value > upperFence), method: "IQR" };
+  }
+
+  function calculatePearsonCorrelation(rows, firstIndex, secondIndex, delimiter) {
+    const pairs = rows.map((row) => [parseDataNumber(row[firstIndex], delimiter), parseDataNumber(row[secondIndex], delimiter)]).filter((pair) => pair[0] !== null && pair[1] !== null);
+    if (pairs.length < 3) return { n: pairs.length, value: null, strength: "data tidak cukup" };
+    const meanX = pairs.reduce((sum, pair) => sum + pair[0], 0) / pairs.length;
+    const meanY = pairs.reduce((sum, pair) => sum + pair[1], 0) / pairs.length;
+    let covariance = 0, varianceX = 0, varianceY = 0;
+    pairs.forEach(([x, y]) => { covariance += (x - meanX) * (y - meanY); varianceX += (x - meanX) ** 2; varianceY += (y - meanY) ** 2; });
+    if (varianceX === 0 || varianceY === 0) return { n: pairs.length, value: null, strength: "tidak terdefinisi (variabel konstan)" };
+    const value = Math.max(-1, Math.min(1, covariance / Math.sqrt(varianceX * varianceY)));
+    const absolute = Math.abs(value);
+    const strength = absolute >= 0.7 ? "kuat" : absolute >= 0.4 ? "sedang" : absolute >= 0.2 ? "lemah" : "sangat lemah";
+    return { n: pairs.length, value, strength };
+  }
+
+  function buildCorrelationMatrix(rows, numericColumns, delimiter) {
+    return numericColumns.map((first) => ({
+      index: first.index, name: first.name,
+      values: numericColumns.map((second) => calculatePearsonCorrelation(rows, first.index, second.index, delimiter))
+    }));
+  }
+
+  function buildStatisticalFindings(rows, numericColumns, delimiter) {
+    const findings = [];
+    if (rows.length < 5) findings.push("Dataset kecil: interpretasi pola sebaiknya dilakukan dengan sangat hati-hati.");
+    numericColumns.forEach((column) => {
+      const values = rows.map((row) => parseDataNumber(row[column.index], delimiter)).filter((value) => value !== null);
+      const stats = calculateQuantiles(values);
+      if (stats.count >= 4) {
+        const iqr = stats.q3 - stats.q1;
+        const count = values.filter((value) => value < stats.q1 - 1.5 * iqr || value > stats.q3 + 1.5 * iqr).length;
+        if (count) findings.push(column.name + ": " + count + " nilai berada di luar pagar IQR.");
+      }
+    });
+    if (!findings.length) findings.push("Tidak ada nilai ekstrem IQR yang terdeteksi pada kolom numerik dengan data memadai.");
+    return findings;
+  }
+
+  function renderDecisionSupport() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    const outlierSummary = document.getElementById("dataOutlierSummary"), outlierTarget = document.getElementById("dataOutlierResult");
+    const correlationTarget = document.getElementById("dataCorrelationResult"), correlationNote = document.getElementById("dataCorrelationNote");
+    if (!analysis || !outlierSummary || !outlierTarget || !correlationTarget) return;
+    const rows = getFilteredDataRows().map((item) => item.row);
+    outlierSummary.replaceChildren(); outlierTarget.replaceChildren(); correlationTarget.replaceChildren();
+    const selected = document.getElementById("dataColumnSelect");
+    const columnIndex = selected && selected.value !== "" ? Number(selected.value) : -1;
+    if (columnIndex < 0) {
+      outlierSummary.textContent = "Pilih kolom numerik untuk menghitung pagar IQR.";
+    } else {
+      const result = detectIqrOutliers(rows, columnIndex, state.delimiter);
+      outlierSummary.textContent = result.stats.count + " nilai valid · Q1 " + formatDataNumber(result.stats.q1) + " · Median " + formatDataNumber(result.stats.median) + " · Q3 " + formatDataNumber(result.stats.q3) + (result.lowerFence === null ? " · Minimal 4 nilai valid diperlukan." : " · Pagar bawah " + formatDataNumber(result.lowerFence) + " · Pagar atas " + formatDataNumber(result.upperFence));
+      if (result.outliers.length) {
+        const table = document.createElement("table"); table.className = "data-preview-table";
+        const head = document.createElement("tr");
+        ["Baris pada hasil filter", "Nilai", "Indikasi"].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
+        const thead = document.createElement("thead"); thead.appendChild(head); table.appendChild(thead);
+        const body = document.createElement("tbody");
+        result.outliers.slice(0, 100).forEach((item) => {
+          const tr = document.createElement("tr");
+          [String(item.rowIndex), formatDataNumber(item.value), item.value < result.lowerFence ? "Di bawah pagar" : "Di atas pagar"].forEach((value) => { const td = document.createElement("td"); td.textContent = value; tr.appendChild(td); });
+          body.appendChild(tr);
+        });
+        table.appendChild(body); outlierTarget.appendChild(table);
+      } else outlierTarget.textContent = result.lowerFence === null ? "Belum cukup data untuk deteksi IQR." : "Tidak ada nilai di luar pagar IQR.";
+    }
+    const matrix = buildCorrelationMatrix(rows, analysis.numericColumns, state.delimiter);
+    if (matrix.length < 2) {
+      correlationTarget.textContent = "Diperlukan minimal dua kolom numerik.";
+    } else {
+      const table = document.createElement("table"); table.className = "data-preview-table data-correlation-table";
+      const head = document.createElement("tr");
+      ["Variabel", ...matrix.map((item) => item.name)].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
+      const thead = document.createElement("thead"); thead.appendChild(head); table.appendChild(thead);
+      const body = document.createElement("tbody");
+      matrix.forEach((item) => {
+        const tr = document.createElement("tr");
+        const name = document.createElement("th"); name.textContent = item.name; tr.appendChild(name);
+        item.values.forEach((entry) => { const td = document.createElement("td"); td.textContent = entry.value === null ? "—" : entry.value.toFixed(3) + " · " + entry.strength; tr.appendChild(td); });
+        body.appendChild(tr);
+      });
+      table.appendChild(body); correlationTarget.appendChild(table);
+    }
+    if (correlationNote) correlationNote.textContent = rows.length + " baris sesuai filter · korelasi Pearson memakai pasangan nilai valid (minimal 3). Korelasi menggambarkan hubungan linear, bukan sebab-akibat.";
   }
 
   function buildGroupedSummary(rows, groupIndex, metricIndex, operation, delimiter) {
@@ -1666,15 +1772,15 @@
     const filterColumn = document.getElementById("dataFilterColumn"), filterText = document.getElementById("dataFilterText"), filterMin = document.getElementById("dataFilterMin"), filterMax = document.getElementById("dataFilterMax"), filterClear = document.getElementById("dataFilterClear");
     const pivotRows = document.getElementById("dataPivotRows"), pivotColumns = document.getElementById("dataPivotColumns"), pivotMetric = document.getElementById("dataPivotMetric"), pivotOperation = document.getElementById("dataPivotOperation");
     const trendControls = ["dataTrendDate", "dataTrendFormat", "dataTrendGranularity", "dataTrendMetric", "dataTrendOperation"].map((id) => document.getElementById(id));
-    if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); });
+    if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); renderDecisionSupport(); });
     if (sortSelect) sortSelect.addEventListener("change", () => { dataWorkspaceState.sortIndex = sortSelect.value === "" ? -1 : Number(sortSelect.value); dataWorkspaceState.page = 1; renderDataExplorer(); });
     if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); });
     if (prevPage) prevPage.addEventListener("click", () => { dataWorkspaceState.page -= 1; renderDataExplorer(); });
     if (nextPage) nextPage.addEventListener("click", () => { dataWorkspaceState.page += 1; renderDataExplorer(); });
     if (exportButton) exportButton.addEventListener("click", exportFilteredData);
     if (filterColumn) filterColumn.addEventListener("change", () => { dataWorkspaceState.filterIndex = filterColumn.value === "" ? -1 : Number(filterColumn.value); dataWorkspaceState.page = 1; renderDataAnalysis(); });
-    if (filterText) filterText.addEventListener("input", () => { dataWorkspaceState.filterText = filterText.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); });
-    [filterMin, filterMax].forEach((control) => { if (control) control.addEventListener("input", () => { dataWorkspaceState.minValue = filterMin ? filterMin.value : ""; dataWorkspaceState.maxValue = filterMax ? filterMax.value : ""; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); }); });
+    if (filterText) filterText.addEventListener("input", () => { dataWorkspaceState.filterText = filterText.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); renderDecisionSupport(); });
+    [filterMin, filterMax].forEach((control) => { if (control) control.addEventListener("input", () => { dataWorkspaceState.minValue = filterMin ? filterMin.value : ""; dataWorkspaceState.maxValue = filterMax ? filterMax.value : ""; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); renderDecisionSupport(); }); });
     if (filterClear) filterClear.addEventListener("click", () => { dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = ""; dataWorkspaceState.page = 1; renderDataAnalysis(); });
     [pivotRows, pivotColumns, pivotMetric, pivotOperation].forEach((control) => { if (control) control.addEventListener("change", renderPivotTable); });
     trendControls.forEach((control) => { if (control) control.addEventListener("change", renderDateTrend); });
@@ -1718,7 +1824,7 @@
         if (empty) empty.hidden = false;
       }
     });
-    if (columnSelect) columnSelect.addEventListener("change", renderSelectedDataColumn);
+    if (columnSelect) columnSelect.addEventListener("change", () => { renderSelectedDataColumn(); renderDecisionSupport(); });
     if (resetButton) resetButton.addEventListener("click", () => {
       dataWorkspaceState.headers = []; dataWorkspaceState.rows = [];
       dataWorkspaceState.numericColumns = []; dataWorkspaceState.analysis = null;
