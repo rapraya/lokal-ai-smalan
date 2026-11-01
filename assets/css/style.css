@@ -360,3 +360,15 @@ body[data-theme="light"] .data-decision-summary{background:#f7f9fd;color:#62758f
 .data-interpretation-controls button:disabled{opacity:.55;cursor:wait}
 body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8faff;border-color:#dce5f0}
 @media(max-width:650px){.data-interpretation-controls{align-items:stretch;flex-direction:column}.data-interpretation-controls button{width:100%}}
+
+/* v0.14.0 — Data Intelligence conversation workspace */
+.data-intelligence-controls{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.5fr);gap:12px;margin:14px 0}
+.data-intelligence-controls>label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:8px;font-weight:700}
+.data-intelligence-controls .data-select,.data-intelligence-controls .data-input{width:100%;min-height:40px;padding:0 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:9px}
+.data-intelligence-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.data-intelligence-actions button:disabled{opacity:.55;cursor:wait}
+.data-intelligence-controls #dataInterpretStatus{grid-column:1/-1;color:var(--muted);font-size:8px;line-height:1.6}
+.data-interpretation-result{max-height:520px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font-size:9px;line-height:1.8}
+.data-interpretation-result:not(:empty){padding:14px;margin-top:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}
+body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8faff;border-color:#dce5f0}
+@media(max-width:650px){.data-intelligence-controls{grid-template-columns:1fr}.data-intelligence-actions{display:grid;grid-template-columns:1fr}.data-intelligence-actions button{width:100%}}
