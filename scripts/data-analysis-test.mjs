@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights, calculateQuantiles, detectIqrOutliers, calculatePearsonCorrelation, buildCorrelationMatrix, buildStatisticalFindings })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights, calculateQuantiles, detectIqrOutliers, calculatePearsonCorrelation, buildCorrelationMatrix, buildStatisticalFindings, buildDataInterpretationContext })",
   vm.createContext({})
 );
 
@@ -153,3 +153,19 @@ assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4],[100]], [{index:0,name:"
 assert.ok(api.buildStatisticalFindings([[1],[2],[3]], [{index:0,name:"Skor"}], ",")[0].includes("kecil"));
 assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4],[5]], [{index:0,name:"Skor"}], ",")[0].includes("Tidak ada nilai ekstrem"));
 console.log("Decision support checks passed: quantiles, IQR outliers, Pearson correlation, constant/insufficient pairs, and statistical findings.");
+
+const interpretationContext = api.buildDataInterpretationContext(
+  [["1","2"],["2","4"],["3","6"],["4","8"],["100","200"]],
+  [{index:0,name:"Score"},{index:1,name:"Hours"}],
+  ",",
+  0
+);
+assert.equal(interpretationContext.scope.filteredRowCount, 5);
+assert.equal(interpretationContext.numericSummaries.length, 2);
+assert.equal(interpretationContext.selectedColumnOutlierReview.outlierCount, 1);
+assert.equal(interpretationContext.strongestLinearRelationships[0].coefficient, 1);
+assert.equal(Object.hasOwn(interpretationContext, "rows"), false);
+assert.equal(Object.hasOwn(interpretationContext, "rawRows"), false);
+assert.ok(!JSON.stringify(interpretationContext).includes('"100"'));
+assert.ok(interpretationContext.limitations.some((item) => item.includes("sebab-akibat")));
+console.log("Local interpretation context checks passed: aggregate-only payload, filtered scope, IQR summary, correlation, and caveats.");
