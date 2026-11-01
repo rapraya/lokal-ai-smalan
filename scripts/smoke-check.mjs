@@ -89,7 +89,7 @@ assert.ok(app.includes("function buildGroupedSummary(") && app.includes("functio
   "Grouped count/sum/average analysis is missing.");
 assert.ok(app.includes("function exportFilteredData()") && app.includes("filtered.csv"),
   "Filtered CSV export is missing.");
-assert.ok(app.includes("dataPageSize: 25") && app.includes("dataSearchInput") &&
+assert.ok(app.includes("pageSize: 25") && app.includes("dataSearchInput") &&
   app.includes("dataSortSelect") && app.includes("dataPrevPage") && app.includes("dataNextPage"),
   "Data Explorer controls are incomplete.");
 assert.ok(css.includes(".data-explorer-toolbar") && css.includes(".data-group-controls") &&
