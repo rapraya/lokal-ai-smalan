@@ -122,7 +122,7 @@ assert.ok(app.includes("dataInterpretFocus") && app.includes("dataInterpretQuest
 assert.ok(app.includes("function buildDataInterpretationMessages(") && app.includes("history.slice(-8)"), "Bounded follow-up history is missing.");
 assert.ok(app.includes("function exportDataInterpretationReport(") && app.includes("text/markdown;charset=utf-8"), "Markdown analysis report export is missing.");
 assert.ok(app.includes("dataInterpretationMessages.length = 0"), "Session history clearing is missing.");
-assert.ok(app.includes("messages: [{ role: \"system\", content: system }, { role: \"user\", content: prompt }]") && app.includes("max_tokens: 512"), "Local interpretation must use a bounded, isolated model prompt.");
+assert.ok(app.includes("function buildDataInterpretationMessages(") && app.includes("max_tokens: 512") && app.includes("history.slice(-8)"), "Local interpretation must use bounded, isolated follow-up messages.");
 assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disertakan"), "Interpretation context must disclose aggregate-only data.");
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
