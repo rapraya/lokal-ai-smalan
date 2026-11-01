@@ -89,7 +89,7 @@ assert.ok(app.includes("function buildGroupedSummary(") && app.includes("functio
   "Grouped count/sum/average analysis is missing.");
 assert.ok(app.includes("function buildPivotSummary(") && app.includes("function renderPivotTable()") && app.includes("dataPivotRows") && app.includes("dataPivotColumns"),
   "Pivot table analysis and controls are missing.");
-assert.ok(app.includes("function parseDataDate(") && app.includes("function buildDateTrendSummary(") && app.includes("function renderDateTrend()") && app.includes("dataTrendFormat") && app.includes("dataTrendGranularity"),
+assert.ok(app.includes("function parseDataDate(") && app.includes("function buildDateTrendSummary(") && app.includes("function renderDateTrend()") && app.includes("function summarizeTrendHighlights(") && app.includes("function exportDateTrendReport()") && app.includes("dataTrendChart") && app.includes("dataTrendExport") && app.includes("dataTrendFormat") && app.includes("dataTrendGranularity"),
   "Explicit date parsing and date trend analysis are missing.");
 assert.ok(app.includes("function exportFilteredData()") && app.includes("filtered.csv"),
   "Filtered CSV export is missing.");
@@ -118,4 +118,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, and safe text/code output.`);
