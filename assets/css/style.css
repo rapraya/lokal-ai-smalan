@@ -307,3 +307,12 @@ body[data-theme="light"] .data-group-note{color:#73849b}
 .data-column-filters input:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:760px){.data-column-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.data-column-filters .data-filter-text{grid-column:1/-1}.data-column-filters button{min-height:38px}}
 @media(max-width:420px){.data-column-filters{grid-template-columns:1fr}}
+
+
+/* v0.9.0 — local pivot-table presentation */
+.data-pivot-controls{grid-template-columns:repeat(4,minmax(130px,1fr))}
+.data-pivot-table{min-width:620px}
+.data-pivot-table tfoot th{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);font-weight:800}
+.data-pivot-table td:not(:first-child),.data-pivot-table th:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:760px){.data-pivot-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.data-pivot-controls{grid-template-columns:1fr}}
