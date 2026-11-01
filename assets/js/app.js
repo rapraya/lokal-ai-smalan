@@ -1276,7 +1276,7 @@
   function buildPivotSummary(rows, rowIndex, columnIndex, metricIndex, operation, delimiter) {
     const rowKeys = [...new Set(rows.map((row) => row[rowIndex] || "(Kosong)"))].sort((a, b) => a.localeCompare(b, "id-ID"));
     const columnKeys = [...new Set(rows.map((row) => row[columnIndex] || "(Kosong)"))].sort((a, b) => a.localeCompare(b, "id-ID"));
-    const cells = new Map(), rowTotals = new Map(), columnTotals = new Map();
+    const cells = new Map(), rowTotals = new Map(), columnAggregates = new Map();
     rows.forEach((row) => {
       const rowKey = row[rowIndex] || "(Kosong)", columnKey = row[columnIndex] || "(Kosong)";
       const key = JSON.stringify([rowKey, columnKey]);
@@ -1287,14 +1287,19 @@
         if (value !== null) { cell.sum += value; cell.valid += 1; }
       }
       rowTotals.set(rowKey, (rowTotals.get(rowKey) || 0) + 1);
-      columnTotals.set(columnKey, (columnTotals.get(columnKey) || 0) + 1);
+      if (!columnAggregates.has(columnKey)) columnAggregates.set(columnKey, { count: 0, sum: 0, valid: 0 });
+      const columnAggregate = columnAggregates.get(columnKey); columnAggregate.count += 1;
+      if (metricIndex >= 0) {
+        const value = parseDataNumber(row[metricIndex], delimiter);
+        if (value !== null) { columnAggregate.sum += value; columnAggregate.valid += 1; }
+      }
     });
     const valueOf = (item) => !item ? (operation === "average" ? null : 0) : operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null;
     return {
       rowKeys, columnKeys,
       values: rowKeys.map((name) => ({ name, cells: columnKeys.map((key) => valueOf(cells.get(JSON.stringify([name, key])))), total: rowTotals.get(name) || 0 })),
-      columnTotals: columnKeys.map((key) => columnTotals.get(key) || 0),
-      grandTotal: rows.length
+      columnTotals: columnKeys.map((key) => valueOf(columnAggregates.get(key))),
+      grandTotal: valueOf({ count: rows.length, sum: rows.reduce((sum, row) => { const value = metricIndex >= 0 ? parseDataNumber(row[metricIndex], delimiter) : null; return sum + (value === null ? 0 : value); }, 0), valid: rows.reduce((count, row) => count + (metricIndex >= 0 && parseDataNumber(row[metricIndex], delimiter) !== null ? 1 : 0), 0) })
     };
   }
 
@@ -1341,7 +1346,7 @@
     });
     table.appendChild(body);
     const foot = document.createElement("tfoot"), totalRow = document.createElement("tr");
-    ["Total kolom", ...pivot.columnTotals.map(String), String(pivot.grandTotal)].forEach((value) => {
+    ["Total kolom", ...pivot.columnTotals.map((value) => value === null ? "—" : formatDataNumber(value)), pivot.grandTotal === null ? "—" : formatDataNumber(pivot.grandTotal)].forEach((value) => {
       const th = document.createElement("th"); th.textContent = value; totalRow.appendChild(th);
     });
     foot.appendChild(totalRow); table.appendChild(foot); target.appendChild(table);
