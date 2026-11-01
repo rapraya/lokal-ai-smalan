@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Lokal AI SMALAN — ruang kerja kecerdasan buatan yang mengutamakan privasi dan pemrosesan di perangkat.">
+  <title>Lokal AI — SMALAN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
+      <a class="brand" href="#" aria-label="Lokal AI beranda" data-page="home">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span class="brand-copy"><strong>lokal<span>ai</span></strong><small>SMALAN WORKSPACE</small></span>
+      </a>
+
+      <div class="sidebar-label">WORKSPACE</div>
+      <nav class="main-nav">
+        <button class="nav-item active" data-page="home"><span class="nav-icon">⌂</span><span>Beranda</span></button>
+        <button class="nav-item" data-page="chat"><span class="nav-icon">◌</span><span>AI Chat</span><span class="nav-soon">Soon</span></button>
+        <button class="nav-item" data-page="vision"><span class="nav-icon">▧</span><span>AI Vision</span><span class="nav-soon">Soon</span></button>
+        <button class="nav-item" data-page="coding"><span class="nav-icon">⌘</span><span>AI Coding</span><span class="nav-soon">Soon</span></button>
+      </nav>
+
+      <div class="sidebar-label tools-label">PREFERENSI</div>
+      <nav class="main-nav">
+        <button class="nav-item" data-page="models"><span class="nav-icon">◈</span><span>Model Engine</span></button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>Pengaturan</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="privacy-card">
+          <div class="privacy-icon">⌑</div>
+          <strong>Privasi diutamakan</strong>
+          <p>Dirancang agar AI dapat berjalan langsung di perangkatmu.</p>
+          <span class="privacy-status"><i></i> Local-first design</span>
+        </div>
+        <div class="sidebar-footer"><span class="footer-dot"></span> Versi awal <span class="version">0.1.0</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button menu-toggle" id="menuToggle" aria-label="Buka navigasi">☰</button>
+          <div class="breadcrumb"><span>Workspace</span><b>/</b><strong id="breadcrumbCurrent">Beranda</strong></div>
+        </div>
+        <div class="topbar-right">
+          <div class="engine-indicator"><span class="engine-dot"></span><span>Engine belum aktif</span></div>
+          <button class="avatar" aria-label="Profil pengguna">S</button>
+        </div>
+      </header>
+
+      <section class="page-content" id="pageContent">
+        <div class="welcome-row">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> YOUR PRIVATE AI WORKSPACE</div>
+            <h1>Selamat datang di <span>Lokal AI.</span></h1>
+            <p class="welcome-subtitle">Satu ruang kerja. Berbagai kemungkinan. AI yang lebih dekat dengan perangkatmu.</p>
+          </div>
+          <div class="date-chip"><span class="date-symbol">◷</span><span id="todayLabel">Workspace pribadi</span></div>
+        </div>
+
+        <section class="hero-panel">
+          <div class="hero-content">
+            <div class="hero-kicker"><span class="sparkle">✳</span> PRIVATE BY DESIGN</div>
+            <h2>Kecerdasan buatan,<br><em>tanpa harus selalu ke cloud.</em></h2>
+            <p>Jalankan model AI yang kompatibel langsung dari browser. Data dan proses dapat tetap berada di perangkat, sesuai dukungan model dan browser yang digunakan.</p>
+            <button class="primary-button" data-page="models">Jelajahi Model Engine <span>↗</span></button>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+            <div class="core-glow"></div>
+            <div class="core"><span class="core-glyph">✳</span></div>
+            <div class="orbit-node node-one"></div><div class="orbit-node node-two"></div><div class="orbit-node node-three"></div>
+            <div class="art-caption"><span class="art-caption-dot"></span> ON-DEVICE AI</div>
+          </div>
+          <div class="hero-grid"></div>
+        </section>
+
+        <div class="section-heading">
+          <div><span class="section-overline">EXPLORE WORKSPACE</span><h2>Ruang kerja AI</h2></div>
+          <span class="section-note">Pilih kemampuan untuk memulai</span>
+        </div>
+
+        <div class="module-grid">
+          <button class="module-card module-chat" data-page="chat">
+            <span class="module-icon">◌</span><span class="module-tag">LANGUAGE MODEL</span>
+            <strong>AI Chat</strong><p>Diskusi, eksplorasi ide, dan tanya jawab dengan model bahasa lokal.</p>
+            <span class="module-link">Buka workspace <b>↗</b></span>
+          </button>
+          <button class="module-card module-vision" data-page="vision">
+            <span class="module-icon">▧</span><span class="module-tag">IMAGE & DOCUMENT</span>
+            <strong>AI Vision</strong><p>Pahami gambar dan dokumen menggunakan model yang kompatibel.</p>
+            <span class="module-link">Buka workspace <b>↗</b></span>
+          </button>
+          <button class="module-card module-code" data-page="coding">
+            <span class="module-icon">⌘</span><span class="module-tag">DEVELOPER TOOLS</span>
+            <strong>AI Coding</strong><p>Bantu membaca, menjelaskan, dan meninjau potongan kode.</p>
+            <span class="module-link">Buka workspace <b>↗</b></span>
+          </button>
+        </div>
+
+        <div class="bottom-grid">
+          <section class="status-panel">
+            <div class="panel-heading"><div><span class="section-overline">DEVICE READINESS</span><h3>Kesiapan perangkat</h3></div><span class="status-pill"><i></i> Belum diperiksa</span></div>
+            <p class="panel-description">Periksa dukungan browser dan perangkat sebelum memuat model AI.</p>
+            <div class="readiness-row"><span>WebGPU</span><span id="webgpuStatus">Belum diperiksa</span></div>
+            <div class="readiness-row"><span>Browser</span><span id="browserStatus">Browser modern</span></div>
+            <button class="text-button" data-page="models">Periksa kemampuan perangkat <b>→</b></button>
+          </section>
+          <section class="activity-panel">
+            <div class="panel-heading"><div><span class="section-overline">GETTING STARTED</span><h3>Mulai dalam 3 langkah</h3></div></div>
+            <ol class="steps-list">
+              <li><span>01</span><div><strong>Periksa perangkat</strong><small>Pastikan browser mendukung teknologi yang dibutuhkan.</small></div></li>
+              <li><span>02</span><div><strong>Pilih model AI</strong><small>Sesuaikan model dengan kemampuan perangkat.</small></div></li>
+              <li><span>03</span><div><strong>Mulai berkarya</strong><small>Gunakan AI Chat, Vision, atau Coding.</small></div></li>
+            </ol>
+          </section>
+        </div>
+
+        <footer class="main-footer"><span>LOKAL AI <b>·</b> SMALAN</span><span>Built with privacy in mind.</span></footer>
+      </section>
+    </main>
+  </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
