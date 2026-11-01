@@ -43,6 +43,28 @@ assert.ok(css.includes(".coding-layout") && css.includes(".coding-result pre") &
   css.includes(".coding-run-button"),
   "AI Coding workspace styles are missing.");
 
+assert.ok(app.includes("function renderTextWorkspace()") && app.includes("function bindTextWorkspace()"),
+  "Text & Language workspace rendering and event bindings are missing.");
+assert.ok(app.includes("async function submitTextTask()"),
+  "Text & Language generation flow is missing.");
+assert.ok(app.includes('value="write"') && app.includes('value="edit"') &&
+  app.includes('value="proofread"') && app.includes('value="summarize"') &&
+  app.includes('value="translate"') && app.includes('value="extract"'),
+  "Text & Language task modes are incomplete.");
+assert.ok(app.includes("textMessages.slice(1).slice(-12)") &&
+  app.includes("role: \"system\""),
+  "Text & Language must use bounded task context and a system instruction.");
+assert.ok(app.includes("id=\"textTargetRow\"") && app.includes("Bahasa tujuan"),
+  "Translation target selection is missing.");
+assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
+  app.includes("textOutput"),
+  "Text & Language result copy support is missing.");
+assert.ok(app.includes("textRunButton") && app.includes("submitTextTask()"),
+  "Text & Language actions are not connected to the shared model engine.");
+assert.ok(css.includes(".text-layout") && css.includes(".text-form #textInput") &&
+  css.includes(".text-result pre"),
+  "Text & Language workspace styles are missing.");
+
 assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
   "The small Llama 3.2 1B model option is missing.");
 assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
@@ -61,4 +83,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding integration, and safe coding output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration and safe text/code output.`);
