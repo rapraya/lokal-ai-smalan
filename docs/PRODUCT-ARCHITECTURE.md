@@ -101,7 +101,7 @@ Verify the 1B model on a compatible device, show clear first-download progress, 
 Add compatible image understanding, background removal, speech-to-text, and text-to-speech models. Test Indonesian language quality and provide model-specific device requirements.
 
 ### Phase 6 — Data Analyst and Assistant
-Build deterministic local data handling, charts, and transparent decision support. Introduce tool execution only after sandboxing, permission scopes, confirmation UI, and audit history are in place.
+**Data Analyst CSV alpha is implemented in v0.6.0.** Next: test representative exports in real browsers, improve locale-aware number/date parsing, add column filters and grouped summaries, and export reproducible analysis reports. Then build AI interpretation that receives validated aggregate statistics rather than an unreviewed raw dataset. AI Assistant remains planned and must use an allowlisted tool registry with preview/approval semantics.
 
 ### Phase 7 — Image Studio and Video Studio
 Evaluate dedicated image/video runtimes and models. Offer local processing only after real device tests; any hosted generation provider must be an explicit optional integration.
