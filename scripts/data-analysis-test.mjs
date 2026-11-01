@@ -104,7 +104,7 @@ assert.equal(api.parseDataDate("2026-02-29", "iso"), null);
 assert.equal(api.parseDataDate("29/02/2024", "dmy").toISOString(), "2024-02-29T00:00:00.000Z");
 assert.equal(api.parseDataDate("03/04/2026", "dmy").getUTCMonth(), 3);
 assert.equal(api.parseDataDate("03/04/2026", "mdy").getUTCMonth(), 2);
-const dailyTrend = api.buildDateTrendSummary([["2025", "4"], ["2026", "8"]], 0, 1, "average", "iso", "year", ",");
+const dailyTrend = api.buildDateTrendSummary([["2025-01-01", "4"], ["2026-01-01", "8"]], 0, 1, "average", "iso", "year", ",");
 assert.deepEqual(Array.from(dailyTrend.periods.map((item) => item.value)), [4, 8]);
 assert.equal(dailyTrend.periods[1].changePercent, 100);
 
