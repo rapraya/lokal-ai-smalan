@@ -151,5 +151,5 @@ assert.equal(api.calculatePearsonCorrelation([["1","2"],["","4"]], 0, 1, ",").n,
 assert.equal(api.buildCorrelationMatrix([["1","2"],["2","4"],["3","6"]], [{index:0,name:"A"},{index:1,name:"B"}], ",").length, 2);
 assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4],[100]], [{index:0,name:"Skor"}], ",")[0].includes("Skor"));
 assert.ok(api.buildStatisticalFindings([[1],[2],[3]], [{index:0,name:"Skor"}], ",")[0].includes("kecil"));
-assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4]], [{index:0,name:"Skor"}], ",")[0].includes("Tidak ada nilai ekstrem"));
+assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4],[5]], [{index:0,name:"Skor"}], ",")[0].includes("Tidak ada nilai ekstrem"));
 console.log("Decision support checks passed: quantiles, IQR outliers, Pearson correlation, constant/insufficient pairs, and statistical findings.");
