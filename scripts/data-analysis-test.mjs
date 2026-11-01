@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary })",
   vm.createContext({})
 );
 
@@ -78,6 +78,14 @@ assert.equal(grouped[0].value, 6);
 assert.equal(grouped[1].value, 30);
 const groupedCount = api.buildGroupedSummary(explorerRows, 2, -1, "count", ",");
 assert.equal(groupedCount.reduce((sum, item) => sum + item.value, 0), 3);
+const pivotCount = api.buildPivotSummary(explorerRows, 2, 0, -1, "count", ",");
+assert.deepEqual(Array.from(pivotCount.rowKeys), ["Lulus", "Tidak"]);
+assert.deepEqual(Array.from(pivotCount.columnKeys), ["Ada", "Budi", "Citra"]);
+assert.deepEqual(Array.from(pivotCount.values[0].cells), [0, 1, 1]);
+assert.equal(pivotCount.grandTotal, 3);
+const pivotAverage = api.buildPivotSummary(explorerRows, 2, 0, 1, "average", ",");
+assert.deepEqual(Array.from(pivotAverage.values[0].cells), [null, 2, 10]);
+assert.deepEqual(Array.from(pivotAverage.columnTotals), [1, 1, 1]);
 
 const bins = api.buildDataHistogram([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 assert.equal(bins.length, 8);
@@ -90,4 +98,4 @@ assert.throws(() => api.parseCsvRecords('Name,Score\n"Ada,10', ","), /kutip/);
 const tooManyRows = [["Name"], ...Array.from({ length: 10001 }, (_, index) => ["row-" + index])];
 assert.throws(() => api.analyzeCsvRecords(tooManyRows, ","), /10.000/);
 
-console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, malformed quotes, and row limit.");
+console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, malformed quotes, and row limit.");
