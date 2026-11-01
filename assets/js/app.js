@@ -83,9 +83,9 @@
     },
     data: {
       title: "Data Analyst", label: "DATA & DECISIONS", icon: "chart", color: "icon-gold",
-      description: "Workspace analisis CSV lokal dengan pencarian, pengurutan, ringkasan kelompok, statistik deterministik, dan ekspor.",
+      description: "Workspace analisis CSV lokal dengan eksplorasi, statistik, deteksi outlier IQR, korelasi Pearson, dan laporan.",
       headline: "Temukan cerita di balik data.",
-      detail: "Alpha mendukung impor CSV hingga 5 MB dan 10.000 baris, profil kualitas data, statistik deskriptif, histogram, pencarian dan filter, pengurutan, ringkasan kelompok, pivot table, grafik tren tanggal, indikator perubahan, dan ekspor laporan CSV. Semua perhitungan dilakukan di browser; interpretasi AI belum tersedia.",
+      detail: "Alpha mendukung impor CSV hingga 5 MB dan 10.000 baris, profil kualitas data, statistik deskriptif, histogram, pencarian dan filter, pengurutan, ringkasan kelompok, pivot table, grafik tren tanggal, deteksi nilai ekstrem IQR, korelasi Pearson, temuan statistik deterministik, dan ekspor laporan CSV. Semua perhitungan dilakukan di browser; interpretasi AI belum tersedia.",
       stages: [["Data workspace", "Impor CSV lokal, profil kualitas, pencarian, pengurutan, paginasi, dan ekspor hasil filter."], ["Analysis & visualization", "Statistik deskriptif, histogram, ringkasan kelompok, pivot table, dan grafik tren tanggal."], ["Decision support", "Indikator perubahan periode dan ekspor laporan tren; interpretasi AI berbasis statistik tervalidasi menjadi tahap berikutnya."]]
     },
     assistant: {
@@ -1780,7 +1780,7 @@
     const trendControls = ["dataTrendDate", "dataTrendFormat", "dataTrendGranularity", "dataTrendMetric", "dataTrendOperation"].map((id) => document.getElementById(id));
     if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); renderDateTrend(); renderDecisionSupport(); });
     if (sortSelect) sortSelect.addEventListener("change", () => { dataWorkspaceState.sortIndex = sortSelect.value === "" ? -1 : Number(sortSelect.value); dataWorkspaceState.page = 1; renderDataExplorer(); });
-    if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); });
+    if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); renderDecisionSupport(); });
     if (prevPage) prevPage.addEventListener("click", () => { dataWorkspaceState.page -= 1; renderDataExplorer(); });
     if (nextPage) nextPage.addEventListener("click", () => { dataWorkspaceState.page += 1; renderDataExplorer(); });
     if (exportButton) exportButton.addEventListener("click", exportFilteredData);
