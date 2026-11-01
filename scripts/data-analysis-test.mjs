@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights, calculateQuantiles, detectIqrOutliers, calculatePearsonCorrelation, buildCorrelationMatrix, buildStatisticalFindings })",
   vm.createContext({})
 );
 
@@ -133,3 +133,21 @@ const tooManyRows = [["Name"], ...Array.from({ length: 10001 }, (_, index) => ["
 assert.throws(() => api.analyzeCsvRecords(tooManyRows, ","), /10.000/);
 
 console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, explicit date formats, monthly/yearly trends, trend highlights, malformed quotes, and row limit.");
+
+const quantiles = api.calculateQuantiles([1, 2, 3, 4, 100]);
+assert.equal(quantiles.q1, 2);
+assert.equal(quantiles.median, 3);
+assert.equal(quantiles.q3, 4);
+assert.equal(quantiles.mean, 22);
+const outliers = api.detectIqrOutliers([[1], [2], [3], [4], [100]], 0, ",");
+assert.deepEqual(Array.from(outliers.outliers.map((item) => item.value)), [100]);
+assert.equal(outliers.upperFence, 7);
+assert.equal(api.detectIqrOutliers([[1], [2], [3]], 0, ",").lowerFence, null);
+const positiveCorrelation = api.calculatePearsonCorrelation([["1","2"],["2","4"],["3","6"]], 0, 1, ",");
+assert.equal(positiveCorrelation.value, 1);
+assert.equal(positiveCorrelation.strength, "kuat");
+assert.equal(api.calculatePearsonCorrelation([["1","9"],["2","9"],["3","9"]], 0, 1, ",").value, null);
+assert.equal(api.calculatePearsonCorrelation([["1","2"],["","4"]], 0, 1, ",").n, 1);
+assert.equal(api.buildCorrelationMatrix([["1","2"],["2","4"],["3","6"]], [{index:0,name:"A"},{index:1,name:"B"}], ",").length, 2);
+assert.ok(api.buildStatisticalFindings([[1],[2],[3],[4],[100]], [{index:0,name:"Skor"}], ",")[0].includes("Skor"));
+console.log("Decision support checks passed: quantiles, IQR outliers, Pearson correlation, constant/insufficient pairs, and statistical findings.");
