@@ -316,3 +316,9 @@ body[data-theme="light"] .data-group-note{color:#73849b}
 .data-pivot-table td:not(:first-child),.data-pivot-table th:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:760px){.data-pivot-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.data-pivot-controls{grid-template-columns:1fr}}
+
+
+/* Date and trend analysis */
+.data-trend-controls { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+.data-trend-panel .data-group-note { line-height: 1.6; }
+.data-trend-table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
