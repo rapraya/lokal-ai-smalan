@@ -17,6 +17,11 @@
     content: "Kamu adalah Lokal AI, asisten yang membantu dalam bahasa Indonesia. Jawab dengan jelas, akurat, dan terstruktur. Jika tidak yakin, nyatakan keterbatasan. Jangan mengarang fakta atau sumber."
   };
   let chatMessages = [chatSystemMessage];
+  const codingSystemMessage = {
+    role: "system",
+    content: "Kamu adalah Lokal AI Coding, asisten pemrograman senior. Bantu pengguna menulis, memahami, mereview, mendokumentasikan, dan memperbaiki kode. Utamakan solusi yang benar, aman, maintainable, dan sesuai konteks. Jangan pernah mengklaim kode sudah dijalankan atau diuji. Nyatakan asumsi dan ketidakpastian dengan jelas. Jangan meminta atau mengulang rahasia seperti API key, password, atau token."
+  };
+  let codingMessages = [codingSystemMessage];
   let chatEngine = null;
   let chatWorker = null;
   let chatModelId = "";
@@ -153,6 +158,11 @@
       bindChatWorkspace();
       return;
     }
+    if (page === "coding") {
+      workspace.innerHTML = renderCodingWorkspace();
+      bindCodingWorkspace();
+      return;
+    }
     const steps = config.stages.map((stage, index) =>
       '<li><span class="roadmap-index">' + String(index + 1).padStart(2, "0") + '</span><div><b>' + stage[0] + '</b><small>' + stage[1] + '</small></div></li>'
     ).join("");
@@ -237,6 +247,184 @@
     '</div>';
   }
 
+
+  function renderCodingWorkspace() {
+    return '<div class="chat-page coding-page">' +
+      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label">' + icon("lock") + ' Kode diproses oleh model lokal</span></div>' +
+      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> DEVELOPER INTELLIGENCE</div><h1>AI Coding</h1><p>Buat, pahami, tinjau, dan perbaiki kode dengan model bahasa lokal.</p></div><span class="chat-build-status"><i></i> Coding workspace · Alpha</span></div>' +
+      '<div class="coding-layout">' +
+        '<aside class="chat-control-panel coding-engine-panel">' +
+          '<div class="chat-panel-label">SHARED MODEL ENGINE</div>' +
+          '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU · shared with AI Chat</small></div></div>' +
+          '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
+          '<select class="chat-model-select" id="chatModelSelect">' +
+            '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
+            '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+          '</select>' +
+          '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model lebih besar belum tentu lebih cepat atau lebih cocok untuk perangkat.</div>' +
+          '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
+          '<button class="chat-unload-button" id="chatUnloadButton" type="button" hidden>Lepaskan model</button>' +
+          '<div class="chat-progress" id="chatProgress" hidden><div class="chat-progress-track"><span id="chatProgressBar"></span></div><p id="chatProgressText">Menyiapkan runtime…</p></div>' +
+          '<div class="chat-engine-status" id="chatEngineStatus"><span class="status-idle"></span><span>Model belum aktif</span></div>' +
+          '<div class="chat-panel-divider"></div>' +
+          '<div class="chat-panel-label">LOCAL PROCESSING</div>' +
+          '<div class="chat-local-note">' + icon("shield") + '<p>AI Coding memakai engine yang sama dengan AI Chat. Model diunduh satu kali per browser cache. Kode yang kamu masukkan diproses di perangkat setelah model aktif.</p></div>' +
+        '</aside>' +
+        '<section class="coding-workbench">' +
+          '<div class="coding-toolbar"><div><b>Code workspace</b><small>Instruksi dan cuplikan kode tetap berada di sesi browser ini.</small></div><span class="coding-model-badge" id="codingModelBadge">Model belum aktif</span></div>' +
+          '<form class="coding-form" id="codingForm">' +
+            '<div class="coding-select-row">' +
+              '<label>Jenis tugas<select id="codingTask"><option value="generate">Buat kode</option><option value="explain">Jelaskan kode</option><option value="debug">Debug / perbaiki bug</option><option value="review">Code review</option><option value="refactor">Refactor kode</option><option value="document">Buat dokumentasi</option></select></label>' +
+              '<label>Bahasa / teknologi<select id="codingLanguage"><option value="auto">Ikuti konteks kode</option><option value="php">PHP</option><option value="laravel">PHP · Laravel</option><option value="codeigniter">PHP · CodeIgniter 4</option><option value="javascript">JavaScript</option><option value="typescript">TypeScript</option><option value="python">Python</option><option value="htmlcss">HTML · CSS</option><option value="sql">SQL</option></select></label>' +
+            '</div>' +
+            '<label class="coding-field-label" for="codingInput">Apa yang ingin dikerjakan?</label>' +
+            '<textarea id="codingInput" rows="3" maxlength="5000" placeholder="Contoh: Buat fungsi validasi formulir dengan pesan kesalahan yang mudah dipahami." required></textarea>' +
+            '<label class="coding-field-label" for="codingContext">Konteks / kode terkait <span>Opsional</span></label>' +
+            '<textarea id="codingContext" rows="8" maxlength="16000" placeholder="Tempelkan kode, pesan error, struktur data, atau kebutuhan teknis di sini. Hapus rahasia, token, dan data sensitif sebelum ditempelkan."></textarea>' +
+            '<div class="coding-actions"><button class="coding-clear-button" id="codingClearButton" type="button">Bersihkan</button><button class="coding-run-button" id="codingRunButton" type="submit" disabled>Jalankan AI Coding ' + icon("arrow") + '</button></div>' +
+          '</form>' +
+          '<section class="coding-result" aria-live="polite"><div class="coding-result-head"><div><span class="section-kicker">MODEL RESPONSE</span><b>Hasil pengerjaan</b></div><button id="codingCopyButton" type="button" disabled>Salin hasil</button></div><pre id="codingOutput">Hasil AI Coding akan tampil di sini. Muat model lokal, lalu tulis instruksi untuk memulai.</pre><p class="coding-status" id="codingStatus" role="status">Belum ada proses yang dijalankan.</p></section>' +
+        '</section>' +
+      '</div>' +
+      '<div class="chat-footer-note">AI Coding menggunakan model Llama melalui WebLLM. Hasil harus ditinjau dan diuji sebelum dipakai. Kode tidak dijalankan, file proyek tidak diubah, dan tidak ada terminal yang diakses oleh fitur ini.</div>' +
+      '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Build safely. Review everything.</span></footer>' +
+    '</div>';
+  }
+
+  function bindCodingWorkspace() {
+    const modelSelect = document.getElementById("chatModelSelect");
+    const modelHint = document.getElementById("chatModelHint");
+    const loadButton = document.getElementById("chatLoadButton");
+    const unloadButton = document.getElementById("chatUnloadButton");
+    const form = document.getElementById("codingForm");
+    const input = document.getElementById("codingInput");
+    const clearButton = document.getElementById("codingClearButton");
+    const copyButton = document.getElementById("codingCopyButton");
+
+    if (modelSelect && modelHint) {
+      modelSelect.addEventListener("change", () => {
+        const option = modelSelect.selectedOptions[0];
+        const memory = option ? option.dataset.vram : "";
+        modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kompatibilitas tetap bergantung pada perangkat.";
+      });
+    }
+    if (loadButton) loadButton.addEventListener("click", loadChatModel);
+    if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
+    if (input) input.addEventListener("input", syncChatControls);
+    if (form) form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitCodingTask();
+    });
+    if (clearButton) clearButton.addEventListener("click", () => {
+      codingMessages = [codingSystemMessage];
+      const instruction = document.getElementById("codingInput");
+      const context = document.getElementById("codingContext");
+      const output = document.getElementById("codingOutput");
+      const status = document.getElementById("codingStatus");
+      if (instruction) instruction.value = "";
+      if (context) context.value = "";
+      if (output) output.textContent = "Hasil AI Coding akan tampil di sini.";
+      if (status) status.textContent = "Workspace dibersihkan.";
+      if (copyButton) copyButton.disabled = true;
+      syncChatControls();
+    });
+    if (copyButton) copyButton.addEventListener("click", async () => {
+      const output = document.getElementById("codingOutput");
+      const status = document.getElementById("codingStatus");
+      if (!output || !output.textContent.trim()) return;
+      try {
+        await navigator.clipboard.writeText(output.textContent);
+        if (status) status.textContent = "Hasil berhasil disalin ke clipboard.";
+      } catch (_) {
+        if (status) status.textContent = "Clipboard tidak tersedia. Pilih teks hasil lalu salin secara manual.";
+      }
+    });
+    syncChatControls();
+  }
+
+  async function submitCodingTask() {
+    const instruction = document.getElementById("codingInput");
+    const context = document.getElementById("codingContext");
+    const taskSelect = document.getElementById("codingTask");
+    const languageSelect = document.getElementById("codingLanguage");
+    const output = document.getElementById("codingOutput");
+    const status = document.getElementById("codingStatus");
+    const copyButton = document.getElementById("codingCopyButton");
+    if (!instruction || !instruction.value.trim() || !chatEngine || chatGenerating) return;
+
+    const taskDescriptions = {
+      generate: "Buat implementasi kode yang lengkap dan sesuai kebutuhan.",
+      explain: "Jelaskan kode secara bertahap, termasuk alur, fungsi, input, output, dan potensi masalah.",
+      debug: "Analisis bug secara sistematis. Jelaskan dugaan akar masalah, cara memverifikasi, lalu berikan perbaikan kode.",
+      review: "Lakukan code review. Prioritaskan bug, risiko keamanan, kualitas, dan maintainability. Berikan temuan dengan tingkat prioritas.",
+      refactor: "Refactor kode agar lebih mudah dirawat tanpa mengubah perilaku yang dimaksud. Jelaskan perubahan penting.",
+      document: "Buat dokumentasi teknis yang jelas, termasuk tujuan, parameter, hasil, contoh penggunaan, dan batasan."
+    };
+    const languageNames = {
+      auto: "Ikuti bahasa dan teknologi pada konteks.",
+      php: "PHP.",
+      laravel: "PHP dengan framework Laravel.",
+      codeigniter: "PHP dengan framework CodeIgniter 4.",
+      javascript: "JavaScript modern.",
+      typescript: "TypeScript.",
+      python: "Python.",
+      htmlcss: "HTML dan CSS.",
+      sql: "SQL."
+    };
+    const task = taskSelect ? taskSelect.value : "generate";
+    const language = languageSelect ? languageSelect.value : "auto";
+    const sourceContext = context ? context.value.trim() : "";
+    const prompt = [
+      "TUGAS: " + (taskDescriptions[task] || taskDescriptions.generate),
+      "BAHASA / TEKNOLOGI: " + (languageNames[language] || languageNames.auto),
+      "INSTRUKSI PENGGUNA:\n" + instruction.value.trim(),
+      sourceContext ? "KONTEKS ATAU KODE SUMBER:\n" + sourceContext : "",
+      "PANDUAN: Jawab dalam Bahasa Indonesia. Jangan mengarang API, file, atau detail proyek yang tidak diberikan. Tunjukkan asumsi bila ada. Untuk kode, gunakan blok kode yang sesuai dan sertakan langkah pengujian. Jangan mengklaim kode sudah dijalankan atau diuji."
+    ].filter(Boolean).join("\n\n");
+
+    chatGenerating = true;
+    chatLastError = "";
+    codingMessages.push({ role: "user", content: prompt });
+    const assistantMessage = { role: "assistant", content: "" };
+    codingMessages.push(assistantMessage);
+    if (output) output.textContent = "";
+    if (status) status.textContent = "Model sedang mengerjakan permintaan…";
+    if (copyButton) copyButton.disabled = true;
+    syncChatControls();
+
+    try {
+      const stream = await chatEngine.chat.completions.create({
+        messages: codingMessages.slice(-17),
+        temperature: 0.25,
+        top_p: 0.9,
+        max_tokens: 1536,
+        stream: true
+      });
+      for await (const chunk of stream) {
+        const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta
+          ? chunk.choices[0].delta.content || ""
+          : "";
+        if (!delta) continue;
+        assistantMessage.content += delta;
+        if (output) output.textContent = assistantMessage.content;
+        if (status) status.textContent = "Jawaban sedang diterima dari model lokal…";
+      }
+      if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      if (output) output.textContent = assistantMessage.content;
+      if (status) status.textContent = "Selesai. Tinjau dan uji kode sebelum digunakan.";
+      if (copyButton) copyButton.disabled = false;
+    } catch (error) {
+      const message = error && error.message ? error.message : "periksa resource perangkat";
+      assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + message;
+      if (output) output.textContent = assistantMessage.content;
+      if (status) status.textContent = "Generasi gagal: " + message;
+      chatLastError = "Generasi AI Coding gagal: " + message;
+    } finally {
+      chatGenerating = false;
+      syncChatControls();
+    }
+  }
+
   function setChatStatus(message, state = "idle") {
     const status = document.getElementById("chatEngineStatus");
     if (status) {
@@ -245,6 +433,8 @@
     }
     const conversationModel = document.getElementById("chatConversationModel");
     if (conversationModel) conversationModel.textContent = chatEngine ? chatModelId : "Belum ada model aktif";
+    const codingBadge = document.getElementById("codingModelBadge");
+    if (codingBadge) codingBadge.textContent = chatEngine ? chatModelId : "Model belum aktif";
   }
 
   function updateChatProgress(progress) {
@@ -308,6 +498,10 @@
     const select = document.getElementById("chatModelSelect");
     if (input) input.disabled = !chatEngine || chatGenerating;
     if (send) send.disabled = !chatEngine || chatGenerating;
+    const codingInput = document.getElementById("codingInput");
+    const codingRunButton = document.getElementById("codingRunButton");
+    if (codingInput) codingInput.disabled = !chatEngine || chatGenerating;
+    if (codingRunButton) codingRunButton.disabled = !chatEngine || chatGenerating || !codingInput || !codingInput.value.trim();
     if (load) {
       load.disabled = chatLoading || !!chatEngine;
       load.hidden = !!chatEngine;
