@@ -7,7 +7,7 @@ The architecture is **local-first, not local-only**: supported models should run
 ## Current status
 
 **v0.12.0 — Statistical decision support**
-- Data Analyst adds filtered-data IQR outlier detection, quantile summaries, pairwise Pearson correlation matrix, and concise deterministic statistical findings. Outliers are signals for review, not automatic errors; correlation is descriptive and does not establish causation. Calculations remain in-browser.
+- Data Analyst adds filtered-data IQR outlier detection, quantile summaries, pairwise Pearson correlation matrix, and concise deterministic statistical findings. Findings are labeled as statistical evidence, not AI-generated advice. Outliers are signals for review, not automatic errors; correlation is descriptive and does not establish causation. Calculations remain in-browser.
 
 **v0.11.0 — Visual trend reports**
 
