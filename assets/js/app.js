@@ -926,7 +926,7 @@
   }
 
 
-  const dataWorkspaceState = { headers: [], rows: [], delimiter: ",", fileName: "", numericColumns: [], analysis: null, page: 1, pageSize: 25, search: "", sortIndex: -1, sortDirection: "asc" };
+  const dataWorkspaceState = { headers: [], rows: [], delimiter: ",", fileName: "", numericColumns: [], analysis: null, page: 1, pageSize: 25, search: "", sortIndex: -1, sortDirection: "asc", filterIndex: -1, filterText: "", minValue: "", maxValue: "" };
 
   function renderDataWorkspace() {
     return '<div class="chat-page data-page">' +
@@ -946,7 +946,7 @@
           '<section class="data-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATA QUALITY</span><b>Profil kolom</b></div><span class="data-panel-meta">Semua kolom</span></div><div class="data-profile-list" id="dataProfileList"></div></section>' +
         '</div>' +
         '<section class="data-panel data-preview-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATA EXPLORER</span><b>Jelajahi dataset</b></div><button class="data-export-button" id="dataExportButton" type="button">Ekspor hasil CSV</button></div>' +
-          '<div class="data-explorer-toolbar"><input id="dataSearchInput" type="search" placeholder="Cari di seluruh kolom…" aria-label="Cari data"><label>Urutkan<select id="dataSortSelect" class="data-select"><option value="">Urutan asli</option></select></label><button id="dataSortDirection" class="data-sort-direction" type="button">↑ Naik</button></div>' +
+          '<div class="data-explorer-toolbar"><input id="dataSearchInput" type="search" placeholder="Cari di seluruh kolom…" aria-label="Cari data"><label>Urutkan<select id="dataSortSelect" class="data-select"><option value="">Urutan asli</option></select></label><button id="dataSortDirection" class="data-sort-direction" type="button">↑ Naik</button></div><div class="data-column-filters"><label>Filter kolom<select id="dataFilterColumn" class="data-select"><option value="">Semua kolom</option></select></label><label class="data-filter-text">Teks mengandung<input id="dataFilterText" type="search" placeholder="Nilai yang dicari…" aria-label="Filter teks kolom"></label><label>Nilai minimum<input id="dataFilterMin" type="number" step="any" placeholder="Min" aria-label="Nilai minimum"></label><label>Nilai maksimum<input id="dataFilterMax" type="number" step="any" placeholder="Maks" aria-label="Nilai maksimum"></label><button id="dataFilterClear" class="data-sort-direction" type="button">Reset filter</button></div>' +
           '<div class="data-table-wrap" id="dataTableWrap"></div><div class="data-pagination"><span id="dataPageInfo">Menampilkan 0 data</span><div><button id="dataPrevPage" type="button" disabled>Sebelumnya</button><button id="dataNextPage" type="button" disabled>Berikutnya</button></div></div></section>' +
         '<section class="data-panel data-group-panel"><div class="data-panel-heading"><div><span class="section-kicker">GROUPED ANALYSIS</span><b>Ringkasan kelompok</b></div><span class="data-panel-meta">Agregasi deterministik</span></div>' +
           '<div class="data-group-controls"><label>Kelompokkan berdasarkan<select id="dataGroupColumn" class="data-select"></select></label><label>Kolom nilai<select id="dataGroupMetric" class="data-select"></select></label><label>Perhitungan<select id="dataGroupOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div>' +
@@ -1161,6 +1161,19 @@
       analysis.headers.forEach((header, index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = header; sortSelect.appendChild(option); });
       sortSelect.value = dataWorkspaceState.sortIndex < 0 ? "" : String(dataWorkspaceState.sortIndex);
     }
+    const filterColumn = document.getElementById("dataFilterColumn");
+    if (filterColumn) {
+      filterColumn.replaceChildren();
+      const all = document.createElement("option"); all.value = ""; all.textContent = "Semua kolom"; filterColumn.appendChild(all);
+      analysis.headers.forEach((header, index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = header; filterColumn.appendChild(option); });
+      filterColumn.value = state.filterIndex < 0 ? "" : String(state.filterIndex);
+    }
+    const filterText = document.getElementById("dataFilterText"); if (filterText) filterText.value = state.filterText;
+    const filterMin = document.getElementById("dataFilterMin"); if (filterMin) filterMin.value = state.minValue;
+    const filterMax = document.getElementById("dataFilterMax"); if (filterMax) filterMax.value = state.maxValue;
+    const numericFilter = state.filterIndex >= 0 && analysis.numericColumns.some((item) => item.index === state.filterIndex);
+    if (filterMin) filterMin.disabled = !numericFilter;
+    if (filterMax) filterMax.disabled = !numericFilter;
     const groupColumn = document.getElementById("dataGroupColumn");
     if (groupColumn) {
       groupColumn.replaceChildren();
@@ -1191,10 +1204,25 @@
   }
 
 
-  function filterSortDataRows(rows, queryText, sortIndex, sortDirection, delimiter) {
+  function filterSortDataRows(rows, queryText, sortIndex, sortDirection, delimiter, columnFilter = {}) {
     const query = queryText.trim().toLocaleLowerCase("id-ID");
     let indexed = rows.map((row, index) => ({ row, index }));
     if (query) indexed = indexed.filter(({ row }) => row.some((value) => value.toLocaleLowerCase("id-ID").includes(query)));
+    if (Number.isInteger(columnFilter.index) && columnFilter.index >= 0) {
+      const index = columnFilter.index;
+      const text = String(columnFilter.text || "").trim().toLocaleLowerCase("id-ID");
+      const hasMin = columnFilter.min !== "" && columnFilter.min !== null && columnFilter.min !== undefined && Number.isFinite(Number(columnFilter.min));
+      const hasMax = columnFilter.max !== "" && columnFilter.max !== null && columnFilter.max !== undefined && Number.isFinite(Number(columnFilter.max));
+      indexed = indexed.filter(({ row }) => {
+        const raw = row[index] || "";
+        if (text && !raw.toLocaleLowerCase("id-ID").includes(text)) return false;
+        if (hasMin || hasMax) {
+          const numeric = parseDataNumber(raw, delimiter);
+          if (numeric === null || (hasMin && numeric < Number(columnFilter.min)) || (hasMax && numeric > Number(columnFilter.max))) return false;
+        }
+        return true;
+      });
+    }
     if (sortIndex >= 0) {
       const direction = sortDirection === "asc" ? 1 : -1;
       indexed.sort((a, b) => {
@@ -1209,7 +1237,7 @@
 
   function getFilteredDataRows() {
     const state = dataWorkspaceState;
-    return filterSortDataRows(state.rows, state.search, state.sortIndex, state.sortDirection, state.delimiter);
+    return filterSortDataRows(state.rows, state.search, state.sortIndex, state.sortDirection, state.delimiter, { index: state.filterIndex, text: state.filterText, min: state.minValue, max: state.maxValue });
   }
 
   function buildGroupedSummary(rows, groupIndex, metricIndex, operation, delimiter) {
@@ -1295,7 +1323,8 @@
       if (note) note.textContent = "Pilih kolom numerik untuk menghitung total atau rata-rata.";
       return;
     }
-    const results = buildGroupedSummary(state.rows, groupIndex, metricIndex, operation, state.delimiter);
+    const filteredRows = getFilteredDataRows().map((item) => item.row);
+    const results = buildGroupedSummary(filteredRows, groupIndex, metricIndex, operation, state.delimiter);
     const table = document.createElement("table"); table.className = "data-preview-table";
     const thead = document.createElement("thead"), head = document.createElement("tr");
     ["Kelompok", "Jumlah baris", operation === "count" ? "Jumlah" : operation === "sum" ? "Total" : "Rata-rata"].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
@@ -1367,12 +1396,17 @@
     const prevPage = document.getElementById("dataPrevPage"), nextPage = document.getElementById("dataNextPage");
     const exportButton = document.getElementById("dataExportButton");
     const groupColumn = document.getElementById("dataGroupColumn"), groupMetric = document.getElementById("dataGroupMetric"), groupOperation = document.getElementById("dataGroupOperation");
+    const filterColumn = document.getElementById("dataFilterColumn"), filterText = document.getElementById("dataFilterText"), filterMin = document.getElementById("dataFilterMin"), filterMax = document.getElementById("dataFilterMax"), filterClear = document.getElementById("dataFilterClear");
     if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); });
     if (sortSelect) sortSelect.addEventListener("change", () => { dataWorkspaceState.sortIndex = sortSelect.value === "" ? -1 : Number(sortSelect.value); dataWorkspaceState.page = 1; renderDataExplorer(); });
     if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); });
     if (prevPage) prevPage.addEventListener("click", () => { dataWorkspaceState.page -= 1; renderDataExplorer(); });
     if (nextPage) nextPage.addEventListener("click", () => { dataWorkspaceState.page += 1; renderDataExplorer(); });
     if (exportButton) exportButton.addEventListener("click", exportFilteredData);
+    if (filterColumn) filterColumn.addEventListener("change", () => { dataWorkspaceState.filterIndex = filterColumn.value === "" ? -1 : Number(filterColumn.value); dataWorkspaceState.page = 1; renderDataAnalysis(); });
+    if (filterText) filterText.addEventListener("input", () => { dataWorkspaceState.filterText = filterText.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); });
+    [filterMin, filterMax].forEach((control) => { if (control) control.addEventListener("input", () => { dataWorkspaceState.minValue = filterMin ? filterMin.value : ""; dataWorkspaceState.maxValue = filterMax ? filterMax.value : ""; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); }); });
+    if (filterClear) filterClear.addEventListener("click", () => { dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = ""; dataWorkspaceState.page = 1; renderDataAnalysis(); });
     [groupColumn, groupMetric, groupOperation].forEach((control) => { if (control) control.addEventListener("change", renderGroupedData); });
     if (fileInput) fileInput.addEventListener("change", async () => {
       const file = fileInput.files && fileInput.files[0];
@@ -1395,6 +1429,7 @@
         dataWorkspaceState.search = "";
         dataWorkspaceState.sortIndex = -1;
         dataWorkspaceState.sortDirection = "asc";
+        dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = "";
         dataWorkspaceState.headers = analysis.headers;
         dataWorkspaceState.rows = analysis.rows;
         dataWorkspaceState.delimiter = delimiter;
@@ -1417,6 +1452,7 @@
       dataWorkspaceState.numericColumns = []; dataWorkspaceState.analysis = null;
       dataWorkspaceState.fileName = ""; dataWorkspaceState.page = 1;
       dataWorkspaceState.search = ""; dataWorkspaceState.sortIndex = -1; dataWorkspaceState.sortDirection = "asc";
+      dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = "";
       const input = document.getElementById("dataFileInput");
       const status = document.getElementById("dataFileStatus");
       const panel = document.getElementById("dataAnalysis");
