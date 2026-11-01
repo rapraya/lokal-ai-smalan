@@ -173,6 +173,11 @@
       bindTextWorkspace();
       return;
     }
+    if (page === "data") {
+      workspace.innerHTML = renderDataWorkspace();
+      bindDataWorkspace();
+      return;
+    }
     const steps = config.stages.map((stage, index) =>
       '<li><span class="roadmap-index">' + String(index + 1).padStart(2, "0") + '</span><div><b>' + stage[0] + '</b><small>' + stage[1] + '</small></div></li>'
     ).join("");
@@ -918,6 +923,338 @@
       chatGenerating = false;
       syncChatControls();
     }
+  }
+
+
+  const dataWorkspaceState = { headers: [], rows: [], delimiter: ",", fileName: "", numericColumns: [], analysis: null };
+
+  function renderDataWorkspace() {
+    return '<div class="chat-page data-page">' +
+      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label">' + icon("lock") + ' Analisis CSV di browser</span></div>' +
+      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> DATA & DECISIONS</div><h1>Data Analyst</h1><p>Impor data, periksa kualitasnya, dan temukan pola melalui perhitungan yang dapat diverifikasi.</p></div><span class="chat-build-status"><i></i> Data workspace · Alpha</span></div>' +
+      '<section class="data-import-panel">' +
+        '<div class="data-import-copy"><span class="data-panel-icon">' + icon("file-spreadsheet") + '</span><div><b>Mulai dari file CSV</b><small>Format CSV, delimiter koma/titik koma/tab · Maks. 5 MB dan 10.000 baris data.</small></div></div>' +
+        '<label class="data-file-picker" for="dataFileInput"><input id="dataFileInput" type="file" accept=".csv,text/csv,.tsv,text/tab-separated-values"><span>' + icon("upload") + ' Pilih file CSV</span></label>' +
+        '<p class="data-file-status" id="dataFileStatus" role="status">Belum ada file dipilih. File tidak diunggah ke server.</p>' +
+      '</section>' +
+      '<section class="data-empty-state" id="dataEmptyState"><span>' + icon("chart") + '</span><b>Dataset kamu akan tampil di sini</b><p>Unggah CSV untuk melihat ringkasan, kualitas data, distribusi, dan pratinjau tabel.</p></section>' +
+      '<div class="data-analysis" id="dataAnalysis" hidden>' +
+        '<div class="data-summary-head"><div><span class="section-kicker">DATASET OVERVIEW</span><h2 id="dataDatasetName">Dataset</h2><p id="dataDatasetMeta"></p></div><button class="data-reset-button" id="dataResetButton" type="button">Hapus dataset</button></div>' +
+        '<div class="data-stat-grid" id="dataStatGrid"></div>' +
+        '<div class="data-analysis-grid">' +
+          '<section class="data-panel"><div class="data-panel-heading"><div><span class="section-kicker">DISTRIBUTION</span><b>Distribusi nilai</b></div><label for="dataColumnSelect">Kolom numerik</label></div><select id="dataColumnSelect" class="data-select"></select><div class="data-chart-wrap" id="dataChart" role="img" aria-label="Histogram distribusi data numerik"></div><div class="data-chart-legend" id="dataChartCaption"></div><div class="data-numeric-stats" id="dataNumericStats"></div></section>' +
+          '<section class="data-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATA QUALITY</span><b>Profil kolom</b></div><span class="data-panel-meta">Semua kolom</span></div><div class="data-profile-list" id="dataProfileList"></div></section>' +
+        '</div>' +
+        '<section class="data-panel data-preview-panel"><div class="data-panel-heading"><div><span class="section-kicker">SAMPLE ROWS</span><b>Pratinjau data</b></div><span class="data-panel-meta">Maks. 8 baris ditampilkan</span></div><div class="data-table-wrap" id="dataTableWrap"></div></section>' +
+        '<div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
+      '</div>' +
+      '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Evidence before decisions.</span></footer>' +
+    '</div>';
+  }
+
+  function parseCsvRecords(source, delimiter) {
+    const records = [];
+    let row = [], field = "", quoted = false;
+    for (let i = 0; i < source.length; i += 1) {
+      const char = source[i];
+      if (quoted) {
+        if (char === '"') {
+          if (source[i + 1] === '"') { field += '"'; i += 1; }
+          else quoted = false;
+        } else field += char;
+      } else if (char === '"' && field.length === 0) {
+        quoted = true;
+      } else if (char === delimiter) {
+        row.push(field); field = "";
+      } else if (char === "\n" || char === "\r") {
+        if (char === "\r" && source[i + 1] === "\n") i += 1;
+        row.push(field); field = "";
+        if (row.some((value) => value.trim() !== "")) records.push(row);
+        row = [];
+      } else {
+        field += char;
+      }
+    }
+    if (quoted) throw new Error("CSV memiliki tanda kutip yang tidak berpasangan.");
+    row.push(field);
+    if (row.some((value) => value.trim() !== "")) records.push(row);
+    return records;
+  }
+
+  function detectCsvDelimiter(source) {
+    const sample = source.slice(0, 12000);
+    const candidates = [",", ";", "\t"];
+    const counts = candidates.map((delimiter) => {
+      let quoted = false, count = 0;
+      for (let i = 0; i < sample.length && sample[i] !== "\n" && sample[i] !== "\r"; i += 1) {
+        if (sample[i] === '"') {
+          if (quoted && sample[i + 1] === '"') i += 1;
+          else quoted = !quoted;
+        } else if (sample[i] === delimiter && !quoted) count += 1;
+      }
+      return count;
+    });
+    const best = Math.max(...counts);
+    return best > 0 ? candidates[counts.indexOf(best)] : ",";
+  }
+
+  function isMissingDataValue(value) {
+    return ["", "-", "n/a", "na", "null", "none"].includes(String(value).trim().toLowerCase());
+  }
+
+  function parseDataNumber(value, delimiter) {
+    let text = String(value).trim().replace(/\s/g, "");
+    if (!text || isMissingDataValue(text)) return null;
+    if (delimiter !== "," && /^[-+]?\d+,\d+$/.test(text)) text = text.replace(",", ".");
+    if (!/^[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$/i.test(text)) return null;
+    const number = Number(text);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function analyzeCsvRecords(records, delimiter) {
+    if (records.length < 2) throw new Error("CSV harus memiliki header dan minimal satu baris data.");
+    if (records.length - 1 > 10000) throw new Error("Dataset melebihi batas 10.000 baris data.");
+    const rawHeaders = records[0].map((value) => value.replace(/^\uFEFF/, "").trim());
+    if (rawHeaders.some((value) => !value)) throw new Error("Semua kolom harus memiliki nama header.");
+    const headers = rawHeaders.map((value, index) => {
+      const duplicate = rawHeaders.slice(0, index).filter((item) => item === value).length;
+      return duplicate ? value + " (" + (duplicate + 1) + ")" : value;
+    });
+    const rows = records.slice(1).map((record) => headers.map((_, index) => String(record[index] ?? "").trim()));
+    const columnProfiles = headers.map((name, index) => {
+      const values = rows.map((row) => row[index]);
+      const present = values.filter((value) => !isMissingDataValue(value));
+      const numeric = present.map((value) => parseDataNumber(value, delimiter));
+      const validNumeric = numeric.filter((value) => value !== null);
+      const isNumeric = present.length > 0 && validNumeric.length / present.length >= 0.8;
+      return {
+        name, index, present: present.length, missing: values.length - present.length,
+        unique: new Set(present).size, type: isNumeric ? "Numerik" : "Teks",
+        numericValues: isNumeric ? values.map((value) => parseDataNumber(value, delimiter)) : []
+      };
+    });
+    const duplicates = new Set();
+    let duplicateRows = 0;
+    rows.forEach((row) => {
+      const key = JSON.stringify(row);
+      if (duplicates.has(key)) duplicateRows += 1;
+      else duplicates.add(key);
+    });
+    return { headers, rows, profiles: columnProfiles, duplicateRows, numericColumns: columnProfiles.filter((item) => item.type === "Numerik") };
+  }
+
+  function formatDataNumber(value) {
+    return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 3 }).format(value);
+  }
+
+  function buildDataHistogram(values, binCount = 8) {
+    const valid = values.filter((value) => value !== null);
+    if (!valid.length) return [];
+    const min = Math.min(...valid), max = Math.max(...valid);
+    if (min === max) return [{ start: min, end: max, count: valid.length }];
+    const width = (max - min) / binCount;
+    const bins = Array.from({ length: binCount }, (_, index) => ({
+      start: min + index * width,
+      end: index === binCount - 1 ? max : min + (index + 1) * width,
+      count: 0
+    }));
+    valid.forEach((value) => {
+      const index = Math.min(binCount - 1, Math.floor((value - min) / width));
+      bins[index].count += 1;
+    });
+    return bins;
+  }
+
+  function renderDataHistogram(values) {
+    const target = document.getElementById("dataChart");
+    const caption = document.getElementById("dataChartCaption");
+    if (!target || !caption) return;
+    const bins = buildDataHistogram(values);
+    target.replaceChildren();
+    if (!bins.length) { caption.textContent = "Tidak ada nilai numerik yang dapat divisualisasikan."; return; }
+    const maxCount = Math.max(...bins.map((bin) => bin.count), 1);
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 640 220");
+    svg.setAttribute("role", "presentation");
+    const baseline = document.createElementNS(ns, "line");
+    baseline.setAttribute("x1", "28"); baseline.setAttribute("x2", "620");
+    baseline.setAttribute("y1", "178"); baseline.setAttribute("y2", "178");
+    baseline.setAttribute("class", "data-chart-axis"); svg.appendChild(baseline);
+    bins.forEach((bin, index) => {
+      const x = 38 + index * 72;
+      const height = Math.max(2, (bin.count / maxCount) * 132);
+      const rect = document.createElementNS(ns, "rect");
+      rect.setAttribute("x", String(x)); rect.setAttribute("y", String(178 - height));
+      rect.setAttribute("width", "48"); rect.setAttribute("height", String(height));
+      rect.setAttribute("rx", "5"); rect.setAttribute("class", "data-chart-bar");
+      rect.setAttribute("aria-label", formatDataNumber(bin.start) + " sampai " + formatDataNumber(bin.end) + ": " + bin.count + " baris");
+      svg.appendChild(rect);
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("x", String(x + 24)); label.setAttribute("y", "198");
+      label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "data-chart-label");
+      label.textContent = String(bin.count); svg.appendChild(label);
+    });
+    target.appendChild(svg);
+    caption.textContent = bins.length === 1
+      ? "Semua nilai valid berada pada " + formatDataNumber(bins[0].start) + "."
+      : "Delapan interval sama lebar (atau satu interval jika semua nilai sama). Angka di atas batang menunjukkan jumlah baris.";
+  }
+
+  function renderDataAnalysis() {
+    const state = dataWorkspaceState;
+    const analysis = state.analysis;
+    if (!analysis) return;
+    const summary = document.getElementById("dataDatasetName");
+    const meta = document.getElementById("dataDatasetMeta");
+    const stats = document.getElementById("dataStatGrid");
+    const profileList = document.getElementById("dataProfileList");
+    const tableWrap = document.getElementById("dataTableWrap");
+    const columnSelect = document.getElementById("dataColumnSelect");
+    if (summary) summary.textContent = state.fileName;
+    if (meta) meta.textContent = analysis.rows.length + " baris · " + analysis.headers.length + " kolom · delimiter " + (state.delimiter === "\t" ? "tab" : state.delimiter);
+    if (stats) {
+      const items = [
+        ["Total baris", analysis.rows.length, "database"],
+        ["Total kolom", analysis.headers.length, "columns"],
+        ["Nilai kosong", analysis.profiles.reduce((sum, item) => sum + item.missing, 0), "alert"],
+        ["Baris duplikat", analysis.duplicateRows, "copy"]
+      ];
+      stats.replaceChildren();
+      items.forEach(([label, value, symbol]) => {
+        const card = document.createElement("div"); card.className = "data-stat-card";
+        const name = document.createElement("span"); name.textContent = label;
+        const number = document.createElement("b"); number.textContent = formatDataNumber(value);
+        const mark = document.createElement("i"); mark.textContent = symbol;
+        card.append(name, number, mark); stats.appendChild(card);
+      });
+    }
+    if (profileList) {
+      profileList.replaceChildren();
+      analysis.profiles.forEach((profile) => {
+        const item = document.createElement("div"); item.className = "data-profile-item";
+        const title = document.createElement("div"); title.className = "data-profile-title";
+        const name = document.createElement("b"); name.textContent = profile.name;
+        const type = document.createElement("span"); type.textContent = profile.type;
+        title.append(name, type);
+        const detail = document.createElement("small");
+        detail.textContent = profile.present + " terisi · " + profile.missing + " kosong · " + profile.unique + " unik";
+        item.append(title, detail); profileList.appendChild(item);
+      });
+    }
+    if (tableWrap) {
+      tableWrap.replaceChildren();
+      const table = document.createElement("table"); table.className = "data-preview-table";
+      const thead = document.createElement("thead"), headRow = document.createElement("tr");
+      analysis.headers.forEach((header) => { const th = document.createElement("th"); th.textContent = header; headRow.appendChild(th); });
+      thead.appendChild(headRow); table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      analysis.rows.slice(0, 8).forEach((row) => {
+        const tr = document.createElement("tr");
+        row.forEach((value) => { const td = document.createElement("td"); td.textContent = value || "—"; tr.appendChild(td); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody); tableWrap.appendChild(table);
+    }
+    if (columnSelect) {
+      columnSelect.replaceChildren();
+      analysis.numericColumns.forEach((profile) => {
+        const option = document.createElement("option"); option.value = String(profile.index);
+        option.textContent = profile.name; columnSelect.appendChild(option);
+      });
+      columnSelect.disabled = !analysis.numericColumns.length;
+      if (!analysis.numericColumns.length) {
+        const option = document.createElement("option"); option.textContent = "Tidak ada kolom numerik"; columnSelect.appendChild(option);
+      }
+      columnSelect.value = analysis.numericColumns.length ? String(analysis.numericColumns[0].index) : "";
+    }
+    renderSelectedDataColumn();
+  }
+
+  function renderSelectedDataColumn() {
+    const analysis = dataWorkspaceState.analysis;
+    const select = document.getElementById("dataColumnSelect");
+    const stats = document.getElementById("dataNumericStats");
+    if (!analysis || !select || !stats) return;
+    const profile = analysis.numericColumns.find((item) => String(item.index) === select.value);
+    stats.replaceChildren();
+    if (!profile) {
+      renderDataHistogram([]);
+      stats.textContent = "Tidak ada kolom numerik yang terdeteksi. Kolom dengan format angka ambigu diperlakukan sebagai teks.";
+      return;
+    }
+    const values = profile.numericValues.filter((value) => value !== null);
+    const sorted = [...values].sort((a, b) => a - b);
+    const sum = values.reduce((total, value) => total + value, 0);
+    const median = sorted.length % 2
+      ? sorted[Math.floor(sorted.length / 2)]
+      : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const mean = sum / values.length;
+    const variance = values.reduce((total, value) => total + ((value - mean) ** 2), 0) / values.length;
+    const measures = [
+      ["Valid", values.length], ["Rata-rata", mean], ["Median", median],
+      ["Minimum", sorted[0]], ["Maksimum", sorted[sorted.length - 1]], ["Simpangan baku", Math.sqrt(variance)]
+    ];
+    measures.forEach(([label, value]) => {
+      const item = document.createElement("div"); item.className = "data-measure";
+      const name = document.createElement("span"); name.textContent = label;
+      const number = document.createElement("b"); number.textContent = label === "Valid" ? String(value) : formatDataNumber(value);
+      item.append(name, number); stats.appendChild(item);
+    });
+    renderDataHistogram(values);
+  }
+
+  function bindDataWorkspace() {
+    const fileInput = document.getElementById("dataFileInput");
+    const columnSelect = document.getElementById("dataColumnSelect");
+    const resetButton = document.getElementById("dataResetButton");
+    if (fileInput) fileInput.addEventListener("change", async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      const status = document.getElementById("dataFileStatus");
+      const analysisPanel = document.getElementById("dataAnalysis");
+      const empty = document.getElementById("dataEmptyState");
+      if (file.size > 5 * 1024 * 1024) {
+        if (status) status.textContent = "File melebihi batas 5 MB. Pilih file yang lebih kecil.";
+        fileInput.value = ""; return;
+      }
+      try {
+        if (status) status.textContent = "Membaca dan memeriksa file secara lokal…";
+        const source = await file.text();
+        if (source.includes("\u0000")) throw new Error("File tampaknya bukan teks CSV yang valid.");
+        const delimiter = detectCsvDelimiter(source);
+        const records = parseCsvRecords(source.replace(/^\uFEFF/, ""), delimiter);
+        const analysis = analyzeCsvRecords(records, delimiter);
+        dataWorkspaceState.headers = analysis.headers;
+        dataWorkspaceState.rows = analysis.rows;
+        dataWorkspaceState.delimiter = delimiter;
+        dataWorkspaceState.fileName = file.name;
+        dataWorkspaceState.analysis = analysis;
+        if (analysisPanel) analysisPanel.hidden = false;
+        if (empty) empty.hidden = true;
+        renderDataAnalysis();
+        if (status) status.textContent = "Berhasil membaca " + file.name + ". Tidak ada data yang dikirim ke server.";
+      } catch (error) {
+        if (status) status.textContent = "Tidak dapat membaca CSV: " + (error.message || "format tidak valid");
+        dataWorkspaceState.analysis = null;
+        if (analysisPanel) analysisPanel.hidden = true;
+        if (empty) empty.hidden = false;
+      }
+    });
+    if (columnSelect) columnSelect.addEventListener("change", renderSelectedDataColumn);
+    if (resetButton) resetButton.addEventListener("click", () => {
+      dataWorkspaceState.headers = []; dataWorkspaceState.rows = [];
+      dataWorkspaceState.numericColumns = []; dataWorkspaceState.analysis = null;
+      dataWorkspaceState.fileName = "";
+      const input = document.getElementById("dataFileInput");
+      const status = document.getElementById("dataFileStatus");
+      const panel = document.getElementById("dataAnalysis");
+      const empty = document.getElementById("dataEmptyState");
+      if (input) input.value = "";
+      if (status) status.textContent = "Dataset dihapus dari sesi browser.";
+      if (panel) panel.hidden = true;
+      if (empty) empty.hidden = false;
+    });
   }
 
   function renderEngineMetrics() {
