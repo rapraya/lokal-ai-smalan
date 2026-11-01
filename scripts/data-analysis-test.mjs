@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights, calculateQuantiles, detectIqrOutliers, calculatePearsonCorrelation, buildCorrelationMatrix, buildStatisticalFindings, buildDataInterpretationContext })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary, summarizeTrendHighlights, calculateQuantiles, detectIqrOutliers, calculatePearsonCorrelation, buildCorrelationMatrix, buildStatisticalFindings, buildDataInterpretationContext, buildDataInterpretationMessages })",
   vm.createContext({})
 );
 
@@ -169,3 +169,19 @@ assert.equal(Object.hasOwn(interpretationContext, "rawRows"), false);
 assert.ok(!JSON.stringify(interpretationContext).includes('"100"'));
 assert.ok(interpretationContext.limitations.some((item) => item.includes("sebab-akibat")));
 console.log("Local interpretation context checks passed: aggregate-only payload, filtered scope, IQR summary, correlation, and caveats.");
+
+const followUpMessages = api.buildDataInterpretationMessages(
+  { scope: { filteredRowCount: 5 }, numericSummaries: [{ name: "Score", mean: 3 }] },
+  [{ role: "user", content: "Apa arti nilai ini?" }, { role: "assistant", content: "Ini ringkasan." }],
+  "Apa yang harus diperiksa selanjutnya?",
+  "anomaly"
+);
+assert.equal(followUpMessages[0].role, "system");
+assert.ok(followUpMessages[0].content.includes("Anomali dan kualitas data"));
+assert.equal(followUpMessages[1].content, "Apa arti nilai ini?");
+assert.equal(followUpMessages[2].role, "assistant");
+assert.ok(followUpMessages[3].content.includes("Apa yang harus diperiksa selanjutnya?"));
+assert.ok(followUpMessages[3].content.includes('"filteredRowCount":5'));
+assert.ok(followUpMessages.every((message) => !message.content.includes("rawRows")));
+assert.equal(api.buildDataInterpretationMessages({}, [], "x".repeat(700), "unknown")[1].content.length < 600, true);
+console.log("Data intelligence checks passed: focus modes, bounded follow-up history, aggregate context, and question limits.");
