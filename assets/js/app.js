@@ -1266,13 +1266,13 @@
     if (!raw) return null;
     let year, month, day, match;
     if (format === "iso") {
-      match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(raw);
+      match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
       if (!match) return null;
       year = Number(match[1]); month = Number(match[2]); day = Number(match[3]);
     } else {
-      match = /^(\\d{1,2})[\\/. -](\\d{1,2})[\\/. -](\\d{4})$/.exec(raw);
+      match = /^(\d{1,2})([\\/. -])(\d{1,2})\\2(\d{4})$/.exec(raw);
       if (!match) return null;
-      const first = Number(match[1]), second = Number(match[2]); year = Number(match[3]);
+      const first = Number(match[1]), second = Number(match[3]); year = Number(match[4]);
       if (format === "dmy") { day = first; month = second; }
       else if (format === "mdy") { month = first; day = second; }
       else return null;
@@ -1420,6 +1420,7 @@
     const format = formatSelect ? formatSelect.value : "iso";
     const operation = operationSelect ? operationSelect.value : "count";
     const metricIndex = metricSelect && metricSelect.value !== "" ? Number(metricSelect.value) : -1;
+    if (operation !== "count" && metricIndex < 0) { if (note) note.textContent = "Pilih kolom numerik untuk menghitung total atau rata-rata."; return; }
     const granularity = granularitySelect ? granularitySelect.value : "month";
     const rows = getFilteredDataRows().map((item) => item.row);
     const result = buildDateTrendSummary(rows, Number(dateSelect.value), metricIndex, operation, format, granularity, state.delimiter);
