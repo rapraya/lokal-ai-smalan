@@ -23,6 +23,26 @@ assert.ok(html.includes('id="app"') || html.includes('id="workspace"') || html.i
 assert.ok(css.includes(".chat-layout") && css.includes(".chat-composer"),
   "Premium chat workspace styles are missing.");
 
+assert.ok(app.includes("function renderCodingWorkspace()") && app.includes("function bindCodingWorkspace()"),
+  "AI Coding workspace rendering and event bindings are missing.");
+assert.ok(app.includes("async function submitCodingTask()"),
+  "AI Coding generation flow is missing.");
+assert.ok(app.includes('value="generate"') && app.includes('value="explain"') &&
+  app.includes('value="debug"') && app.includes('value="review"') &&
+  app.includes('value="refactor"') && app.includes('value="document"'),
+  "AI Coding task modes are incomplete.");
+assert.ok(app.includes("messages: [codingSystemMessage, ...codingMessages.slice(1).slice(-16)]"),
+  "AI Coding must retain its system instructions and bounded context.");
+assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
+  app.includes("output.textContent = assistantMessage.content"),
+  "AI Coding safe text output and copy support are missing.");
+assert.ok(app.includes("const codingInput = document.getElementById(\"codingInput\")") &&
+  app.includes("const codingRunButton = document.getElementById(\"codingRunButton\")"),
+  "AI Coding controls are not connected to the shared model engine.");
+assert.ok(css.includes(".coding-layout") && css.includes(".coding-result pre") &&
+  css.includes(".coding-run-button"),
+  "AI Coding workspace styles are missing.");
+
 assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
   "The small Llama 3.2 1B model option is missing.");
 assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
@@ -41,4 +61,4 @@ assert.ok(readme.includes("Runtime validation") || readme.includes("not yet been
   "README must disclose that browser/GPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules and the initial WebLLM Chat integration contract.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding integration, and safe coding output.`);
