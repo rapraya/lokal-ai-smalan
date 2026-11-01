@@ -7,7 +7,7 @@ const parseStart = app.indexOf("  function parseCsvRecords(source, delimiter) {"
 const parseEnd = app.indexOf("  function formatDataNumber(value) {", parseStart);
 const histogramStart = app.indexOf("  function buildDataHistogram(values, binCount = 8) {");
 const histogramEnd = app.indexOf("  function renderDataHistogram(values) {", histogramStart);
-const explorerStart = app.indexOf("  function filterSortDataRows(rows, queryText, sortIndex, sortDirection, delimiter) {");
+const explorerStart = app.indexOf("  function filterSortDataRows(");
 const explorerEnd = app.indexOf("  function renderDataExplorer() {", explorerStart);
 
 assert.ok(parseStart >= 0 && parseEnd > parseStart, "CSV parser functions were not found.");
