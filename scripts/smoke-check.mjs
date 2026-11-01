@@ -57,8 +57,8 @@ assert.ok(app.includes('localStorage.getItem(chatSavePreferenceKey) !== "1"'),
   "Chat history must remain opt-in by default.");
 assert.ok(worker.includes("WebWorkerMLCEngineHandler") && worker.includes("@mlc-ai/web-llm@0.2.87"),
   "WebLLM worker handler/version mismatch.");
-assert.ok(readme.includes("Runtime validation") || readme.includes("not yet been exercised"),
-  "README must disclose that browser/GPU runtime validation is pending.");
+assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
+  "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
 console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding integration, and safe coding output.`);
