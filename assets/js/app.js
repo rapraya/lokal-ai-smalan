@@ -951,7 +951,7 @@
         '<section class="data-panel data-group-panel"><div class="data-panel-heading"><div><span class="section-kicker">GROUPED ANALYSIS</span><b>Ringkasan kelompok</b></div><span class="data-panel-meta">Agregasi deterministik</span></div>' +
           '<div class="data-group-controls"><label>Kelompokkan berdasarkan<select id="dataGroupColumn" class="data-select"></select></label><label>Kolom nilai<select id="dataGroupMetric" class="data-select"></select></label><label>Perhitungan<select id="dataGroupOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div>' +
           '<div class="data-table-wrap" id="dataGroupResult"></div><p class="data-group-note" id="dataGroupNote">Pilih kolom kategori untuk mulai membuat ringkasan kelompok.</p></section>' +
-        '<div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
+        '<section class="data-panel data-pivot-panel"><div class="data-panel-heading"><div><span class="section-kicker">PIVOT ANALYSIS</span><b>Pivot table</b></div><span class="data-panel-meta">Tabulasi silang</span></div><div class="data-group-controls data-pivot-controls"><label>Baris<select id="dataPivotRows" class="data-select"></select></label><label>Kolom<select id="dataPivotColumns" class="data-select"></select></label><label>Metrik numerik<select id="dataPivotMetric" class="data-select"></select></label><label>Agregasi<select id="dataPivotOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div><div class="data-table-wrap" id="dataPivotResult"></div><p class="data-group-note" id="dataPivotNote">Pilih kolom baris dan kolom untuk membentuk pivot table.</p></section><div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
       '</div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Evidence before decisions.</span></footer>' +
     '</div>';
@@ -1186,8 +1186,23 @@
       analysis.numericColumns.forEach((profile) => { const option = document.createElement("option"); option.value = String(profile.index); option.textContent = profile.name; groupMetric.appendChild(option); });
       groupMetric.disabled = !analysis.numericColumns.length;
     }
+    const pivotRows = document.getElementById("dataPivotRows"), pivotColumns = document.getElementById("dataPivotColumns");
+    [pivotRows, pivotColumns].forEach((select) => {
+      if (!select) return;
+      select.replaceChildren();
+      const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Pilih kolom"; select.appendChild(placeholder);
+      analysis.headers.forEach((header, index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = header; select.appendChild(option); });
+    });
+    const pivotMetric = document.getElementById("dataPivotMetric");
+    if (pivotMetric) {
+      pivotMetric.replaceChildren();
+      const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Tanpa metrik"; pivotMetric.appendChild(placeholder);
+      analysis.numericColumns.forEach((profile) => { const option = document.createElement("option"); option.value = String(profile.index); option.textContent = profile.name; pivotMetric.appendChild(option); });
+      pivotMetric.disabled = !analysis.numericColumns.length;
+    }
     renderDataExplorer();
     renderGroupedData();
+    renderPivotTable();
     if (columnSelect) {
       columnSelect.replaceChildren();
       analysis.numericColumns.forEach((profile) => {
@@ -1256,6 +1271,84 @@
       value: operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null,
       valid: item.valid
     })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "id-ID"));
+  }
+
+  function buildPivotSummary(rows, rowIndex, columnIndex, metricIndex, operation, delimiter) {
+    const rowKeys = [...new Set(rows.map((row) => row[rowIndex] || "(Kosong)"))].sort((a, b) => a.localeCompare(b, "id-ID"));
+    const columnKeys = [...new Set(rows.map((row) => row[columnIndex] || "(Kosong)"))].sort((a, b) => a.localeCompare(b, "id-ID"));
+    const cells = new Map(), rowTotals = new Map(), columnTotals = new Map();
+    rows.forEach((row) => {
+      const rowKey = row[rowIndex] || "(Kosong)", columnKey = row[columnIndex] || "(Kosong)";
+      const key = JSON.stringify([rowKey, columnKey]);
+      if (!cells.has(key)) cells.set(key, { count: 0, sum: 0, valid: 0 });
+      const cell = cells.get(key); cell.count += 1;
+      if (metricIndex >= 0) {
+        const value = parseDataNumber(row[metricIndex], delimiter);
+        if (value !== null) { cell.sum += value; cell.valid += 1; }
+      }
+      rowTotals.set(rowKey, (rowTotals.get(rowKey) || 0) + 1);
+      columnTotals.set(columnKey, (columnTotals.get(columnKey) || 0) + 1);
+    });
+    const valueOf = (item) => !item ? (operation === "average" ? null : 0) : operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null;
+    return {
+      rowKeys, columnKeys,
+      values: rowKeys.map((name) => ({ name, cells: columnKeys.map((key) => valueOf(cells.get(JSON.stringify([name, key])))), total: rowTotals.get(name) || 0 })),
+      columnTotals: columnKeys.map((key) => columnTotals.get(key) || 0),
+      grandTotal: rows.length
+    };
+  }
+
+  function renderPivotTable() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    const target = document.getElementById("dataPivotResult"), note = document.getElementById("dataPivotNote");
+    const rowSelect = document.getElementById("dataPivotRows"), columnSelect = document.getElementById("dataPivotColumns");
+    const metricSelect = document.getElementById("dataPivotMetric"), operationSelect = document.getElementById("dataPivotOperation");
+    if (!analysis || !target || !rowSelect || !columnSelect) return;
+    target.replaceChildren();
+    if (rowSelect.value === "" || columnSelect.value === "") {
+      if (note) note.textContent = "Pilih kolom baris dan kolom untuk membentuk pivot table.";
+      return;
+    }
+    if (rowSelect.value === columnSelect.value) {
+      if (note) note.textContent = "Kolom baris dan kolom harus berbeda.";
+      return;
+    }
+    const operation = operationSelect ? operationSelect.value : "count";
+    const metricIndex = metricSelect && metricSelect.value !== "" ? Number(metricSelect.value) : -1;
+    if (operation !== "count" && metricIndex < 0) {
+      if (note) note.textContent = "Pilih kolom numerik untuk menghitung total atau rata-rata.";
+      return;
+    }
+    const rows = getFilteredDataRows().map((item) => item.row);
+    const pivot = buildPivotSummary(rows, Number(rowSelect.value), Number(columnSelect.value), metricIndex, operation, state.delimiter);
+    if (!pivot.rowKeys.length || !pivot.columnKeys.length) {
+      if (note) note.textContent = "Tidak ada data yang cocok dengan filter aktif.";
+      return;
+    }
+    const table = document.createElement("table"); table.className = "data-preview-table data-pivot-table";
+    const thead = document.createElement("thead"), head = document.createElement("tr");
+    [analysis.headers[Number(rowSelect.value)], ...pivot.columnKeys, "Total baris"].forEach((label) => {
+      const th = document.createElement("th"); th.textContent = label; head.appendChild(th);
+    });
+    thead.appendChild(head); table.appendChild(thead);
+    const body = document.createElement("tbody");
+    pivot.values.slice(0, 100).forEach((item) => {
+      const tr = document.createElement("tr");
+      [item.name, ...item.cells.map((value) => value === null ? "—" : formatDataNumber(value)), String(item.total)].forEach((value) => {
+        const td = document.createElement("td"); td.textContent = value; tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    const foot = document.createElement("tfoot"), totalRow = document.createElement("tr");
+    ["Total kolom", ...pivot.columnTotals.map(String), String(pivot.grandTotal)].forEach((value) => {
+      const th = document.createElement("th"); th.textContent = value; totalRow.appendChild(th);
+    });
+    foot.appendChild(totalRow); table.appendChild(foot); target.appendChild(table);
+    if (note) note.textContent = pivot.rowKeys.length + " baris × " + pivot.columnKeys.length + " kolom kategori · " +
+      (pivot.rowKeys.length > 100 ? "100 baris pertama ditampilkan · " : "") +
+      (operation === "count" ? "jumlah rekaman" : operation === "sum" ? "total nilai numerik" : "rata-rata nilai numerik") +
+      " · mengikuti pencarian dan filter aktif.";
   }
 
   function renderDataExplorer() {
@@ -1397,16 +1490,18 @@
     const exportButton = document.getElementById("dataExportButton");
     const groupColumn = document.getElementById("dataGroupColumn"), groupMetric = document.getElementById("dataGroupMetric"), groupOperation = document.getElementById("dataGroupOperation");
     const filterColumn = document.getElementById("dataFilterColumn"), filterText = document.getElementById("dataFilterText"), filterMin = document.getElementById("dataFilterMin"), filterMax = document.getElementById("dataFilterMax"), filterClear = document.getElementById("dataFilterClear");
-    if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); });
+    const pivotRows = document.getElementById("dataPivotRows"), pivotColumns = document.getElementById("dataPivotColumns"), pivotMetric = document.getElementById("dataPivotMetric"), pivotOperation = document.getElementById("dataPivotOperation");
+    if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); });
     if (sortSelect) sortSelect.addEventListener("change", () => { dataWorkspaceState.sortIndex = sortSelect.value === "" ? -1 : Number(sortSelect.value); dataWorkspaceState.page = 1; renderDataExplorer(); });
     if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); });
     if (prevPage) prevPage.addEventListener("click", () => { dataWorkspaceState.page -= 1; renderDataExplorer(); });
     if (nextPage) nextPage.addEventListener("click", () => { dataWorkspaceState.page += 1; renderDataExplorer(); });
     if (exportButton) exportButton.addEventListener("click", exportFilteredData);
     if (filterColumn) filterColumn.addEventListener("change", () => { dataWorkspaceState.filterIndex = filterColumn.value === "" ? -1 : Number(filterColumn.value); dataWorkspaceState.page = 1; renderDataAnalysis(); });
-    if (filterText) filterText.addEventListener("input", () => { dataWorkspaceState.filterText = filterText.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); });
-    [filterMin, filterMax].forEach((control) => { if (control) control.addEventListener("input", () => { dataWorkspaceState.minValue = filterMin ? filterMin.value : ""; dataWorkspaceState.maxValue = filterMax ? filterMax.value : ""; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); }); });
+    if (filterText) filterText.addEventListener("input", () => { dataWorkspaceState.filterText = filterText.value; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); });
+    [filterMin, filterMax].forEach((control) => { if (control) control.addEventListener("input", () => { dataWorkspaceState.minValue = filterMin ? filterMin.value : ""; dataWorkspaceState.maxValue = filterMax ? filterMax.value : ""; dataWorkspaceState.page = 1; renderDataExplorer(); renderGroupedData(); renderPivotTable(); }); });
     if (filterClear) filterClear.addEventListener("click", () => { dataWorkspaceState.filterIndex = -1; dataWorkspaceState.filterText = ""; dataWorkspaceState.minValue = ""; dataWorkspaceState.maxValue = ""; dataWorkspaceState.page = 1; renderDataAnalysis(); });
+    [pivotRows, pivotColumns, pivotMetric, pivotOperation].forEach((control) => { if (control) control.addEventListener("change", renderPivotTable); });
     [groupColumn, groupMetric, groupOperation].forEach((control) => { if (control) control.addEventListener("change", renderGroupedData); });
     if (fileInput) fileInput.addEventListener("change", async () => {
       const file = fileInput.files && fileInput.files[0];
