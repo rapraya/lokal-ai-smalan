@@ -49,13 +49,14 @@ See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for fea
 
 Model support, model licenses, browser compatibility, GPU memory, download size, and performance must be checked before a model is offered as ready to use.
 
-## Run locally
+## Run locally (Windows preview)
 
-Serve the repository root with a local static HTTP server:
+1. Download the repository ZIP from GitHub and extract it, or clone the repository.
+2. Double-click `PREVIEW-WINDOWS.bat` in the extracted project folder.
+3. The launcher starts a local server and opens http://127.0.0.1:8765.
+4. Keep the terminal window open while using the preview. Press `Ctrl+C` in that window to stop the server.
 
-    python -m http.server 8080
-
-Open http://localhost:8080. WebGPU features require a secure context in supporting browsers; localhost is normally treated as a secure development context.
+The launcher uses Python 3 when available, or PHP CLI as a fallback. Alternatively, run `python -m http.server 8080` in the repository root and open http://localhost:8080. Do not open `index.html` directly with `file://`; Web Workers and WebGPU require a secure context. Localhost is normally treated as a secure development context.
 
 ## AI Chat: first model test
 
