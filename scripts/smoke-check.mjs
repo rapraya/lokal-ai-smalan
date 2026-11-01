@@ -83,7 +83,7 @@ assert.ok(css.includes(".data-import-panel") && css.includes(".data-stat-grid") 
   css.includes(".data-analysis-grid") && css.includes(".data-preview-table"),
   "Data Analyst responsive styles are missing.");
 
-assert.ok(app.includes("function filterSortDataRows(") && app.includes("function renderDataExplorer()"),
+assert.ok(app.includes("function filterSortDataRows(") && app.includes("function renderDataExplorer()") && app.includes("dataFilterColumn") && app.includes("dataFilterMin") && app.includes("dataFilterMax"),
   "Data Explorer filtering, sorting, and pagination are missing.");
 assert.ok(app.includes("function buildGroupedSummary(") && app.includes("function renderGroupedData()"),
   "Grouped count/sum/average analysis is missing.");
@@ -92,7 +92,7 @@ assert.ok(app.includes("function exportFilteredData()") && app.includes("filtere
 assert.ok(app.includes("pageSize: 25") && app.includes("dataSearchInput") &&
   app.includes("dataSortSelect") && app.includes("dataPrevPage") && app.includes("dataNextPage"),
   "Data Explorer controls are incomplete.");
-assert.ok(css.includes(".data-explorer-toolbar") && css.includes(".data-group-controls") &&
+assert.ok(css.includes(".data-column-filters") && css.includes(".data-explorer-toolbar") && css.includes(".data-group-controls") &&
   css.includes(".data-pagination") && css.includes(".data-th-sort"),
   "Data Explorer responsive styles are missing.");
 
@@ -114,4 +114,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer, grouped analytics, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, and safe text/code output.`);
