@@ -215,7 +215,7 @@
     else renderModule(selected);
     if (updateHash) {
       const nextHash = selected === "home" ? "#home" : "#" + selected;
-      if (window.location.hash !== nextHash) history.replaceState(null, "", nextHash);
+      if (window.location.hash !== nextHash) history.pushState(null, "", nextHash);
     }
     closeSidebar();
   }
