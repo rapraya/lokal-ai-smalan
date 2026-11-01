@@ -65,6 +65,24 @@ assert.ok(css.includes(".coding-layout") && css.includes(".text-form #textInput"
   css.includes(".text-target-row") && css.includes(".text-result pre"),
   "Text & Language workspace styles are missing.");
 
+assert.ok(app.includes("function renderDataWorkspace()") && app.includes("function bindDataWorkspace()"),
+  "Data Analyst workspace rendering and event bindings are missing.");
+assert.ok(app.includes("function parseCsvRecords(source, delimiter)") &&
+  app.includes("function analyzeCsvRecords(records, delimiter)"),
+  "Local CSV parsing and analysis functions are missing.");
+assert.ok(app.includes("function renderDataHistogram(values)") &&
+  app.includes("function renderSelectedDataColumn()"),
+  "Data Analyst histogram and numeric analysis are missing.");
+assert.ok(app.includes("file.size > 5 * 1024 * 1024") && app.includes("records.length - 1 > 10000"),
+  "CSV file and row limits are missing.");
+assert.ok(app.includes("const duplicates = new Set()") && app.includes("duplicateRows += 1"),
+  "Duplicate-row quality check is missing.");
+assert.ok(app.includes("file.text()") && app.includes("Tidak ada data yang dikirim ke server."),
+  "CSV must be read locally with an explicit no-upload status.");
+assert.ok(css.includes(".data-import-panel") && css.includes(".data-stat-grid") &&
+  css.includes(".data-analysis-grid") && css.includes(".data-preview-table"),
+  "Data Analyst responsive styles are missing.");
+
 assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
   "The small Llama 3.2 1B model option is missing.");
 assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
@@ -83,4 +101,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, and safe text/code output.`);
