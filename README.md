@@ -1,47 +1,70 @@
 # Lokal AI — SMALAN
 
-A privacy-first, browser-based AI workspace for SMALAN. The project is designed to run supported AI models directly in the user's browser where hardware and browser capabilities allow it.
+**Lokal AI** is a browser-based, multi-capability AI workspace for SMALAN. The product direction combines conversational AI, coding, image and media tools, language workflows, data analysis, virtual assistance, personalization, and navigation in one modern workspace.
 
-## Project status
+The architecture is **local-first, not local-only**: supported models should run in the browser whenever practical. Any future feature that needs an external service must disclose what data leaves the device and require an explicit user choice.
 
-**Early foundation / UI scaffold.** The current version contains the responsive application shell and module navigation. AI inference is not connected yet.
+## Current status
 
-## Planned modules
+**v0.2.0 — Premium workspace foundation**
 
-- **AI Chat** — conversations with locally running language models.
-- **AI Vision** — image and document understanding.
-- **AI Coding** — code explanation, review, and debugging assistance.
-- **Model Engine** — browser capability checks, model loading, and local model storage.
-- **Settings** — appearance, privacy, and device information.
+- Modern responsive dashboard and navigation for 10 capability areas.
+- Module overview pages and global capability search.
+- Dark/light theme preference stored in the browser.
+- Initial secure-context and WebGPU adapter checks.
+- Product architecture and implementation roadmap.
+
+**Important:** This is still a UI and architecture foundation. No AI model inference, image generation, speech processing, video generation, data-agent workflow, or map service is connected yet. The WebGPU check only detects whether an adapter is available; it does not prove that a particular model can run.
+
+## Workspace capabilities
+
+| Workspace | Direction |
+| --- | --- |
+| AI Chat | Local language-model conversations with streaming responses and locally stored history. |
+| AI Coding | Code explanation, generation, review, debugging, and later safe project workflows. |
+| Image Studio | Image understanding, editing utilities, and a separately evaluated image-generation runtime. |
+| Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
+| Video Studio | Browser-based media tools, video understanding, and separately evaluated AI video generation. |
+| Text & Language | Writing, summarization, translation, language tasks, and document workflows. |
+| Data Analyst | Local data import, deterministic statistics, visualizations, and AI-assisted interpretation. |
+| AI Assistant | Task planning and approved tools with explicit user confirmation. |
+| Personal AI | User-controlled preferences, optional local memory, and explainable recommendations. |
+| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
+
+See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for feasibility notes, privacy rules, and delivery phases.
 
 ## Technology direction
 
-- HTML, CSS, and modern JavaScript
-- WebLLM / WebGPU for supported language models
-- Transformers.js for supported vision and utility models
-- IndexedDB for local persistence where appropriate
-- GitHub Pages for static hosting
+- Static HTML, CSS, and modern JavaScript for the current application shell.
+- [WebLLM](https://webllm.mlc.ai/docs/) for compatible browser-based language models through WebGPU.
+- [Transformers.js](https://huggingface.co/docs/transformers.js) for supported browser-based text, vision, and audio tasks.
+- Web Workers for compute-heavy tasks where supported.
+- IndexedDB and browser caching for user-controlled local data and model assets.
+- GitHub Pages as a static hosting target.
 
-## Privacy and hardware notes
-
-The goal is local-first processing. A feature may use a remote service only if a future implementation explicitly offers that option and the user chooses it. Model files may be large and must be downloaded before first use. WebGPU support, available memory, browser compatibility, and device performance vary. The interface must clearly disclose model status and whether processing is local.
-
-Never enter confidential or sensitive information into an AI model unless you understand the model and storage behavior.
+Model support, model licenses, browser compatibility, GPU memory, download size, and performance must be checked before a model is offered as ready to use.
 
 ## Run locally
 
-Because this is a static web app, serve the repository root with any local static HTTP server. For example:
+Serve the repository root with a local static HTTP server:
 
-```bash
-python -m http.server 8080
-```
+    python -m http.server 8080
 
-Then open http://localhost:8080.
+Open http://localhost:8080. WebGPU features require a secure context in supporting browsers; localhost is normally treated as a secure development context.
+
+## Privacy and security principles
+
+1. Local processing is preferred when a supported model and device make it practical.
+2. External AI, maps, storage, or other providers must be clearly identified and opt-in.
+3. Never embed private API keys or secrets in a GitHub Pages application.
+4. File access, geolocation, and consequential actions require explicit user permission.
+5. Local history and memory must be visible, exportable where practical, and deletable by the user.
+6. AI output is assistive; important decisions and generated code must be reviewed.
 
 ## Deployment
 
-The project is intended for GitHub Pages. Deployment configuration and automated checks will be added in a later step.
+GitHub Pages deployment has not yet been enabled. Keep the site in preview until the application has passed functional, accessibility, privacy, and browser-compatibility checks.
 
 ## License
 
-License to be decided by the repository owner.
+To be decided by the repository owner.
