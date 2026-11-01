@@ -422,7 +422,7 @@
     const answerNode = host && host.querySelector(".chat-message:last-child .chat-message-text");
     try {
       const stream = await chatEngine.chat.completions.create({
-        messages: [chatSystemMessage, ...chatMessages.slice(1, -1).slice(-24)],
+        messages: [chatSystemMessage, ...chatMessages.slice(0, -1).slice(-24)],
         temperature: 0.7,
         top_p: 0.9,
         max_tokens: 768,
