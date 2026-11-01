@@ -961,6 +961,9 @@
         if (char === '"') {
           if (source[i + 1] === '"') { field += '"'; i += 1; }
           else quoted = false;
+        } else if (char === "\r") {
+          field += "\n";
+          if (source[i + 1] === "\n") i += 1;
         } else field += char;
       } else if (char === '"' && field.length === 0) {
         quoted = true;
