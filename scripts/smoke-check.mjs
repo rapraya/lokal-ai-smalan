@@ -61,8 +61,8 @@ assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
   "Text & Language result copy support is missing.");
 assert.ok(app.includes("textRunButton") && app.includes("submitTextTask()"),
   "Text & Language actions are not connected to the shared model engine.");
-assert.ok(css.includes(".text-layout") && css.includes(".text-form #textInput") &&
-  css.includes(".text-result pre"),
+assert.ok(css.includes(".coding-layout") && css.includes(".text-form #textInput") &&
+  css.includes(".text-target-row") && css.includes(".text-result pre"),
   "Text & Language workspace styles are missing.");
 
 assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
