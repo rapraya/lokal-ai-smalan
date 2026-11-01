@@ -114,8 +114,10 @@ assert.ok(app.includes('localStorage.getItem(chatSavePreferenceKey) !== "1"'),
   "Chat history must remain opt-in by default.");
 assert.ok(worker.includes("WebWorkerMLCEngineHandler") && worker.includes("@mlc-ai/web-llm@0.2.87"),
   "WebLLM worker handler/version mismatch.");
+assert.ok(app.includes("function detectIqrOutliers(") && app.includes("function calculatePearsonCorrelation(") && app.includes("function renderDecisionSupport()"), "Decision support calculations and UI are missing.");
+assert.ok(css.includes(".data-decision-panel") && css.includes(".data-correlation-table"), "Decision support styles are missing.");
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, IQR outlier detection, Pearson correlation, statistical findings, and safe text/code output.`);
