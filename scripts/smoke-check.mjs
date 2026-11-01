@@ -118,10 +118,14 @@ assert.ok(app.includes("function detectIqrOutliers(") && app.includes("function 
 assert.ok(css.includes(".data-decision-panel") && css.includes(".data-correlation-table"), "Decision support styles are missing.");
 assert.ok(app.includes("function buildDataInterpretationContext(") && app.includes("async function runDataInterpretation()"), "Local data interpretation integration is missing.");
 assert.ok(app.includes("dataInterpretButton") && app.includes("dataInterpretResult"), "Data interpretation controls are missing.");
+assert.ok(app.includes("dataInterpretFocus") && app.includes("dataInterpretQuestion") && app.includes("dataInterpretClear") && app.includes("dataInterpretExport"), "Data Intelligence follow-up, focus, clear, or export controls are missing.");
+assert.ok(app.includes("function buildDataInterpretationMessages(") && app.includes("history.slice(-8)"), "Bounded follow-up history is missing.");
+assert.ok(app.includes("function exportDataInterpretationReport(") && app.includes("text/markdown;charset=utf-8"), "Markdown analysis report export is missing.");
+assert.ok(app.includes("dataInterpretationMessages.length = 0"), "Session history clearing is missing.");
 assert.ok(app.includes("messages: [{ role: \"system\", content: system }, { role: \"user\", content: prompt }]") && app.includes("max_tokens: 512"), "Local interpretation must use a bounded, isolated model prompt.");
 assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disertakan"), "Interpretation context must disclose aggregate-only data.");
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, IQR outlier detection, Pearson correlation, statistical findings, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, IQR outlier detection, Pearson correlation, statistical findings, aggregate-only local interpretation, follow-up Data Intelligence sessions, and safe text/code output.`);
