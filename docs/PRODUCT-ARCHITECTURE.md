@@ -6,23 +6,26 @@ Lokal AI SMALAN is intended to feel like a premium AI product: one cohesive work
 
 The product is **local-first, not local-only**. A browser can run many useful models locally, but not every capability is equally practical on every device. Each module must show where processing happens, what model or provider is used, what it needs, and whether data leaves the device.
 
-## Current implementation
+## Current implementation — v0.3.0
 
-Version 0.2.0 currently provides:
+The current branch contains:
 
 - A responsive premium workspace shell.
 - Navigation for ten capability modules plus Model Engine and Settings.
 - Overview cards, capability search, module descriptions, and roadmap views.
 - A browser-stored theme preference.
 - A first-pass WebGPU adapter and secure-context check.
+- An initial WebLLM 0.2.87 worker-based Chat integration, including a 1B/3B model selector, loading progress callback, streaming responses, and opt-in local history.
 
-The application does **not yet run any AI model**. The readiness check does not benchmark available memory or guarantee model compatibility.
+**Runtime validation is pending.** The Chat implementation has not yet been tested on an actual browser/GPU device in this project session. The code path is based on the documented WebLLM worker API. Do not treat the presence of the integration as proof that a selected model will load on every computer.
+
+The WebGPU readiness check does not benchmark GPU memory, browser quotas, or device performance. The actual model manifest resource estimate is only a planning value.
 
 ## Capability feasibility
 
 | Area | Local-first approach | Important limitation / decision |
 | --- | --- | --- |
-| Chat | WebLLM + WebGPU for supported LLMs; worker-based generation and streaming. | Model files must be downloaded; hardware, browser, memory, and model license matter. |
+| Chat | WebLLM + WebGPU for supported LLMs; worker-based generation and streaming. Initial integration is present; browser testing pending. | Model files must be downloaded; hardware, browser, memory, and model license matter. |
 | Coding | A capable local LLM for code explanations, generation, and review. | File editing and execution need an isolated workspace, explicit scope, and user approval. |
 | Image understanding | Transformers.js tasks such as image classification, object detection, segmentation, image-to-text, and background removal where a compatible model exists. | Supported tasks and language/quality vary per model. |
 | Image generation | Evaluate a dedicated browser image-generation runtime/model; optionally offer a clearly disclosed remote provider. | Transformers.js' current documented task list does not provide a general text-to-image pipeline. Do not label this capability local until an actual runtime is validated. |
@@ -52,6 +55,8 @@ Create a registry of model records rather than hard-coding model names across sc
 
 The first runtime candidates are WebLLM for LLM inference and Transformers.js for supported vision, audio, and specialized text tasks. Heavy inference should be moved off the main UI thread where the runtime supports workers.
 
+WebLLM's default model-artifact cache uses the browser Cache API; an IndexedDB cache backend is also documented. Storage remains subject to browser quota and eviction behavior. This project's initial integration uses the default WebLLM cache behavior.
+
 ### Persistence
 Separate preferences, conversations, uploaded work files, and model artifacts. Use browser storage deliberately, show storage usage where possible, and provide controls to clear user data. Do not assume browser cache is permanent.
 
@@ -71,15 +76,19 @@ An external provider must never be a silent fallback. Before a request, tell the
 ## Delivery roadmap
 
 ### Phase 1 — Product shell and information architecture
-**Current phase: implemented in v0.2.0.**
+**Implemented in v0.2.0.**
 
 Premium responsive overview, ten capability areas, module descriptions, search, theme preference, and first-pass device checks.
 
 ### Phase 2 — Model Engine foundation
+**Initial device checks are present; full model management remains planned.**
+
 Build a model registry, robust WebGPU diagnostics, model detail cards, loading progress, error recovery, storage management, and worker lifecycle. Validate on more than one browser/device class.
 
 ### Phase 3 — Working local AI Chat
-Integrate WebLLM, test a small prebuilt model on compatible hardware, show first-download size/progress, stream responses, handle cancellation, and persist chat history locally with clear delete controls. Do not make the application depend on a single large model.
+**Initial WebLLM worker integration is present; live browser/GPU validation remains pending.**
+
+Verify the 1B model on a compatible device, show clear first-download progress, stream responses, test reload/cache behavior, and validate optional local history. Add cancellation, model lifecycle recovery, and history controls before calling this phase complete.
 
 ### Phase 4 — Coding and Text & Language
 Reuse the language-model abstraction, add structured prompts and safe code blocks, then build text tools and document workflows using validated local pipelines.
