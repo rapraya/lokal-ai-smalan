@@ -1420,7 +1420,7 @@
     history.slice(-8).forEach((item) => {
       if ((item.role === "user" || item.role === "assistant") && typeof item.content === "string") messages.push({ role: item.role, content: item.content.slice(0, 4000) });
     });
-    messages.push({ role: "user", content: "Pertanyaan: " + String(question || "Berikan ikhtisar temuan dan pemeriksaan yang disarankan.").slice(0, 500) + "\\n\\nRingkasan statistik dataset terfilter (agregat saja):\\n" + JSON.stringify(context) });
+    messages.push({ role: "user", content: "Pertanyaan: " + String(question || "Berikan ikhtisar temuan dan pemeriksaan yang disarankan.").slice(0, 500) + "\n\nRingkasan statistik dataset terfilter (agregat saja):\n" + JSON.stringify(context) });
     return messages;
   }
 
@@ -1452,7 +1452,7 @@
       lines.push("### " + (item.role === "assistant" ? "Interpretasi model" : "Pertanyaan pengguna"), "", item.content, "");
     });
     lines.push("## Catatan", "", "Statistik dihitung di browser dari data terfilter. Interpretasi model bersifat saran, bukan fakta terverifikasi atau keputusan otomatis. Korelasi tidak membuktikan sebab-akibat.");
-    const blob = new Blob([lines.join("\\n")], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -1485,7 +1485,7 @@
     const messages = buildDataInterpretationMessages(context, dataInterpretationMessages, question, focus);
     const userMessage = { role: "user", content: question };
     dataInterpretationMessages.push(userMessage);
-    output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\\n\\n");
+    output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
     status.textContent = "Model lokal sedang menganalisis ringkasan agregat…";
     if (button) button.disabled = true;
     if (questionInput) questionInput.disabled = true;
@@ -1497,16 +1497,16 @@
       });
       for await (const chunk of stream) {
         const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta ? chunk.choices[0].delta.content || "" : "";
-        if (delta) { answer += delta; output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\\n\\n") + "\\n\\nModel: " + answer; }
+        if (delta) { answer += delta; output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n") + "\n\nModel: " + answer; }
       }
       if (!answer) answer = "Model tidak menghasilkan interpretasi. Coba ulangi.";
       dataInterpretationMessages.push({ role: "assistant", content: answer });
-      output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\\n\\n");
+      output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
       status.textContent = "Jawaban selesai. Riwayat tersimpan sementara di sesi browser ini.";
       if (questionInput) questionInput.value = "";
     } catch (error) {
       dataInterpretationMessages.pop();
-      output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\\n\\n");
+      output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
       status.textContent = "Interpretasi gagal: " + (error && error.message ? error.message : "kesalahan model");
     } finally {
       chatGenerating = false;
