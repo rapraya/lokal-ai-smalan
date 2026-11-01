@@ -350,13 +350,32 @@
       updateChatProgress({ progress: 0.02, text: "Memuat runtime WebLLM…" });
       const runtime = await import("https://esm.run/@mlc-ai/web-llm@0.2.87");
       chatWorker = new Worker(new URL("assets/js/webllm-worker.js", document.baseURI), { type: "module" });
+      let startupPending = true;
+      let rejectWorkerStartup;
+      const workerStartupFailure = new Promise((_, reject) => {
+        rejectWorkerStartup = reject;
+      });
+      const handleWorkerFailure = (message) => {
+        const failure = new Error(message);
+        chatLastError = "Worker model mengalami kesalahan: " + message;
+        setChatStatus(chatLastError, "error");
+        if (startupPending) {
+          startupPending = false;
+          rejectWorkerStartup(failure);
+        }
+      };
       chatWorker.addEventListener("error", (event) => {
-        setChatStatus("Worker model mengalami kesalahan: " + (event.message || "unknown error"), "error");
+        handleWorkerFailure(event.message || "unknown worker error");
+      });
+      chatWorker.addEventListener("messageerror", () => {
+        handleWorkerFailure("pesan dari worker tidak dapat dibaca");
       });
       chatModelId = selectedModel;
-      chatEngine = await runtime.CreateWebWorkerMLCEngine(chatWorker, selectedModel, {
+      const engineInitialization = runtime.CreateWebWorkerMLCEngine(chatWorker, selectedModel, {
         initProgressCallback: (progress) => updateChatProgress(progress)
       });
+      chatEngine = await Promise.race([engineInitialization, workerStartupFailure]);
+      startupPending = false;
       const progress = document.getElementById("chatProgress");
       if (progress) progress.hidden = true;
       syncChatControls();
