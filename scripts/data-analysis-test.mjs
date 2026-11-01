@@ -85,7 +85,11 @@ assert.deepEqual(Array.from(pivotCount.values[0].cells), [0, 1, 1]);
 assert.equal(pivotCount.grandTotal, 3);
 const pivotAverage = api.buildPivotSummary(explorerRows, 2, 0, 1, "average", ",");
 assert.deepEqual(Array.from(pivotAverage.values[0].cells), [null, 2, 10]);
-assert.deepEqual(Array.from(pivotAverage.columnTotals), [1, 1, 1]);
+assert.deepEqual(Array.from(pivotAverage.columnTotals), [30, 2, 10]);
+assert.equal(pivotAverage.grandTotal, 14);
+const pivotSum = api.buildPivotSummary(explorerRows, 2, 0, 1, "sum", ",");
+assert.deepEqual(Array.from(pivotSum.columnTotals), [30, 2, 10]);
+assert.equal(pivotSum.grandTotal, 42);
 
 const bins = api.buildDataHistogram([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 assert.equal(bins.length, 8);
