@@ -18,7 +18,7 @@ const parserSource = app.slice(parseStart, parseEnd);
 const histogramSource = app.slice(histogramStart, histogramEnd);
 const api = vm.runInNewContext(
   parserSource + "\n" + histogramSource + app.slice(explorerStart, explorerEnd) +
-  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary })",
+  "\n({ detectCsvDelimiter, parseCsvRecords, analyzeCsvRecords, buildDataHistogram, parseDataNumber, filterSortDataRows, buildGroupedSummary, buildPivotSummary, parseDataDate, buildDateTrendSummary })",
   vm.createContext({})
 );
 
@@ -91,6 +91,23 @@ const pivotSum = api.buildPivotSummary(explorerRows, 2, 0, 1, "sum", ",");
 assert.deepEqual(Array.from(pivotSum.columnTotals), [30, 2, 10]);
 assert.equal(pivotSum.grandTotal, 42);
 
+
+const dmyTrendRows = [["01/01/2026", "10"], ["15/01/2026", "20"], ["01/02/2026", "30"], ["31/02/2026", "99"], ["", "5"]];
+const monthlyTrend = api.buildDateTrendSummary(dmyTrendRows, 0, 1, "sum", "dmy", "month", ",");
+assert.equal(monthlyTrend.validDates, 3);
+assert.equal(monthlyTrend.invalidDates, 2);
+assert.deepEqual(Array.from(monthlyTrend.periods.map((item) => item.period)), ["2026-01", "2026-02"]);
+assert.deepEqual(Array.from(monthlyTrend.periods.map((item) => item.value)), [30, 30]);
+assert.equal(monthlyTrend.periods[1].change, 0);
+assert.equal(monthlyTrend.periods[1].changePercent, 0);
+assert.equal(api.parseDataDate("2026-02-29", "iso"), null);
+assert.equal(api.parseDataDate("29/02/2024", "dmy").toISOString(), "2024-02-29T00:00:00.000Z");
+assert.equal(api.parseDataDate("03/04/2026", "dmy").getUTCMonth(), 3);
+assert.equal(api.parseDataDate("03/04/2026", "mdy").getUTCMonth(), 2);
+const dailyTrend = api.buildDateTrendSummary([["2025", "4"], ["2026", "8"]], 0, 1, "average", "iso", "year", ",");
+assert.deepEqual(Array.from(dailyTrend.periods.map((item) => item.value)), [4, 8]);
+assert.equal(dailyTrend.periods[1].changePercent, 100);
+
 const bins = api.buildDataHistogram([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 assert.equal(bins.length, 8);
 assert.equal(bins.reduce((sum, bin) => sum + bin.count, 0), 9);
@@ -102,4 +119,4 @@ assert.throws(() => api.parseCsvRecords('Name,Score\n"Ada,10', ","), /kutip/);
 const tooManyRows = [["Name"], ...Array.from({ length: 10001 }, (_, index) => ["row-" + index])];
 assert.throws(() => api.analyzeCsvRecords(tooManyRows, ","), /10.000/);
 
-console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, malformed quotes, and row limit.");
+console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, pivot count/average and totals, explicit date formats and monthly/yearly trends, malformed quotes, and row limit.");
