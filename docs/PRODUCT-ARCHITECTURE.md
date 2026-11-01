@@ -6,7 +6,7 @@ Lokal AI SMALAN is intended to feel like a premium AI product: one cohesive work
 
 The product is **local-first, not local-only**. A browser can run many useful models locally, but not every capability is equally practical on every device. Each module must show where processing happens, what model or provider is used, what it needs, and whether data leaves the device.
 
-## Current implementation — v0.5.0
+## Current implementation — v0.6.0
 
 The current branch contains:
 
@@ -19,8 +19,9 @@ The current branch contains:
 - AI Coding task modes for code generation, explanation, debugging, review, refactoring, and documentation, with bounded in-session context and copyable text output.
 - Generated code is rendered as text only; this alpha does not execute code, edit project files, or open a terminal.
 - An initial Text & Language workspace with six task modes: drafting, editing, proofreading, summarization, translation, and information extraction. It reuses the shared engine and keeps task context in memory for the active browser session only.
+- An initial deterministic Data Analyst workspace: local CSV import (5 MB / 10,000 data-row limits), quoted and multiline field parsing, comma/semicolon/tab delimiter detection, missing and duplicate row counts, column profiling, numeric descriptive statistics, histograms, and an eight-row preview. Data is processed in the browser and is not uploaded.
 
-**Runtime validation is pending.** The shared Chat/Coding/Text implementation has not yet been tested on an actual browser/GPU device in this project session. Text quality, translation fidelity, and Indonesian spelling/grammar quality require hands-on evaluation. The code path is based on the documented WebLLM worker API. Do not treat the presence of the integration as proof that a selected model will load on every computer.
+**Runtime validation is pending.** The shared Chat/Coding/Text implementation has not yet been tested on an actual browser/GPU device in this project session. The Data Analyst parser and calculations have automated fixture coverage but still require hands-on browser testing against representative CSV exports. Text quality, translation fidelity, and Indonesian spelling/grammar quality require hands-on evaluation. The code path is based on the documented WebLLM worker API. Do not treat the presence of the integration as proof that a selected model will load on every computer.
 
 The WebGPU readiness check does not benchmark GPU memory, browser quotas, or device performance. The actual model manifest resource estimate is only a planning value.
 
@@ -35,7 +36,7 @@ The WebGPU readiness check does not benchmark GPU memory, browser quotas, or dev
 | Audio | Transformers.js-compatible speech recognition, audio classification, and text-to-speech models. | Language coverage, voice quality, model size, and offline behavior must be tested per model. |
 | Video | Browser-native media processing, frame extraction, and audio transcription; evaluate dedicated video models separately. | AI video generation is a distinct, resource-intensive workload and must not be implied by basic browser video APIs. |
 | Text & language | Initial shared-WebLLM workspace for drafting, editing, proofreading, summarization, translation, and extraction. | Alpha only: output quality and Indonesian language behavior must be evaluated. Large document ingestion, citations, and source verification are not implemented. |
-| Data analysis | Local CSV/table parsing, deterministic calculations, and browser-side charts; an LLM explains validated results. | Numerical calculations must not rely on an LLM's unsupported mental arithmetic. Show assumptions and data provenance. |
+| Data analysis | Initial local CSV parser, data-quality checks, numeric descriptive statistics, and browser-side histograms. | Alpha limits: CSV only, 5 MB and 10,000 rows; numeric parsing is conservative and locale-ambiguous formats may be treated as text. No AI interpretation, date analysis, pivot tables, or report export yet. Numerical calculations remain deterministic. |
 | Virtual assistant | Local reasoning plus an allowlisted set of tools and workflows. | Preview actions and require confirmation before sending, deleting, publishing, navigating to a site, or changing user data. |
 | Personalization | Store explicitly selected preferences and optional memory locally, for example in IndexedDB. | Memory must be transparent, editable, and deletable; do not silently profile users. |
 | Navigation | Browser geolocation only after permission; map and route data from an identified provider. | Location is sensitive. Explain when coordinates are sent to a map/routing provider and ask before use. |
