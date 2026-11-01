@@ -87,6 +87,8 @@ assert.ok(app.includes("function filterSortDataRows(") && app.includes("function
   "Data Explorer filtering, sorting, and pagination are missing.");
 assert.ok(app.includes("function buildGroupedSummary(") && app.includes("function renderGroupedData()"),
   "Grouped count/sum/average analysis is missing.");
+assert.ok(app.includes("function buildPivotSummary(") && app.includes("function renderPivotTable()") && app.includes("dataPivotRows") && app.includes("dataPivotColumns"),
+  "Pivot table analysis and controls are missing.");
 assert.ok(app.includes("function exportFilteredData()") && app.includes("filtered.csv"),
   "Filtered CSV export is missing.");
 assert.ok(app.includes("pageSize: 25") && app.includes("dataSearchInput") &&
@@ -114,4 +116,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, and safe text/code output.`);
