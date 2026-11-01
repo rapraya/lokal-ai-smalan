@@ -10,6 +10,21 @@
   const overviewMarkup = workspace.innerHTML;
   let currentPage = "home";
 
+  const chatHistoryKey = "lokal-ai-chat-history";
+  const chatSavePreferenceKey = "lokal-ai-chat-save";
+  const chatSystemMessage = {
+    role: "system",
+    content: "Kamu adalah Lokal AI, asisten yang membantu dalam bahasa Indonesia. Jawab dengan jelas, akurat, dan terstruktur. Jika tidak yakin, nyatakan keterbatasan. Jangan mengarang fakta atau sumber."
+  };
+  let chatMessages = [chatSystemMessage];
+  let chatEngine = null;
+  let chatWorker = null;
+  let chatModelId = "";
+  let chatLoading = false;
+  let chatGenerating = false;
+  let chatHistoryRestored = false;
+
+
   const icon = (name) => '<svg aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
 
   const modules = {
@@ -131,6 +146,12 @@
   function renderModule(page) {
     const config = modules[page] || pages[page];
     if (!config) return;
+
+    if (page === "chat") {
+      workspace.innerHTML = renderChatWorkspace();
+      bindChatWorkspace();
+      return;
+    }
     const steps = config.stages.map((stage, index) =>
       '<li><span class="roadmap-index">' + String(index + 1).padStart(2, "0") + '</span><div><b>' + stage[0] + '</b><small>' + stage[1] + '</small></div></li>'
     ).join("");
@@ -156,6 +177,307 @@
         <footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Designed for ideas without limits.</span></footer>
       </div>`;
     if (page === "models") checkDevice();
+  }
+
+
+  function restoreChatHistory() {
+    if (chatHistoryRestored) return;
+    chatHistoryRestored = true;
+    try {
+      if (localStorage.getItem(chatSavePreferenceKey) !== "1") return;
+      const stored = JSON.parse(localStorage.getItem(chatHistoryKey) || "[]");
+      if (!Array.isArray(stored)) return;
+      const valid = stored.filter((item) =>
+        item && (item.role === "user" || item.role === "assistant") &&
+        typeof item.content === "string"
+      ).slice(-80);
+      chatMessages = [chatSystemMessage, ...valid];
+    } catch (_) {
+      chatMessages = [chatSystemMessage];
+    }
+  }
+
+  function renderChatWorkspace() {
+    restoreChatHistory();
+    return '<div class="chat-page">' +
+      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label">' + icon("lock") + ' Percakapan diproses di perangkat</span></div>' +
+      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> CONVERSATIONAL INTELLIGENCE</div><h1>AI Chat</h1><p>Mulai percakapan dengan model bahasa yang berjalan langsung di browser.</p></div><span class="chat-build-status"><i></i> Local runtime</span></div>' +
+      '<div class="chat-layout">' +
+        '<aside class="chat-control-panel">' +
+          '<div class="chat-panel-label">MODEL ENGINE</div>' +
+          '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU</small></div></div>' +
+          '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
+          '<select class="chat-model-select" id="chatModelSelect">' +
+            '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
+            '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+          '</select>' +
+          '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
+          '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
+          '<button class="chat-unload-button" id="chatUnloadButton" type="button" hidden>Lepaskan model</button>' +
+          '<div class="chat-progress" id="chatProgress" hidden><div class="chat-progress-track"><span id="chatProgressBar"></span></div><p id="chatProgressText">Menyiapkan runtime…</p></div>' +
+          '<div class="chat-engine-status" id="chatEngineStatus"><span class="status-idle"></span><span>Model belum aktif</span></div>' +
+          '<div class="chat-panel-divider"></div>' +
+          '<div class="chat-panel-label">PRIVACY CONTROLS</div>' +
+          '<label class="chat-save-option"><input id="chatSaveHistory" type="checkbox"><span><b>Simpan riwayat lokal</b><small>Opsional. Disimpan di browser ini dan dapat dihapus.</small></span></label>' +
+          '<button class="chat-clear-button" id="chatClearButton" type="button">Hapus riwayat percakapan</button>' +
+          '<div class="chat-local-note">' + icon("shield") + '<p>Prompt dan jawaban diproses oleh model lokal setelah model termuat. Unduhan runtime dan model tetap membutuhkan koneksi internet.</p></div>' +
+        '</aside>' +
+        '<section class="chat-conversation">' +
+          '<div class="chat-conversation-top"><div><b>Private session</b><small id="chatConversationModel">Belum ada model aktif</small></div><span class="chat-session-indicator"><i></i> LOCAL SESSION</span></div>' +
+          '<div class="chat-messages" id="chatMessages" aria-live="polite"></div>' +
+          '<form class="chat-composer" id="chatComposer">' +
+            '<textarea id="chatInput" rows="2" maxlength="8000" placeholder="Muat model lokal untuk mulai bertanya…" disabled></textarea>' +
+            '<div class="chat-composer-bottom"><span>Enter untuk baris baru · Ctrl + Enter untuk kirim</span><button id="chatSendButton" type="submit" disabled>Kirim ' + icon("arrow-up") + '</button></div>' +
+          '</form>' +
+        '</section>' +
+      '</div>' +
+      '<div class="chat-footer-note">Model: Llama 3.2 Instruct · WebLLM 0.2.87 · Model file disediakan melalui Hugging Face/MLC. Perkiraan VRAM bukan jaminan kompatibilitas.</div>' +
+      '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Local-first by design.</span></footer>' +
+    '</div>';
+  }
+
+  function setChatStatus(message, state = "idle") {
+    const status = document.getElementById("chatEngineStatus");
+    if (status) {
+      status.innerHTML = '<span class="status-' + state + '"></span><span></span>';
+      status.lastElementChild.textContent = message;
+    }
+    const conversationModel = document.getElementById("chatConversationModel");
+    if (conversationModel) conversationModel.textContent = chatEngine ? chatModelId : "Belum ada model aktif";
+  }
+
+  function updateChatProgress(progress) {
+    const panel = document.getElementById("chatProgress");
+    const bar = document.getElementById("chatProgressBar");
+    const label = document.getElementById("chatProgressText");
+    if (!panel || !bar || !label) return;
+    panel.hidden = false;
+    const ratio = Number(progress && progress.progress);
+    const percent = Number.isFinite(ratio) ? Math.max(0, Math.min(100, Math.round(ratio * 100))) : 0;
+    bar.style.width = percent + "%";
+    label.textContent = (progress && progress.text) || "Mengunduh dan menyiapkan model lokal…";
+  }
+
+  function paintChatMessages() {
+    const host = document.getElementById("chatMessages");
+    if (!host) return;
+    host.replaceChildren();
+    const visibleMessages = chatMessages.filter((message) => message.role === "user" || message.role === "assistant");
+    if (!visibleMessages.length) {
+      host.innerHTML = '<div class="chat-welcome"><div class="chat-welcome-mark">✳</div><span class="section-kicker">YOUR PRIVATE AI ASSISTANT</span><h2>Apa yang ingin kamu eksplorasi?</h2><p>Mulai dengan pertanyaan, ide, atau pekerjaan yang ingin kamu pecahkan.</p><div class="chat-prompt-grid"><button type="button" data-chat-prompt="Jelaskan konsep kecerdasan buatan dengan contoh sederhana.">Jelaskan sebuah konsep</button><button type="button" data-chat-prompt="Bantu saya menyusun rencana kerja yang terstruktur.">Susun rencana kerja</button><button type="button" data-chat-prompt="Bantu saya memahami dan memperbaiki kode berikut:">Bantu memahami kode</button></div></div>';
+      return;
+    }
+    visibleMessages.forEach((message) => {
+      const item = document.createElement("article");
+      item.className = "chat-message " + (message.role === "user" ? "chat-message-user" : "chat-message-assistant");
+      const avatar = document.createElement("span");
+      avatar.className = "chat-message-avatar";
+      avatar.textContent = message.role === "user" ? "S" : "✳";
+      const body = document.createElement("div");
+      body.className = "chat-message-body";
+      const title = document.createElement("b");
+      title.textContent = message.role === "user" ? "Kamu" : "Lokal AI";
+      const text = document.createElement("div");
+      text.className = "chat-message-text";
+      text.textContent = message.content;
+      body.append(title, text);
+      item.append(avatar, body);
+      host.append(item);
+    });
+    host.scrollTop = host.scrollHeight;
+  }
+
+  function saveChatHistory() {
+    try {
+      if (localStorage.getItem(chatSavePreferenceKey) !== "1") return;
+      const stored = chatMessages
+        .filter((message) => message.role === "user" || message.role === "assistant")
+        .slice(-80);
+      localStorage.setItem(chatHistoryKey, JSON.stringify(stored));
+    } catch (_) {
+      setChatStatus("Penyimpanan lokal tidak tersedia", "error");
+    }
+  }
+
+  function syncChatControls() {
+    const input = document.getElementById("chatInput");
+    const send = document.getElementById("chatSendButton");
+    const load = document.getElementById("chatLoadButton");
+    const unload = document.getElementById("chatUnloadButton");
+    const select = document.getElementById("chatModelSelect");
+    if (input) input.disabled = !chatEngine || chatGenerating;
+    if (send) send.disabled = !chatEngine || chatGenerating;
+    if (load) {
+      load.disabled = chatLoading || !!chatEngine;
+      load.hidden = !!chatEngine;
+      load.textContent = chatLoading ? "Menyiapkan model…" : "Muat model lokal";
+    }
+    if (unload) unload.hidden = !chatEngine;
+    if (select) select.disabled = chatLoading || !!chatEngine;
+    setChatStatus(
+      chatLoading ? "Memuat model lokal…" : chatEngine ? "Model siap · berjalan lokal" : "Model belum aktif",
+      chatLoading ? "loading" : chatEngine ? "ready" : "idle"
+    );
+  }
+
+  async function loadChatModel() {
+    if (chatLoading || chatEngine) return;
+    if (!window.isSecureContext) {
+      setChatStatus("WebGPU memerlukan HTTPS atau localhost", "error");
+      return;
+    }
+    if (!navigator.gpu || typeof navigator.gpu.requestAdapter !== "function") {
+      setChatStatus("WebGPU tidak tersedia di browser ini", "error");
+      return;
+    }
+    chatLoading = true;
+    syncChatControls();
+    updateChatProgress({ progress: 0, text: "Memeriksa GPU adapter…" });
+    const select = document.getElementById("chatModelSelect");
+    const selectedModel = select ? select.value : "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) throw new Error("GPU adapter tidak ditemukan. Periksa browser, driver, dan dukungan GPU.");
+      updateChatProgress({ progress: 0.02, text: "Memuat runtime WebLLM…" });
+      const runtime = await import("https://esm.run/@mlc-ai/web-llm@0.2.87");
+      chatWorker = new Worker(new URL("assets/js/webllm-worker.js", document.baseURI), { type: "module" });
+      chatWorker.addEventListener("error", (event) => {
+        setChatStatus("Worker model mengalami kesalahan: " + (event.message || "unknown error"), "error");
+      });
+      chatModelId = selectedModel;
+      chatEngine = await runtime.CreateWebWorkerMLCEngine(chatWorker, selectedModel, {
+        initProgressCallback: (progress) => updateChatProgress(progress)
+      });
+      const progress = document.getElementById("chatProgress");
+      if (progress) progress.hidden = true;
+      syncChatControls();
+      paintChatMessages();
+    } catch (error) {
+      if (chatWorker) chatWorker.terminate();
+      chatWorker = null;
+      chatEngine = null;
+      chatModelId = "";
+      chatLoading = false;
+      const progress = document.getElementById("chatProgress");
+      if (progress) progress.hidden = true;
+      setChatStatus("Gagal memuat model: " + (error && error.message ? error.message : "periksa koneksi dan kompatibilitas"), "error");
+      syncChatControls();
+    } finally {
+      chatLoading = false;
+      syncChatControls();
+    }
+  }
+
+  async function unloadChatModel() {
+    if (!chatEngine || chatGenerating) return;
+    try {
+      await chatEngine.unload();
+    } catch (_) {}
+    if (chatWorker) chatWorker.terminate();
+    chatWorker = null;
+    chatEngine = null;
+    chatModelId = "";
+    syncChatControls();
+  }
+
+  async function submitChatMessage(value) {
+    const prompt = String(value || "").trim();
+    if (!prompt || !chatEngine || chatGenerating) return;
+    chatGenerating = true;
+    chatMessages.push({ role: "user", content: prompt });
+    const assistantMessage = { role: "assistant", content: "" };
+    chatMessages.push(assistantMessage);
+    paintChatMessages();
+    syncChatControls();
+    const host = document.getElementById("chatMessages");
+    const answerNode = host && host.querySelector(".chat-message:last-child .chat-message-text");
+    try {
+      const stream = await chatEngine.chat.completions.create({
+        messages: chatMessages.slice(0, -1),
+        temperature: 0.7,
+        top_p: 0.9,
+        max_tokens: 768,
+        stream: true
+      });
+      for await (const chunk of stream) {
+        const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta
+          ? chunk.choices[0].delta.content || ""
+          : "";
+        if (!delta) continue;
+        assistantMessage.content += delta;
+        if (answerNode) answerNode.textContent = assistantMessage.content;
+        if (host) host.scrollTop = host.scrollHeight;
+      }
+      if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      saveChatHistory();
+    } catch (error) {
+      assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + (error && error.message ? error.message : "unknown error");
+      if (answerNode) answerNode.textContent = assistantMessage.content;
+      setChatStatus("Generasi gagal. Periksa resource perangkat.", "error");
+      saveChatHistory();
+    } finally {
+      chatGenerating = false;
+      syncChatControls();
+    }
+  }
+
+  function bindChatWorkspace() {
+    const saveToggle = document.getElementById("chatSaveHistory");
+    const composer = document.getElementById("chatComposer");
+    const input = document.getElementById("chatInput");
+    const modelSelect = document.getElementById("chatModelSelect");
+    const modelHint = document.getElementById("chatModelHint");
+    const loadButton = document.getElementById("chatLoadButton");
+    const unloadButton = document.getElementById("chatUnloadButton");
+    const clearButton = document.getElementById("chatClearButton");
+    if (saveToggle) {
+      try { saveToggle.checked = localStorage.getItem(chatSavePreferenceKey) === "1"; } catch (_) {}
+      saveToggle.addEventListener("change", () => {
+        try {
+          if (saveToggle.checked) {
+            localStorage.setItem(chatSavePreferenceKey, "1");
+            saveChatHistory();
+          } else {
+            localStorage.removeItem(chatSavePreferenceKey);
+            localStorage.removeItem(chatHistoryKey);
+          }
+        } catch (_) {}
+      });
+    }
+    if (modelSelect && modelHint) {
+      modelSelect.addEventListener("change", () => {
+        const option = modelSelect.selectedOptions[0];
+        const memory = option ? option.dataset.vram : "";
+        modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kompatibilitas tetap bergantung pada perangkat.";
+      });
+    }
+    if (loadButton) loadButton.addEventListener("click", loadChatModel);
+    if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
+    if (clearButton) clearButton.addEventListener("click", () => {
+      chatMessages = [chatSystemMessage];
+      try { localStorage.removeItem(chatHistoryKey); } catch (_) {}
+      paintChatMessages();
+    });
+    if (composer) composer.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!input || !input.value.trim() || !chatEngine) return;
+      const prompt = input.value.trim();
+      input.value = "";
+      input.style.height = "auto";
+      await submitChatMessage(prompt);
+    });
+    if (input) input.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        if (composer) composer.requestSubmit();
+      }
+    });
+    if (input) input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 150) + "px";
+    });
+    paintChatMessages();
+    syncChatControls();
   }
 
   function renderEngineMetrics() {
@@ -221,6 +543,16 @@
   }
 
   document.addEventListener("click", (event) => {
+
+    const promptTrigger = event.target.closest("[data-chat-prompt]");
+    if (promptTrigger) {
+      const input = document.getElementById("chatInput");
+      if (input) {
+        input.value = promptTrigger.dataset.chatPrompt || "";
+        input.focus();
+      }
+      return;
+    }
     const pageTrigger = event.target.closest("[data-page]");
     if (pageTrigger) {
       event.preventDefault();
