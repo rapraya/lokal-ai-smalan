@@ -83,10 +83,10 @@
     },
     data: {
       title: "Data Analyst", label: "DATA & DECISIONS", icon: "chart", color: "icon-gold",
-      description: "Ubah data menjadi pemahaman melalui eksplorasi, statistik, visualisasi, dan dukungan pengambilan keputusan.",
+      description: "Workspace analisis CSV lokal dengan statistik deterministik, profil kualitas data, dan visualisasi distribusi.",
       headline: "Temukan cerita di balik data.",
-      detail: "Perhitungan statistik dan visualisasi sebaiknya dilakukan oleh kode analitik yang deterministik. AI membantu menjelaskan temuan, menyusun hipotesis, dan membandingkan skenario—bukan menggantikan validasi data.",
-      stages: [["Data workspace", "Impor CSV dan format tabel dengan pemeriksaan kualitas data."], ["Analysis & visualization", "Statistik deskriptif, tren, distribusi, dan grafik."], ["Decision support", "Skenario, asumsi, risiko, serta ringkasan yang dapat diverifikasi."]]
+      detail: "Alpha saat ini mendukung impor CSV hingga 5 MB dan 10.000 baris, pemeriksaan nilai kosong dan duplikat, profil kolom, statistik deskriptif numerik, histogram, serta pratinjau tabel. Semua perhitungan dilakukan di browser; interpretasi AI dan analisis lanjutan belum tersedia.",
+      stages: [["Data workspace", "Impor CSV lokal, pemeriksaan kualitas data, dan pratinjau tabel."], ["Analysis & visualization", "Profil kolom, statistik deskriptif numerik, dan histogram distribusi."], ["Decision support", "Interpretasi AI berbasis statistik terverifikasi, tren, perbandingan, dan ekspor laporan pada tahap berikutnya."]]
     },
     assistant: {
       title: "AI Assistant", label: "AI AGENT & WORKFLOWS", icon: "spark", color: "icon-cyan",
