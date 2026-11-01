@@ -359,6 +359,7 @@
         const failure = new Error(message);
         chatLastError = "Worker model mengalami kesalahan: " + message;
         setChatStatus(chatLastError, "error");
+        syncChatControls();
         if (startupPending) {
           startupPending = false;
           rejectWorkerStartup(failure);
