@@ -343,3 +343,11 @@ body[data-theme="light"] .data-trend-kpi b{color:#263953}
 body[data-theme="light"] .data-trend-kpi span,body[data-theme="light"] .data-trend-kpi small,body[data-theme="light"] .data-trend-chart-caption{color:#73849b}
 body[data-theme="light"] .data-trend-visual{background:#fbfcff;border-color:#dce5f0}
 @media(max-width:650px){.data-trend-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.data-trend-kpi b{font-size:15px}}
+
+/* v0.12.0 — deterministic decision-support panels */
+.data-decision-panel{margin:0 0 12px}
+.data-decision-summary{padding:10px 12px;margin:8px 0 12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.025);color:#a8bbd3;font-size:8px;line-height:1.7}
+.data-correlation-table{min-width:560px}
+.data-correlation-table td{font-variant-numeric:tabular-nums}
+.data-decision-panel .data-group-note{line-height:1.7}
+body[data-theme="light"] .data-decision-summary{background:#f7f9fd;color:#62758f;border-color:#dce5f0}
