@@ -1270,7 +1270,7 @@
       if (!match) return null;
       year = Number(match[1]); month = Number(match[2]); day = Number(match[3]);
     } else {
-      match = /^(\d{1,2})([\\/. -])(\d{1,2})\\2(\d{4})$/.exec(raw);
+      match = /^(\d{1,2})([\/. -])(\d{1,2})\2(\d{4})$/.exec(raw);
       if (!match) return null;
       const first = Number(match[1]), second = Number(match[3]); year = Number(match[4]);
       if (format === "dmy") { day = first; month = second; }
