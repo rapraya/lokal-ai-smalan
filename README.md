@@ -6,18 +6,19 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.3.0 — Premium workspace & initial local Chat integration**
+**v0.4.0 — Shared local AI Chat & AI Coding workspaces**
 
 - Modern responsive dashboard and navigation for 10 capability areas.
-- Dedicated overview pages for Chat, Coding, Image, Audio, Video, Text, Data, Assistant, Personal AI, and Navigator.
-- Global capability search and dark/light theme preference stored in the browser.
-- Initial secure-context and WebGPU adapter checks.
-- Initial AI Chat integration using WebLLM 0.2.87 through a Web Worker.
-- Small Llama 3.2 1B and 3B model options, loading progress, and streaming responses.
-- Optional local chat history; saving is off by default.
-- Product architecture, feasibility notes, privacy rules, and delivery roadmap.
+- Dedicated workspaces for AI Chat and an initial AI Coding alpha, alongside roadmap pages for the other capabilities.
+- Global capability search, responsive layout, and dark/light theme preference stored in the browser.
+- Secure-context and WebGPU adapter checks before model initialization.
+- Shared WebLLM 0.2.87 runtime through a Web Worker, so Chat and Coding can use the same loaded model.
+- Llama 3.2 1B and 3B model options, download progress, and streaming responses.
+- AI Coding task modes: generate, explain, debug, review, refactor, and document code.
+- Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
+- Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** The Chat runtime code has been added and checked against WebLLM's current API documentation, but it has **not yet been exercised in a real browser/GPU session**. Browser compatibility, model downloads, device memory, and actual generation still need hands-on testing. The other capability modules are currently UI and architecture plans; they do not yet run their respective AI tasks.
+**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat and Coding runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, and actual generation. The other capability modules remain UI and architecture plans; they do not yet run their respective AI tasks.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
@@ -26,7 +27,7 @@ The WebGPU check only detects whether a browser can provide an adapter. It does 
 | Workspace | Direction |
 | --- | --- |
 | AI Chat | WebLLM-based local language-model conversations, streaming, and optional browser-local history. Initial code integration is present; device validation is pending. |
-| AI Coding | Code explanation, generation, review, debugging, and later safe project workflows. |
+| AI Coding | Initial local-model workspace for code generation, explanation, review, debugging, refactoring, and documentation. No code execution or automatic project-file changes. |
 | Image Studio | Image understanding, editing utilities, and a separately evaluated image-generation runtime. |
 | Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
 | Video Studio | Browser-based media tools, video understanding, and separately evaluated AI video generation. |
