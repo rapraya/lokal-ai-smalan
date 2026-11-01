@@ -76,10 +76,10 @@
     },
     text: {
       title: "Text & Language", label: "LANGUAGE & KNOWLEDGE", icon: "type", color: "icon-sky",
-      description: "Bantu menulis, merangkum, menerjemahkan, menyunting, dan memahami dokumen maupun bahasa.",
+      description: "Workspace lokal untuk menulis, menyunting, meringkas, menerjemahkan, dan mengekstrak informasi.",
       headline: "Kata-kata yang lebih tajam. Gagasan yang lebih jelas.",
-      detail: "Tugas seperti ringkasan, klasifikasi, ekstraksi informasi, dan terjemahan dapat menggunakan model yang sesuai dari ekosistem Transformers.js atau LLM lokal.",
-      stages: [["Writing assistant", "Draft, penyuntingan, perbaikan gaya, dan pemeriksaan struktur."], ["Language tools", "Ringkasan, terjemahan, klasifikasi, dan ekstraksi informasi."], ["Document intelligence", "Pemrosesan teks dan dokumen dengan sumber yang bisa ditelusuri."]]
+      detail: "Workspace awal menggunakan engine WebLLM bersama AI Chat dan AI Coding. Enam tugas teks tersedia dalam sesi browser; kualitas bahasa, ejaan, dan akurasi hasil tetap perlu ditinjau pengguna.",
+      stages: [["Writing assistant", "Membuat draf, menyunting naskah, dan memperbaiki ejaan serta tata bahasa."], ["Language tools", "Meringkas, menerjemahkan, dan mengekstrak informasi dari materi sumber."], ["Document intelligence", "Pemrosesan dokumen yang lebih besar, sitasi, dan verifikasi sumber pada tahap berikutnya."]]
     },
     data: {
       title: "Data Analyst", label: "DATA & DECISIONS", icon: "chart", color: "icon-gold",
