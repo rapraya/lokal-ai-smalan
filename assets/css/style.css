@@ -298,3 +298,12 @@ body[data-theme="light"] .data-pagination button{color:#425b7a;background:#f5f8f
 body[data-theme="light"] .data-group-note{color:#73849b}
 @media(max-width:700px){.data-explorer-toolbar{grid-template-columns:1fr 1fr}.data-explorer-toolbar>input{grid-column:1/-1}.data-group-controls{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.data-explorer-toolbar{grid-template-columns:1fr}.data-explorer-toolbar>input{grid-column:auto}.data-group-controls{grid-template-columns:1fr}.data-pagination{align-items:flex-start;flex-direction:column}}
+
+
+/* v0.8.0 — column-specific Data Explorer filters */
+.data-column-filters{display:grid;grid-template-columns:minmax(150px,1.1fr) minmax(170px,1.3fr) repeat(2,minmax(100px,.7fr)) auto;gap:10px;align-items:end;padding:12px 0 16px}
+.data-column-filters label{display:flex;flex-direction:column;gap:6px;color:var(--text-muted);font-size:11px;font-weight:700}
+.data-column-filters input,.data-column-filters select{width:100%;min-width:0;min-height:38px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font:inherit;font-size:12px}
+.data-column-filters input:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:760px){.data-column-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.data-column-filters .data-filter-text{grid-column:1/-1}.data-column-filters button{min-height:38px}}
+@media(max-width:420px){.data-column-filters{grid-template-columns:1fr}}
