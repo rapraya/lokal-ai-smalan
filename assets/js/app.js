@@ -394,7 +394,7 @@
 
     try {
       const stream = await chatEngine.chat.completions.create({
-        messages: codingMessages.slice(-17),
+        messages: [codingSystemMessage, ...codingMessages.slice(1).slice(-16)],
         temperature: 0.25,
         top_p: 0.9,
         max_tokens: 1536,
