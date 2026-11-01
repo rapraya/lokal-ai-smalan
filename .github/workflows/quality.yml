@@ -1,0 +1,29 @@
+name: Quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: JavaScript syntax and smoke checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check application JavaScript syntax
+        run: node --check assets/js/app.js
+      - name: Check WebLLM worker module syntax
+        run: node --input-type=module --check < assets/js/webllm-worker.js
+      - name: Run project smoke checks
+        run: node scripts/smoke-check.mjs
