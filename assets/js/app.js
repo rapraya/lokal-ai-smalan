@@ -926,7 +926,7 @@
   }
 
 
-  const dataWorkspaceState = { headers: [], rows: [], delimiter: ",", fileName: "", numericColumns: [], analysis: null };
+  const dataWorkspaceState = { headers: [], rows: [], delimiter: ",", fileName: "", numericColumns: [], analysis: null, page: 1, pageSize: 25, search: "", sortIndex: -1, sortDirection: "asc" };
 
   function renderDataWorkspace() {
     return '<div class="chat-page data-page">' +
@@ -945,7 +945,12 @@
           '<section class="data-panel"><div class="data-panel-heading"><div><span class="section-kicker">DISTRIBUTION</span><b>Distribusi nilai</b></div><label for="dataColumnSelect">Kolom numerik</label></div><select id="dataColumnSelect" class="data-select"></select><div class="data-chart-wrap" id="dataChart" role="img" aria-label="Histogram distribusi data numerik"></div><div class="data-chart-legend" id="dataChartCaption"></div><div class="data-numeric-stats" id="dataNumericStats"></div></section>' +
           '<section class="data-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATA QUALITY</span><b>Profil kolom</b></div><span class="data-panel-meta">Semua kolom</span></div><div class="data-profile-list" id="dataProfileList"></div></section>' +
         '</div>' +
-        '<section class="data-panel data-preview-panel"><div class="data-panel-heading"><div><span class="section-kicker">SAMPLE ROWS</span><b>Pratinjau data</b></div><span class="data-panel-meta">Maks. 8 baris ditampilkan</span></div><div class="data-table-wrap" id="dataTableWrap"></div></section>' +
+        '<section class="data-panel data-preview-panel"><div class="data-panel-heading"><div><span class="section-kicker">DATA EXPLORER</span><b>Jelajahi dataset</b></div><button class="data-export-button" id="dataExportButton" type="button">Ekspor hasil CSV</button></div>' +
+          '<div class="data-explorer-toolbar"><input id="dataSearchInput" type="search" placeholder="Cari di seluruh kolom…" aria-label="Cari data"><label>Urutkan<select id="dataSortSelect" class="data-select"><option value="">Urutan asli</option></select></label><button id="dataSortDirection" class="data-sort-direction" type="button">↑ Naik</button></div>' +
+          '<div class="data-table-wrap" id="dataTableWrap"></div><div class="data-pagination"><span id="dataPageInfo">Menampilkan 0 data</span><div><button id="dataPrevPage" type="button" disabled>Sebelumnya</button><button id="dataNextPage" type="button" disabled>Berikutnya</button></div></div></section>' +
+        '<section class="data-panel data-group-panel"><div class="data-panel-heading"><div><span class="section-kicker">GROUPED ANALYSIS</span><b>Ringkasan kelompok</b></div><span class="data-panel-meta">Agregasi deterministik</span></div>' +
+          '<div class="data-group-controls"><label>Kelompokkan berdasarkan<select id="dataGroupColumn" class="data-select"></select></label><label>Kolom nilai<select id="dataGroupMetric" class="data-select"></select></label><label>Perhitungan<select id="dataGroupOperation" class="data-select"><option value="count">Jumlah baris</option><option value="sum">Total nilai</option><option value="average">Rata-rata</option></select></label></div>' +
+          '<div class="data-table-wrap" id="dataGroupResult"></div><p class="data-group-note" id="dataGroupNote">Pilih kolom kategori untuk mulai membuat ringkasan kelompok.</p></section>' +
         '<div class="data-disclaimer">' + icon("shield") + '<p><b>Analisis deterministik, bukan tebakan AI.</b> Statistik dihitung dari nilai yang berhasil dikenali. Format angka ambigu dapat dianggap sebagai teks; periksa profil kolom dan data sumber sebelum mengambil keputusan. Seluruh proses berlangsung di browser.</p></div>' +
       '</div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Evidence before decisions.</span></footer>' +
@@ -1145,20 +1150,27 @@
         item.append(title, detail); profileList.appendChild(item);
       });
     }
-    if (tableWrap) {
-      tableWrap.replaceChildren();
-      const table = document.createElement("table"); table.className = "data-preview-table";
-      const thead = document.createElement("thead"), headRow = document.createElement("tr");
-      analysis.headers.forEach((header) => { const th = document.createElement("th"); th.textContent = header; headRow.appendChild(th); });
-      thead.appendChild(headRow); table.appendChild(thead);
-      const tbody = document.createElement("tbody");
-      analysis.rows.slice(0, 8).forEach((row) => {
-        const tr = document.createElement("tr");
-        row.forEach((value) => { const td = document.createElement("td"); td.textContent = value || "—"; tr.appendChild(td); });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody); tableWrap.appendChild(table);
+    const sortSelect = document.getElementById("dataSortSelect");
+    if (sortSelect) {
+      sortSelect.replaceChildren();
+      const original = document.createElement("option"); original.value = ""; original.textContent = "Urutan asli"; sortSelect.appendChild(original);
+      analysis.headers.forEach((header, index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = header; sortSelect.appendChild(option); });
+      sortSelect.value = dataWorkspaceState.sortIndex < 0 ? "" : String(dataWorkspaceState.sortIndex);
     }
+    const groupColumn = document.getElementById("dataGroupColumn");
+    if (groupColumn) {
+      groupColumn.replaceChildren();
+      const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Pilih kolom kategori"; groupColumn.appendChild(placeholder);
+      analysis.headers.forEach((header, index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = header; groupColumn.appendChild(option); });
+    }
+    const groupMetric = document.getElementById("dataGroupMetric");
+    if (groupMetric) {
+      groupMetric.replaceChildren();
+      analysis.numericColumns.forEach((profile) => { const option = document.createElement("option"); option.value = String(profile.index); option.textContent = profile.name; groupMetric.appendChild(option); });
+      groupMetric.disabled = !analysis.numericColumns.length;
+    }
+    renderDataExplorer();
+    renderGroupedData();
     if (columnSelect) {
       columnSelect.replaceChildren();
       analysis.numericColumns.forEach((profile) => {
@@ -1172,6 +1184,132 @@
       columnSelect.value = analysis.numericColumns.length ? String(analysis.numericColumns[0].index) : "";
     }
     renderSelectedDataColumn();
+  }
+
+
+  function getFilteredDataRows() {
+    const state = dataWorkspaceState;
+    const query = state.search.trim().toLocaleLowerCase("id-ID");
+    let indexed = state.rows.map((row, index) => ({ row, index }));
+    if (query) indexed = indexed.filter(({ row }) => row.some((value) => value.toLocaleLowerCase("id-ID").includes(query)));
+    if (state.sortIndex >= 0) {
+      const index = state.sortIndex, direction = state.sortDirection === "asc" ? 1 : -1;
+      indexed.sort((a, b) => {
+        const left = a.row[index] || "", right = b.row[index] || "";
+        const leftNumber = parseDataNumber(left, state.delimiter), rightNumber = parseDataNumber(right, state.delimiter);
+        if (leftNumber !== null && rightNumber !== null) return (leftNumber - rightNumber) * direction;
+        return left.localeCompare(right, "id-ID", { numeric: true, sensitivity: "base" }) * direction;
+      });
+    }
+    return indexed;
+  }
+
+  function renderDataExplorer() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    const tableWrap = document.getElementById("dataTableWrap");
+    const pageInfo = document.getElementById("dataPageInfo");
+    const prev = document.getElementById("dataPrevPage"), next = document.getElementById("dataNextPage");
+    if (!analysis || !tableWrap) return;
+    const filtered = getFilteredDataRows();
+    const pageCount = Math.max(1, Math.ceil(filtered.length / state.pageSize));
+    state.page = Math.min(Math.max(1, state.page), pageCount);
+    const start = (state.page - 1) * state.pageSize;
+    const visible = filtered.slice(start, start + state.pageSize);
+    tableWrap.replaceChildren();
+    if (!visible.length) {
+      const empty = document.createElement("p"); empty.className = "data-table-empty"; empty.textContent = "Tidak ada baris yang cocok dengan pencarian."; tableWrap.appendChild(empty);
+    } else {
+      const table = document.createElement("table"); table.className = "data-preview-table";
+      const thead = document.createElement("thead"), headRow = document.createElement("tr");
+      analysis.headers.forEach((header, index) => {
+        const th = document.createElement("th");
+        const button = document.createElement("button"); button.type = "button"; button.className = "data-th-sort";
+        button.textContent = header + (state.sortIndex === index ? (state.sortDirection === "asc" ? " ↑" : " ↓") : "");
+        button.addEventListener("click", () => {
+          if (state.sortIndex === index) state.sortDirection = state.sortDirection === "asc" ? "desc" : "asc";
+          else { state.sortIndex = index; state.sortDirection = "asc"; }
+          state.page = 1;
+          const select = document.getElementById("dataSortSelect"); if (select) select.value = String(state.sortIndex);
+          renderDataExplorer();
+        });
+        th.appendChild(button); headRow.appendChild(th);
+      });
+      thead.appendChild(headRow); table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      visible.forEach(({ row }) => {
+        const tr = document.createElement("tr");
+        row.forEach((value) => { const td = document.createElement("td"); td.textContent = value || "—"; tr.appendChild(td); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody); tableWrap.appendChild(table);
+    }
+    if (pageInfo) pageInfo.textContent = filtered.length
+      ? "Menampilkan " + (start + 1) + "–" + (start + visible.length) + " dari " + filtered.length + " baris" + (state.search ? " · difilter dari " + state.rows.length : "")
+      : "0 baris ditemukan";
+    if (prev) prev.disabled = state.page <= 1;
+    if (next) next.disabled = state.page >= pageCount;
+  }
+
+  function renderGroupedData() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    const target = document.getElementById("dataGroupResult"), note = document.getElementById("dataGroupNote");
+    const groupSelect = document.getElementById("dataGroupColumn");
+    const metricSelect = document.getElementById("dataGroupMetric");
+    const operationSelect = document.getElementById("dataGroupOperation");
+    if (!analysis || !target || !groupSelect) return;
+    target.replaceChildren();
+    if (groupSelect.value === "") {
+      if (note) note.textContent = "Pilih kolom kategori untuk mulai membuat ringkasan kelompok.";
+      return;
+    }
+    const groupIndex = Number(groupSelect.value);
+    const operation = operationSelect ? operationSelect.value : "count";
+    const metricIndex = metricSelect && metricSelect.value !== "" ? Number(metricSelect.value) : -1;
+    if (operation !== "count" && metricIndex < 0) {
+      if (note) note.textContent = "Pilih kolom numerik untuk menghitung total atau rata-rata.";
+      return;
+    }
+    const groups = new Map();
+    state.rows.forEach((row) => {
+      const key = row[groupIndex] || "(Kosong)";
+      if (!groups.has(key)) groups.set(key, { count: 0, sum: 0, valid: 0 });
+      const item = groups.get(key); item.count += 1;
+      if (metricIndex >= 0) {
+        const value = parseDataNumber(row[metricIndex], state.delimiter);
+        if (value !== null) { item.sum += value; item.valid += 1; }
+      }
+    });
+    const results = [...groups.entries()].map(([name, item]) => ({
+      name, count: item.count,
+      value: operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null,
+      valid: item.valid
+    })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "id-ID"));
+    const table = document.createElement("table"); table.className = "data-preview-table";
+    const thead = document.createElement("thead"), head = document.createElement("tr");
+    ["Kelompok", "Jumlah baris", operation === "count" ? "Jumlah" : operation === "sum" ? "Total" : "Rata-rata"].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
+    thead.appendChild(head); table.appendChild(thead);
+    const body = document.createElement("tbody");
+    results.slice(0, 100).forEach((item) => {
+      const tr = document.createElement("tr");
+      [item.name, String(item.count), item.value === null ? "—" : formatDataNumber(item.value)].forEach((value) => { const td = document.createElement("td"); td.textContent = value; tr.appendChild(td); });
+      body.appendChild(tr);
+    });
+    table.appendChild(body); target.appendChild(table);
+    if (note) note.textContent = results.length + " kelompok ditemukan" + (results.length > 100 ? " · 100 kelompok pertama ditampilkan" : "") + (operation !== "count" ? " · nilai valid: " + results.reduce((sum, item) => sum + item.valid, 0) : "") + ".";
+  }
+
+  function exportFilteredData() {
+    const state = dataWorkspaceState, analysis = state.analysis;
+    if (!analysis) return;
+    const rows = getFilteredDataRows().map((item) => item.row);
+    const quote = (value) => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    const csv = [analysis.headers, ...rows].map((row) => row.map(quote).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = (state.fileName.replace(/\.[^.]+$/, "") || "dataset") + "-filtered.csv";
+    document.body.appendChild(link); link.click(); link.remove();
+    URL.revokeObjectURL(url);
   }
 
   function renderSelectedDataColumn() {
@@ -1211,6 +1349,19 @@
     const fileInput = document.getElementById("dataFileInput");
     const columnSelect = document.getElementById("dataColumnSelect");
     const resetButton = document.getElementById("dataResetButton");
+    const searchInput = document.getElementById("dataSearchInput");
+    const sortSelect = document.getElementById("dataSortSelect");
+    const sortDirection = document.getElementById("dataSortDirection");
+    const prevPage = document.getElementById("dataPrevPage"), nextPage = document.getElementById("dataNextPage");
+    const exportButton = document.getElementById("dataExportButton");
+    const groupColumn = document.getElementById("dataGroupColumn"), groupMetric = document.getElementById("dataGroupMetric"), groupOperation = document.getElementById("dataGroupOperation");
+    if (searchInput) searchInput.addEventListener("input", () => { dataWorkspaceState.search = searchInput.value; dataWorkspaceState.page = 1; renderDataExplorer(); });
+    if (sortSelect) sortSelect.addEventListener("change", () => { dataWorkspaceState.sortIndex = sortSelect.value === "" ? -1 : Number(sortSelect.value); dataWorkspaceState.page = 1; renderDataExplorer(); });
+    if (sortDirection) sortDirection.addEventListener("click", () => { dataWorkspaceState.sortDirection = dataWorkspaceState.sortDirection === "asc" ? "desc" : "asc"; sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun"; renderDataExplorer(); });
+    if (prevPage) prevPage.addEventListener("click", () => { dataWorkspaceState.page -= 1; renderDataExplorer(); });
+    if (nextPage) nextPage.addEventListener("click", () => { dataWorkspaceState.page += 1; renderDataExplorer(); });
+    if (exportButton) exportButton.addEventListener("click", exportFilteredData);
+    [groupColumn, groupMetric, groupOperation].forEach((control) => { if (control) control.addEventListener("change", renderGroupedData); });
     if (fileInput) fileInput.addEventListener("change", async () => {
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
@@ -1248,7 +1399,8 @@
     if (resetButton) resetButton.addEventListener("click", () => {
       dataWorkspaceState.headers = []; dataWorkspaceState.rows = [];
       dataWorkspaceState.numericColumns = []; dataWorkspaceState.analysis = null;
-      dataWorkspaceState.fileName = "";
+      dataWorkspaceState.fileName = ""; dataWorkspaceState.page = 1;
+      dataWorkspaceState.search = ""; dataWorkspaceState.sortIndex = -1;
       const input = document.getElementById("dataFileInput");
       const status = document.getElementById("dataFileStatus");
       const panel = document.getElementById("dataAnalysis");
