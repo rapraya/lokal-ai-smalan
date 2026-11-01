@@ -6,7 +6,7 @@ Lokal AI SMALAN is intended to feel like a premium AI product: one cohesive work
 
 The product is **local-first, not local-only**. A browser can run many useful models locally, but not every capability is equally practical on every device. Each module must show where processing happens, what model or provider is used, what it needs, and whether data leaves the device.
 
-## Current implementation — v0.4.0
+## Current implementation — v0.5.0
 
 The current branch contains:
 
@@ -18,8 +18,9 @@ The current branch contains:
 - A shared WebLLM 0.2.87 worker-based language-model engine for AI Chat and the initial AI Coding workspace, including a 1B/3B model selector, loading progress callback, and streaming responses.
 - AI Coding task modes for code generation, explanation, debugging, review, refactoring, and documentation, with bounded in-session context and copyable text output.
 - Generated code is rendered as text only; this alpha does not execute code, edit project files, or open a terminal.
+- An initial Text & Language workspace with six task modes: drafting, editing, proofreading, summarization, translation, and information extraction. It reuses the shared engine and keeps task context in memory for the active browser session only.
 
-**Runtime validation is pending.** The shared Chat/Coding implementation has not yet been tested on an actual browser/GPU device in this project session. The code path is based on the documented WebLLM worker API. Do not treat the presence of the integration as proof that a selected model will load on every computer.
+**Runtime validation is pending.** The shared Chat/Coding/Text implementation has not yet been tested on an actual browser/GPU device in this project session. Text quality, translation fidelity, and Indonesian spelling/grammar quality require hands-on evaluation. The code path is based on the documented WebLLM worker API. Do not treat the presence of the integration as proof that a selected model will load on every computer.
 
 The WebGPU readiness check does not benchmark GPU memory, browser quotas, or device performance. The actual model manifest resource estimate is only a planning value.
 
@@ -33,7 +34,7 @@ The WebGPU readiness check does not benchmark GPU memory, browser quotas, or dev
 | Image generation | Evaluate a dedicated browser image-generation runtime/model; optionally offer a clearly disclosed remote provider. | Transformers.js' current documented task list does not provide a general text-to-image pipeline. Do not label this capability local until an actual runtime is validated. |
 | Audio | Transformers.js-compatible speech recognition, audio classification, and text-to-speech models. | Language coverage, voice quality, model size, and offline behavior must be tested per model. |
 | Video | Browser-native media processing, frame extraction, and audio transcription; evaluate dedicated video models separately. | AI video generation is a distinct, resource-intensive workload and must not be implied by basic browser video APIs. |
-| Text & language | WebLLM for general writing and compatible Transformers.js pipelines for specialized language tasks. | Verify the chosen model supports Indonesian and the intended task. |
+| Text & language | Initial shared-WebLLM workspace for drafting, editing, proofreading, summarization, translation, and extraction. | Alpha only: output quality and Indonesian language behavior must be evaluated. Large document ingestion, citations, and source verification are not implemented. |
 | Data analysis | Local CSV/table parsing, deterministic calculations, and browser-side charts; an LLM explains validated results. | Numerical calculations must not rely on an LLM's unsupported mental arithmetic. Show assumptions and data provenance. |
 | Virtual assistant | Local reasoning plus an allowlisted set of tools and workflows. | Preview actions and require confirmation before sending, deleting, publishing, navigating to a site, or changing user data. |
 | Personalization | Store explicitly selected preferences and optional memory locally, for example in IndexedDB. | Memory must be transparent, editable, and deletable; do not silently profile users. |
@@ -93,7 +94,7 @@ Build a model registry, robust WebGPU diagnostics, model detail cards, loading p
 Verify the 1B model on a compatible device, show clear first-download progress, stream responses, test reload/cache behavior, and validate optional local history. Add cancellation, model lifecycle recovery, and history controls before calling this phase complete.
 
 ### Phase 4 — Coding and Text & Language
-**AI Coding prompt-workspace alpha is implemented in v0.4.0; Text & Language remains planned.** The first coding workspace reuses the shared language-model engine and provides structured task prompts with safe text output. Next: validate generation on real devices, add user-selected project context with preview/consent, and only later evaluate sandboxed execution. Build text tools and document workflows using validated local pipelines.
+**AI Coding alpha was implemented in v0.4.0; Text & Language alpha is implemented in v0.5.0.** Both reuse the shared language-model engine and provide structured task prompts with safe text output. Next: validate model behavior on real devices, evaluate Indonesian language quality, add user-selected document/project context with preview and consent, and only later evaluate sandboxed execution and source-grounded workflows.
 
 ### Phase 5 — Vision and Audio
 Add compatible image understanding, background removal, speech-to-text, and text-to-speech models. Test Indonesian language quality and provide model-specific device requirements.
