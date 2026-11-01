@@ -116,6 +116,10 @@ assert.ok(worker.includes("WebWorkerMLCEngineHandler") && worker.includes("@mlc-
   "WebLLM worker handler/version mismatch.");
 assert.ok(app.includes("function detectIqrOutliers(") && app.includes("function calculatePearsonCorrelation(") && app.includes("function renderDecisionSupport()"), "Decision support calculations and UI are missing.");
 assert.ok(css.includes(".data-decision-panel") && css.includes(".data-correlation-table"), "Decision support styles are missing.");
+assert.ok(app.includes("function buildDataInterpretationContext(") && app.includes("async function runDataInterpretation()"), "Local data interpretation integration is missing.");
+assert.ok(app.includes("dataInterpretButton") && app.includes("dataInterpretResult"), "Data interpretation controls are missing.");
+assert.ok(app.includes("messages: [{ role: \"system\", content: system }, { role: \"user\", content: prompt }]") && app.includes("max_tokens: 512"), "Local interpretation must use a bounded, isolated model prompt.");
+assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disertakan"), "Interpretation context must disclose aggregate-only data.");
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
