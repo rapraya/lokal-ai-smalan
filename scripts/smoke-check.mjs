@@ -31,8 +31,8 @@ assert.ok(app.includes('value="generate"') && app.includes('value="explain"') &&
   app.includes('value="debug"') && app.includes('value="review"') &&
   app.includes('value="refactor"') && app.includes('value="document"'),
   "AI Coding task modes are incomplete.");
-assert.ok(app.includes("messages: [codingSystemMessage, ...codingMessages.slice(1).slice(-16)]"),
-  "AI Coding must retain its system instructions and bounded context.");
+assert.ok(app.includes("messages: [codingSystemMessage, ...codingMessages.slice(1, -1).slice(-16)]"),
+  "AI Coding must retain its system instructions, bounded context, and exclude the empty assistant placeholder.");
 assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
   app.includes("output.textContent = assistantMessage.content"),
   "AI Coding safe text output and copy support are missing.");
@@ -51,9 +51,9 @@ assert.ok(app.includes('value="write"') && app.includes('value="edit"') &&
   app.includes('value="proofread"') && app.includes('value="summarize"') &&
   app.includes('value="translate"') && app.includes('value="extract"'),
   "Text & Language task modes are incomplete.");
-assert.ok(app.includes("textMessages.slice(1).slice(-12)") &&
+assert.ok(app.includes("textMessages.slice(1, -1).slice(-12)") &&
   app.includes("role: \"system\""),
-  "Text & Language must use bounded task context and a system instruction.");
+  "Text & Language must use bounded task context and exclude the empty assistant placeholder.");
 assert.ok(app.includes("id=\"textTargetRow\"") && app.includes("Bahasa tujuan"),
   "Translation target selection is missing.");
 assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
