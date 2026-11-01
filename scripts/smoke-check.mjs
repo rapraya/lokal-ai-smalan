@@ -83,6 +83,19 @@ assert.ok(css.includes(".data-import-panel") && css.includes(".data-stat-grid") 
   css.includes(".data-analysis-grid") && css.includes(".data-preview-table"),
   "Data Analyst responsive styles are missing.");
 
+assert.ok(app.includes("function filterSortDataRows(") && app.includes("function renderDataExplorer()"),
+  "Data Explorer filtering, sorting, and pagination are missing.");
+assert.ok(app.includes("function buildGroupedSummary(") && app.includes("function renderGroupedData()"),
+  "Grouped count/sum/average analysis is missing.");
+assert.ok(app.includes("function exportFilteredData()") && app.includes("filtered.csv"),
+  "Filtered CSV export is missing.");
+assert.ok(app.includes("dataPageSize: 25") && app.includes("dataSearchInput") &&
+  app.includes("dataSortSelect") && app.includes("dataPrevPage") && app.includes("dataNextPage"),
+  "Data Explorer controls are incomplete.");
+assert.ok(css.includes(".data-explorer-toolbar") && css.includes(".data-group-controls") &&
+  css.includes(".data-pagination") && css.includes(".data-th-sort"),
+  "Data Explorer responsive styles are missing.");
+
 assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
   "The small Llama 3.2 1B model option is missing.");
 assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
@@ -101,4 +114,4 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
 console.log("Lokal AI smoke checks passed.");
-console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, and safe text/code output.`);
+console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer, grouped analytics, and safe text/code output.`);
