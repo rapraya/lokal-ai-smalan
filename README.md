@@ -6,7 +6,7 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.7.0 — Data Explorer and grouped analysis**
+**v0.8.0 — Column filters and numeric ranges**
 
 - Modern responsive dashboard and navigation for 10 capability areas.
 - Dedicated workspaces for AI Chat, AI Coding alpha, Text & Language alpha, and a deterministic local Data Analyst alpha; other capability areas retain their roadmap views.
@@ -17,7 +17,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - AI Coding task modes: generate, explain, debug, review, refactor, and document code.
 - Text & Language task modes: write, edit, proofread, summarize, translate, and extract information.
 - Chat, Coding, and Text share one loaded local language-model engine; Text and Coding working context are held in the active browser session only.
-- Data Analyst imports CSV files locally (up to 5 MB / 10,000 data rows), profiles missing/unique values and duplicate rows, calculates descriptive statistics, draws numeric histograms, supports global search, numeric/text sorting, pagination, grouped count/sum/average summaries, and exports filtered rows to CSV without sending data to a server.
+- Data Analyst imports CSV files locally (up to 5 MB / 10,000 data rows), profiles missing/unique values and duplicate rows, calculates descriptive statistics, draws numeric histograms, supports global search, column-specific text filters, numeric minimum/maximum ranges, numeric/text sorting, pagination, grouped count/sum/average summaries based on the active filters, and exports filtered rows to CSV without sending data to a server.
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
@@ -35,7 +35,7 @@ The WebGPU check only detects whether a browser can provide an adapter. It does 
 | Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
 | Video Studio | Browser-based media tools, video understanding, and separately evaluated AI video generation. |
 | Text & Language | Initial local-model workspace for drafting, editing, proofreading, summarizing, translation, and information extraction. |
-| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, sorting, pagination, grouped count/sum/average, and filtered CSV export. AI interpretation, date analysis, and pivot tables are not yet implemented. |
+| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average based on active filters, and filtered CSV export. AI interpretation, date analysis, and pivot tables are not yet implemented. |
 | AI Assistant | Task planning and approved tools with explicit user confirmation. |
 | Personal AI | User-controlled preferences, optional local memory, and explainable recommendations. |
 | AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
