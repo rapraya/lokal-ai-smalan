@@ -351,3 +351,12 @@ body[data-theme="light"] .data-trend-visual{background:#fbfcff;border-color:#dce
 .data-correlation-table td{font-variant-numeric:tabular-nums}
 .data-decision-panel .data-group-note{line-height:1.7}
 body[data-theme="light"] .data-decision-summary{background:#f7f9fd;color:#62758f;border-color:#dce5f0}
+
+/* v0.13.0 — opt-in local model interpretation */
+.data-interpretation-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 10px}
+.data-interpretation-controls #dataInterpretStatus{color:var(--muted);font-size:8px;line-height:1.6;flex:1 1 220px}
+.data-interpretation-result{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font-size:9px;line-height:1.8}
+.data-interpretation-result:not(:empty){padding:14px;margin-top:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}
+.data-interpretation-controls button:disabled{opacity:.55;cursor:wait}
+body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8faff;border-color:#dce5f0}
+@media(max-width:650px){.data-interpretation-controls{align-items:stretch;flex-direction:column}.data-interpretation-controls button{width:100%}}
