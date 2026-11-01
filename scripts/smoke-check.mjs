@@ -11,7 +11,7 @@ const [html, css, app, worker, readme] = await Promise.all([
 
 const requiredModules = [
   "chat", "coding", "image", "audio", "video",
-  "text", "data", "assistant", "personal", "navigator",
+  "text", "data", "assistant", "personal", "navigation",
 ];
 
 for (const module of requiredModules) {
