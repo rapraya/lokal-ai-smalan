@@ -500,7 +500,7 @@
     if (send) send.disabled = !chatEngine || chatGenerating;
     const codingInput = document.getElementById("codingInput");
     const codingRunButton = document.getElementById("codingRunButton");
-    if (codingInput) codingInput.disabled = !chatEngine || chatGenerating;
+    if (codingInput) codingInput.disabled = chatGenerating;
     if (codingRunButton) codingRunButton.disabled = !chatEngine || chatGenerating || !codingInput || !codingInput.value.trim();
     if (load) {
       load.disabled = chatLoading || !!chatEngine;
