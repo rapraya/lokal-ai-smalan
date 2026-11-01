@@ -6,6 +6,9 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.12.0 — Statistical decision support**
+- Data Analyst adds filtered-data IQR outlier detection, quantile summaries, pairwise Pearson correlation matrix, and concise deterministic statistical findings. Outliers are signals for review, not automatic errors; correlation is descriptive and does not establish causation. Calculations remain in-browser.
+
 **v0.11.0 — Visual trend reports**
 
 - Modern responsive dashboard and navigation for 10 capability areas.
@@ -21,7 +24,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, and report export. Image, Audio, Video, Assistant, Personal AI, and Navigator remain UI and architecture plans; they do not yet run their respective AI tasks.
+**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, and Pearson correlation. Image, Audio, Video, Assistant, Personal AI, and Navigator remain UI and architecture plans; they do not yet run their respective AI tasks.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
@@ -35,7 +38,7 @@ The WebGPU check only detects whether a browser can provide an adapter. It does 
 | Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
 | Video Studio | Browser-based media tools, video understanding, and separately evaluated AI video generation. |
 | Text & Language | Initial local-model workspace for drafting, editing, proofreading, summarizing, translation, and information extraction. |
-| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables with cross-tab count/sum/average, and filtered CSV export. AI interpretation is not yet implemented. |
+| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables with cross-tab count/sum/average, and filtered CSV export. AI interpretation is not yet implemented; statistical decision support uses deterministic IQR and Pearson calculations. |
 | AI Assistant | Task planning and approved tools with explicit user confirmation. |
 | Personal AI | User-controlled preferences, optional local memory, and explainable recommendations. |
 | AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
