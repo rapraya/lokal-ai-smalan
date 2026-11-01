@@ -1150,6 +1150,10 @@
         item.append(title, detail); profileList.appendChild(item);
       });
     }
+    const searchInput = document.getElementById("dataSearchInput");
+    if (searchInput) searchInput.value = dataWorkspaceState.search;
+    const sortDirection = document.getElementById("dataSortDirection");
+    if (sortDirection) sortDirection.textContent = dataWorkspaceState.sortDirection === "asc" ? "↑ Naik" : "↓ Turun";
     const sortSelect = document.getElementById("dataSortSelect");
     if (sortSelect) {
       sortSelect.replaceChildren();
@@ -1317,7 +1321,7 @@
     const link = document.createElement("a");
     link.href = url; link.download = (state.fileName.replace(/\.[^.]+$/, "") || "dataset") + "-filtered.csv";
     document.body.appendChild(link); link.click(); link.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function renderSelectedDataColumn() {
@@ -1387,6 +1391,10 @@
         const delimiter = detectCsvDelimiter(source);
         const records = parseCsvRecords(source.replace(/^\uFEFF/, ""), delimiter);
         const analysis = analyzeCsvRecords(records, delimiter);
+        dataWorkspaceState.page = 1;
+        dataWorkspaceState.search = "";
+        dataWorkspaceState.sortIndex = -1;
+        dataWorkspaceState.sortDirection = "asc";
         dataWorkspaceState.headers = analysis.headers;
         dataWorkspaceState.rows = analysis.rows;
         dataWorkspaceState.delimiter = delimiter;
@@ -1408,7 +1416,7 @@
       dataWorkspaceState.headers = []; dataWorkspaceState.rows = [];
       dataWorkspaceState.numericColumns = []; dataWorkspaceState.analysis = null;
       dataWorkspaceState.fileName = ""; dataWorkspaceState.page = 1;
-      dataWorkspaceState.search = ""; dataWorkspaceState.sortIndex = -1;
+      dataWorkspaceState.search = ""; dataWorkspaceState.sortIndex = -1; dataWorkspaceState.sortDirection = "asc";
       const input = document.getElementById("dataFileInput");
       const status = document.getElementById("dataFileStatus");
       const panel = document.getElementById("dataAnalysis");
