@@ -404,7 +404,7 @@
 
     try {
       const stream = await chatEngine.chat.completions.create({
-        messages: [codingSystemMessage, ...codingMessages.slice(1).slice(-16)],
+        messages: [codingSystemMessage, ...codingMessages.slice(1, -1).slice(-16)],
         temperature: 0.25,
         top_p: 0.9,
         max_tokens: 1536,
@@ -889,7 +889,7 @@
 
     try {
       const stream = await chatEngine.chat.completions.create({
-        messages: [textSystemMessage, ...textMessages.slice(1).slice(-12)],
+        messages: [textSystemMessage, ...textMessages.slice(1, -1).slice(-12)],
         temperature: task === "write" ? 0.6 : 0.25,
         top_p: 0.9,
         max_tokens: 1400,
