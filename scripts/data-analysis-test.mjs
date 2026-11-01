@@ -59,6 +59,18 @@ assert.deepEqual(
   Array.from(api.filterSortDataRows(explorerRows, "", 1, "desc", ",").map((item) => item.row[0])),
   ["Ada", "Citra", "Budi"]
 );
+assert.deepEqual(
+  Array.from(api.filterSortDataRows(explorerRows, "", -1, "asc", ",", { index: 2, text: "lulus" }).map((item) => item.row[0])),
+  ["Citra", "Budi"]
+);
+assert.deepEqual(
+  Array.from(api.filterSortDataRows(explorerRows, "", -1, "asc", ",", { index: 1, min: "5", max: "20" }).map((item) => item.row[0])),
+  ["Citra"]
+);
+assert.deepEqual(
+  Array.from(api.filterSortDataRows(explorerRows, "lulus", -1, "asc", ",", { index: 1, min: "2", max: "10" }).map((item) => item.row[0])),
+  ["Citra", "Budi"]
+);
 const grouped = api.buildGroupedSummary(explorerRows, 2, 1, "average", ",");
 assert.equal(grouped[0].name, "Lulus");
 assert.equal(grouped[0].count, 2);
@@ -78,4 +90,4 @@ assert.throws(() => api.parseCsvRecords('Name,Score\n"Ada,10', ","), /kutip/);
 const tooManyRows = [["Name"], ...Array.from({ length: 10001 }, (_, index) => ["row-" + index])];
 assert.throws(() => api.analyzeCsvRecords(tooManyRows, ","), /10.000/);
 
-console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, filtering, numeric sorting, grouped count/average, malformed quotes, and row limit.");
+console.log("Data Analyst unit checks passed: quoted CSV, multiline fields, decimal comma, missing values, duplicate rows, numeric profiling, histogram, global/column filters, numeric ranges, sorting, grouped count/average, malformed quotes, and row limit.");
