@@ -1187,21 +1187,43 @@
   }
 
 
-  function getFilteredDataRows() {
-    const state = dataWorkspaceState;
-    const query = state.search.trim().toLocaleLowerCase("id-ID");
-    let indexed = state.rows.map((row, index) => ({ row, index }));
+  function filterSortDataRows(rows, queryText, sortIndex, sortDirection, delimiter) {
+    const query = queryText.trim().toLocaleLowerCase("id-ID");
+    let indexed = rows.map((row, index) => ({ row, index }));
     if (query) indexed = indexed.filter(({ row }) => row.some((value) => value.toLocaleLowerCase("id-ID").includes(query)));
-    if (state.sortIndex >= 0) {
-      const index = state.sortIndex, direction = state.sortDirection === "asc" ? 1 : -1;
+    if (sortIndex >= 0) {
+      const direction = sortDirection === "asc" ? 1 : -1;
       indexed.sort((a, b) => {
-        const left = a.row[index] || "", right = b.row[index] || "";
-        const leftNumber = parseDataNumber(left, state.delimiter), rightNumber = parseDataNumber(right, state.delimiter);
+        const left = a.row[sortIndex] || "", right = b.row[sortIndex] || "";
+        const leftNumber = parseDataNumber(left, delimiter), rightNumber = parseDataNumber(right, delimiter);
         if (leftNumber !== null && rightNumber !== null) return (leftNumber - rightNumber) * direction;
         return left.localeCompare(right, "id-ID", { numeric: true, sensitivity: "base" }) * direction;
       });
     }
     return indexed;
+  }
+
+  function getFilteredDataRows() {
+    const state = dataWorkspaceState;
+    return filterSortDataRows(state.rows, state.search, state.sortIndex, state.sortDirection, state.delimiter);
+  }
+
+  function buildGroupedSummary(rows, groupIndex, metricIndex, operation, delimiter) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const key = row[groupIndex] || "(Kosong)";
+      if (!groups.has(key)) groups.set(key, { count: 0, sum: 0, valid: 0 });
+      const item = groups.get(key); item.count += 1;
+      if (metricIndex >= 0) {
+        const value = parseDataNumber(row[metricIndex], delimiter);
+        if (value !== null) { item.sum += value; item.valid += 1; }
+      }
+    });
+    return [...groups.entries()].map(([name, item]) => ({
+      name, count: item.count,
+      value: operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null,
+      valid: item.valid
+    })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "id-ID"));
   }
 
   function renderDataExplorer() {
@@ -1269,21 +1291,7 @@
       if (note) note.textContent = "Pilih kolom numerik untuk menghitung total atau rata-rata.";
       return;
     }
-    const groups = new Map();
-    state.rows.forEach((row) => {
-      const key = row[groupIndex] || "(Kosong)";
-      if (!groups.has(key)) groups.set(key, { count: 0, sum: 0, valid: 0 });
-      const item = groups.get(key); item.count += 1;
-      if (metricIndex >= 0) {
-        const value = parseDataNumber(row[metricIndex], state.delimiter);
-        if (value !== null) { item.sum += value; item.valid += 1; }
-      }
-    });
-    const results = [...groups.entries()].map(([name, item]) => ({
-      name, count: item.count,
-      value: operation === "count" ? item.count : operation === "sum" ? item.sum : item.valid ? item.sum / item.valid : null,
-      valid: item.valid
-    })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "id-ID"));
+    const results = buildGroupedSummary(state.rows, groupIndex, metricIndex, operation, state.delimiter);
     const table = document.createElement("table"); table.className = "data-preview-table";
     const thead = document.createElement("thead"), head = document.createElement("tr");
     ["Kelompok", "Jumlah baris", operation === "count" ? "Jumlah" : operation === "sum" ? "Total" : "Rata-rata"].forEach((label) => { const th = document.createElement("th"); th.textContent = label; head.appendChild(th); });
