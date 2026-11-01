@@ -23,6 +23,7 @@
   let chatLoading = false;
   let chatGenerating = false;
   let chatHistoryRestored = false;
+  let chatLastError = "";
 
 
   const icon = (name) => '<svg aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
@@ -314,10 +315,17 @@
     }
     if (unload) unload.hidden = !chatEngine;
     if (select) select.disabled = chatLoading || !!chatEngine;
-    setChatStatus(
-      chatLoading ? "Memuat model lokal…" : chatEngine ? "Model siap · berjalan lokal" : "Model belum aktif",
-      chatLoading ? "loading" : chatEngine ? "ready" : "idle"
-    );
+    const statusMessage = chatLoading
+      ? "Memuat model lokal…"
+      : chatGenerating
+        ? "Sedang menghasilkan jawaban…"
+        : chatLastError
+          ? chatLastError
+          : chatEngine
+            ? "Model siap · berjalan lokal"
+            : "Model belum aktif";
+    const statusType = chatLoading ? "loading" : chatGenerating ? "loading" : chatLastError ? "error" : chatEngine ? "ready" : "idle";
+    setChatStatus(statusMessage, statusType);
   }
 
   async function loadChatModel() {
@@ -331,6 +339,7 @@
       return;
     }
     chatLoading = true;
+    chatLastError = "";
     syncChatControls();
     updateChatProgress({ progress: 0, text: "Memeriksa GPU adapter…" });
     const select = document.getElementById("chatModelSelect");
@@ -360,7 +369,7 @@
       chatLoading = false;
       const progress = document.getElementById("chatProgress");
       if (progress) progress.hidden = true;
-      setChatStatus("Gagal memuat model: " + (error && error.message ? error.message : "periksa koneksi dan kompatibilitas"), "error");
+      chatLastError = "Gagal memuat model: " + (error && error.message ? error.message : "periksa koneksi dan kompatibilitas");
       syncChatControls();
     } finally {
       chatLoading = false;
@@ -384,6 +393,7 @@
     const prompt = String(value || "").trim();
     if (!prompt || !chatEngine || chatGenerating) return;
     chatGenerating = true;
+    chatLastError = "";
     chatMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
     chatMessages.push(assistantMessage);
@@ -393,7 +403,7 @@
     const answerNode = host && host.querySelector(".chat-message:last-child .chat-message-text");
     try {
       const stream = await chatEngine.chat.completions.create({
-        messages: chatMessages.slice(0, -1),
+        messages: [chatSystemMessage, ...chatMessages.slice(1, -1).slice(-24)],
         temperature: 0.7,
         top_p: 0.9,
         max_tokens: 768,
@@ -413,7 +423,7 @@
     } catch (error) {
       assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + (error && error.message ? error.message : "unknown error");
       if (answerNode) answerNode.textContent = assistantMessage.content;
-      setChatStatus("Generasi gagal. Periksa resource perangkat.", "error");
+      chatLastError = "Generasi gagal: " + (error && error.message ? error.message : "periksa resource perangkat");
       saveChatHistory();
     } finally {
       chatGenerating = false;
@@ -481,12 +491,12 @@
   }
 
   function renderEngineMetrics() {
-    return '<div class="engine-metrics"><div class="engine-metric"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-metric"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-metric"><span>AI runtime</span><strong>Belum terhubung</strong></div></div>';
+    return '<div class="engine-metrics"><div class="engine-metric"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-metric"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-metric"><span>AI runtime</span><strong>WebLLM · AI Chat</strong></div></div>';
   }
 
   function renderSettingsPanel() {
     const theme = document.body.dataset.theme === "light" ? "Terang" : "Gelap";
-    return '<div class="stage-side-card" style="margin-top:13px"><h3>Preferensi workspace</h3><div class="settings-row"><span>Tema saat ini</span><strong id="themeSetting">' + theme + '</strong></div><div class="settings-row"><span>Penyimpanan lokal</span><strong>Preferensi tema saja</strong></div><div class="settings-row"><span>Riwayat AI</span><strong>Belum diaktifkan</strong></div></div>';
+    return '<div class="stage-side-card" style="margin-top:13px"><h3>Preferensi workspace</h3><div class="settings-row"><span>Tema saat ini</span><strong id="themeSetting">' + theme + '</strong></div><div class="settings-row"><span>Penyimpanan lokal</span><strong>Tema + riwayat Chat opsional</strong></div><div class="settings-row"><span>Riwayat AI</span><strong>Opt-in · hanya browser ini</strong></div></div>';
   }
 
   function checkDevice() {
