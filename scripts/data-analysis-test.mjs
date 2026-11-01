@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const app = await readFile("assets/js/app.js", "utf8");
-const parseStart = app.indexOf("  function parseCsvRecords(source, delimiter) {");
+const parseStart = app.indexOf("  function detectCsvDelimiter(source) {");
 const parseEnd = app.indexOf("  function formatDataNumber(value) {", parseStart);
 const histogramStart = app.indexOf("  function buildDataHistogram(values, binCount = 8) {");
 const histogramEnd = app.indexOf("  function renderDataHistogram(values) {", histogramStart);
