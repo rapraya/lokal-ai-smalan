@@ -6,6 +6,9 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.14.0 — Data Intelligence Workspace**
+- Data Analyst now supports follow-up questions with focus modes (overview, trends, comparisons, anomalies, relationships, and next actions), a bounded in-session conversation history, Markdown report export, and explicit history clearing. Each request includes refreshed aggregate statistics for the active filters; raw CSV rows are not included in model messages. History remains in browser memory for the current session and is not persisted.
+
 **v0.13.0 — Local AI data interpretation**
 - Data Analyst can optionally ask the already-loaded local WebLLM model to interpret aggregate statistics for the currently filtered dataset. The prompt includes column-level descriptive summaries, IQR counts, selected-column fences, Pearson relationships, deterministic findings, and explicit caveats; it does not include raw CSV rows or individual records. The action is user-triggered, uses the model already loaded in AI Chat, and does not silently call an external provider. Model output is advisory and must be checked against the source data.
 
@@ -27,7 +30,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model. Image, Audio, Video, Assistant, Personal AI, and Navigator remain UI and architecture plans; they do not yet run their respective AI tasks.
+**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, Assistant, Personal AI, and Navigator remain UI and architecture plans; they do not yet run their respective AI tasks.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
