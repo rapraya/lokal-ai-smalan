@@ -6,21 +6,26 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.2.0 — Premium workspace foundation**
+**v0.3.0 — Premium workspace & initial local Chat integration**
 
 - Modern responsive dashboard and navigation for 10 capability areas.
-- Module overview pages and global capability search.
-- Dark/light theme preference stored in the browser.
+- Dedicated overview pages for Chat, Coding, Image, Audio, Video, Text, Data, Assistant, Personal AI, and Navigator.
+- Global capability search and dark/light theme preference stored in the browser.
 - Initial secure-context and WebGPU adapter checks.
-- Product architecture and implementation roadmap.
+- Initial AI Chat integration using WebLLM 0.2.87 through a Web Worker.
+- Small Llama 3.2 1B and 3B model options, loading progress, and streaming responses.
+- Optional local chat history; saving is off by default.
+- Product architecture, feasibility notes, privacy rules, and delivery roadmap.
 
-**Important:** This is still a UI and architecture foundation. No AI model inference, image generation, speech processing, video generation, data-agent workflow, or map service is connected yet. The WebGPU check only detects whether an adapter is available; it does not prove that a particular model can run.
+**Validation status:** The Chat runtime code has been added and checked against WebLLM's current API documentation, but it has **not yet been exercised in a real browser/GPU session**. Browser compatibility, model downloads, device memory, and actual generation still need hands-on testing. The other capability modules are currently UI and architecture plans; they do not yet run their respective AI tasks.
+
+The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
 ## Workspace capabilities
 
 | Workspace | Direction |
 | --- | --- |
-| AI Chat | Local language-model conversations with streaming responses and locally stored history. |
+| AI Chat | WebLLM-based local language-model conversations, streaming, and optional browser-local history. Initial code integration is present; device validation is pending. |
 | AI Coding | Code explanation, generation, review, debugging, and later safe project workflows. |
 | Image Studio | Image understanding, editing utilities, and a separately evaluated image-generation runtime. |
 | Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
@@ -36,10 +41,10 @@ See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for fea
 ## Technology direction
 
 - Static HTML, CSS, and modern JavaScript for the current application shell.
-- [WebLLM](https://webllm.mlc.ai/docs/) for compatible browser-based language models through WebGPU.
+- [WebLLM](https://webllm.mlc.ai/docs/) 0.2.87 for compatible browser-based language models through WebGPU.
 - [Transformers.js](https://huggingface.co/docs/transformers.js) for supported browser-based text, vision, and audio tasks.
 - Web Workers for compute-heavy tasks where supported.
-- IndexedDB and browser caching for user-controlled local data and model assets.
+- Browser Cache API / IndexedDB for model artifacts and user-controlled local data where appropriate.
 - GitHub Pages as a static hosting target.
 
 Model support, model licenses, browser compatibility, GPU memory, download size, and performance must be checked before a model is offered as ready to use.
@@ -52,14 +57,26 @@ Serve the repository root with a local static HTTP server:
 
 Open http://localhost:8080. WebGPU features require a secure context in supporting browsers; localhost is normally treated as a secure development context.
 
+## AI Chat: first model test
+
+1. Open the AI Chat workspace.
+2. Select the smaller 1B model first.
+3. Press **Muat model lokal** and allow the runtime/model downloads to finish.
+4. Send a simple prompt after the engine reports that the model is ready.
+5. If the browser cannot initialize WebGPU or the model exceeds device resources, try another supported browser/device or do not load the model.
+
+The selected model files are downloaded over the network the first time. WebLLM uses browser caching for model artifacts by default, so subsequent loads may reuse cached files. The actual first-run download size and performance depend on the model assets and cache state.
+
 ## Privacy and security principles
 
 1. Local processing is preferred when a supported model and device make it practical.
-2. External AI, maps, storage, or other providers must be clearly identified and opt-in.
-3. Never embed private API keys or secrets in a GitHub Pages application.
-4. File access, geolocation, and consequential actions require explicit user permission.
-5. Local history and memory must be visible, exportable where practical, and deletable by the user.
-6. AI output is assistive; important decisions and generated code must be reviewed.
+2. Model downloads use a network connection even when later inference runs locally.
+3. Optional chat history is stored in this browser only when the user enables it; it is off by default.
+4. External AI, maps, storage, or other providers must be clearly identified and opt-in.
+5. Never embed private API keys or secrets in a GitHub Pages application.
+6. File access, geolocation, and consequential actions require explicit user permission.
+7. Local history and memory must be visible, exportable where practical, and deletable by the user.
+8. AI output is assistive; important decisions and generated code must be reviewed.
 
 ## Deployment
 
