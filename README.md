@@ -53,10 +53,10 @@ Model support, model licenses, browser compatibility, GPU memory, download size,
 
 1. Download the repository ZIP from GitHub and extract it, or clone the repository.
 2. Double-click `PREVIEW-WINDOWS.bat` in the extracted project folder.
-3. The launcher starts a local server and opens http://127.0.0.1:8765.
-4. Keep the terminal window open while using the preview. Press `Ctrl+C` in that window to stop the server.
+3. The launcher selects an available local port, opens the preview URL, and displays that exact URL in the launcher window.
+4. Keep the `Lokal AI Preview Server` window open while using the preview. Close that window to stop the server.
 
-The launcher uses Python 3 when available, or PHP CLI as a fallback. Alternatively, run `python -m http.server 8080` in the repository root and open http://localhost:8080. Do not open `index.html` directly with `file://`; Web Workers and WebGPU require a secure context. Localhost is normally treated as a secure development context.
+The launcher uses Python 3 when available, or PHP CLI as a fallback. It checks that `index.html` exists and verifies that the server has started before opening the browser. Alternatively, run `py -3 -m http.server 8766 --bind 127.0.0.1` in the repository root and open http://127.0.0.1:8766/. Do not open `index.html` directly with `file://`; Web Workers and WebGPU require a secure context. Localhost is normally treated as a secure development context.
 
 ## AI Chat: first model test
 
