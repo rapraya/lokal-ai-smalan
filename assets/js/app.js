@@ -134,27 +134,27 @@
     const steps = config.stages.map((stage, index) =>
       '<li><span class="roadmap-index">' + String(index + 1).padStart(2, "0") + '</span><div><b>' + stage[0] + '</b><small>' + stage[1] + '</small></div></li>'
     ).join("");
-    workspace.innerHTML = \`
+    workspace.innerHTML = `
       <div class="module-page">
-        <button class="module-back" data-page="home">\${icon("arrow")} Kembali ke overview</button>
+        <button class="module-back" data-page="home">${icon("arrow")} Kembali ke overview</button>
         <div class="module-heading-row">
-          <span class="module-heading-icon \${config.color}">\${icon(config.icon)}</span>
-          <div><div class="eyebrow"><span class="eyebrow-pulse"></span> \${config.label}</div><h1>\${config.title}</h1><p>\${config.description}</p></div>
+          <span class="module-heading-icon ${config.color}">${icon(config.icon)}</span>
+          <div><div class="eyebrow"><span class="eyebrow-pulse"></span> ${config.label}</div><h1>${config.title}</h1><p>${config.description}</p></div>
         </div>
         <div class="module-stage">
           <section class="stage-card">
             <span class="stage-tag"><i></i> Rencana implementasi</span>
-            <h2>\${config.headline}</h2>
-            <p>\${config.detail}</p>
-            <div class="stage-note">\${icon("shield")} <span>Workspace ini sedang dibangun bertahap. Kartu ini menjelaskan arah fitur; belum ada inferensi atau pemrosesan AI yang dijalankan pada halaman ini.</span></div>
+            <h2>${config.headline}</h2>
+            <p>${config.detail}</p>
+            <div class="stage-note">${icon("shield")} <span>Workspace ini sedang dibangun bertahap. Kartu ini menjelaskan arah fitur; belum ada inferensi atau pemrosesan AI yang dijalankan pada halaman ini.</span></div>
           </section>
-          <aside class="stage-side-card"><h3>Ruang lingkup pengembangan</h3><ol class="roadmap-list">\${steps}</ol></aside>
+          <aside class="stage-side-card"><h3>Ruang lingkup pengembangan</h3><ol class="roadmap-list">${steps}</ol></aside>
         </div>
-        <div class="module-privacy">\${icon("lock")}<p><strong>Transparansi pemrosesan.</strong> Model lokal, penyimpanan browser, dan layanan eksternal akan dibedakan dengan jelas. Fitur yang mengirim data ke layanan lain harus meminta pilihan pengguna terlebih dahulu.</p></div>
-        \${page === "models" ? renderEngineMetrics() : ""}
-        \${page === "settings" ? renderSettingsPanel() : ""}
+        <div class="module-privacy">${icon("lock")}<p><strong>Transparansi pemrosesan.</strong> Model lokal, penyimpanan browser, dan layanan eksternal akan dibedakan dengan jelas. Fitur yang mengirim data ke layanan lain harus meminta pilihan pengguna terlebih dahulu.</p></div>
+        ${page === "models" ? renderEngineMetrics() : ""}
+        ${page === "settings" ? renderSettingsPanel() : ""}
         <footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Designed for ideas without limits.</span></footer>
-      </div>\`;
+      </div>`;
     if (page === "models") checkDevice();
   }
 
