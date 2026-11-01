@@ -27,3 +27,5 @@ jobs:
         run: node --input-type=module --check < assets/js/webllm-worker.js
       - name: Run project smoke checks
         run: node scripts/smoke-check.mjs
+      - name: Run deterministic CSV analysis tests
+        run: node scripts/data-analysis-test.mjs
