@@ -89,6 +89,28 @@ assert.ok(app.includes("Gateway diperlukan") &&
   app.includes('id="engineGatewayCheck"') &&
   app.includes("modelEngine.checkGateway()"),
   "The Model Engine UI must disclose cloud gateway status and expose its readiness check.");
+
+assert.ok(app.includes('id="chatProviderSelect"') &&
+  app.includes('id="chatCloudModelSelect"') &&
+  app.includes('id="chatCloudConsent"'),
+  "AI Chat must expose distinct local/GPT choices and explicit cloud-session consent.");
+assert.ok(app.includes("async function loadSelectedChatProvider()") &&
+  app.includes('modelEngine.attachRuntime("openai", client, selectedModel)') &&
+  app.includes('modelEngine.createOpenAIClient()'),
+  "GPT activation must require a ready gateway and attach the normalized cloud client.");
+assert.ok(app.includes('chatCloudEngine && (!cloudConsent || !cloudConsent.checked)') &&
+  app.includes("Lepaskan sesi GPT di AI Chat sebelum memuat model lokal untuk modul lain."),
+  "GPT chat must enforce active consent and must not silently replace local sessions in other workspaces.");
+assert.ok(app.includes("const chatContext = chatCloudEngine") &&
+  app.includes("chatMessages.slice(0, -1).slice(-24)"),
+  "Cloud Chat must send only the opted-in conversation context and must not automatically append Personal AI context.");
+assert.ok(app.includes("if (codingInput) codingInput.disabled = chatGenerating") &&
+  app.includes("if (codingRunButton) codingRunButton.disabled = !chatEngine"),
+  "Coding must continue to use the local runtime instead of silently sharing the GPT Chat session.");
+assert.ok(css.includes(".chat-cloud-model-controls{") &&
+  css.includes(".chat-cloud-consent{"),
+  "GPT provider and consent controls must have responsive styling.");
+
 assert.ok(modelEngineCore.includes("async function checkGateway") &&
   modelEngineCore.includes("function createOpenAIClient") &&
   modelEngineCore.includes('credentials: "same-origin"'),
