@@ -1616,18 +1616,27 @@
   function renderChatWorkspace() {
     restoreChatHistory();
     return '<div class="chat-page">' +
-      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label">' + icon("lock") + ' Percakapan diproses di perangkat</span></div>' +
-      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> CONVERSATIONAL INTELLIGENCE</div><h1>AI Chat</h1><p>Mulai percakapan dengan model bahasa yang berjalan langsung di browser.</p></div><span class="chat-build-status"><i></i> Local runtime</span></div>' +
+      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label" id="chatPrivacyLabel">' + icon("lock") + ' Percakapan diproses di perangkat</span></div>' +
+      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> CONVERSATIONAL INTELLIGENCE</div><h1>AI Chat</h1><p>Mulai percakapan dengan model lokal atau provider GPT setelah gateway aman tersedia.</p></div><span class="chat-build-status" id="chatBuildStatusLabel"><i></i> Local runtime</span></div>' +
       '<div class="chat-layout">' +
         '<aside class="chat-control-panel">' +
           '<div class="chat-panel-label">MODEL ENGINE</div>' +
-          '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU</small></div></div>' +
-          '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
-          '<select class="chat-model-select" id="chatModelSelect">' +
-            '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
-            '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
-          '</select>' +
-          '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
+          '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>AI provider</b><small>Local-first · Cloud opsional</small></div></div>' +
+          '<label class="chat-field-label" for="chatProviderSelect">Penyedia AI</label>' +
+          '<select class="chat-model-select" id="chatProviderSelect"><option value="local">Model lokal · WebGPU</option><option value="openai" disabled>OpenAI GPT · gateway belum tersedia</option></select>' +
+          '<div id="chatLocalModelControls">' +
+            '<label class="chat-field-label" for="chatModelSelect">Model lokal</label>' +
+            '<select class="chat-model-select" id="chatModelSelect">' +
+              '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
+              '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+            '</select>' +
+            '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
+          '</div>' +
+          '<div id="chatCloudModelControls" class="chat-cloud-model-controls" hidden>' +
+            '<label class="chat-field-label" for="chatCloudModelSelect">Model GPT</label>' +
+            '<select class="chat-model-select" id="chatCloudModelSelect"><option value="">Periksa gateway untuk memuat katalog model</option></select>' +
+            '<label class="chat-cloud-consent"><input id="chatCloudConsent" type="checkbox"><span><b>Izinkan pemrosesan cloud untuk sesi Chat ini</b><small>Pesan dan konteks percakapan dikirim ke OpenAI melalui gateway aman. Jangan masukkan data sensitif atau dokumen rahasia.</small></span></label>' +
+          '</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
           '<button class="chat-unload-button" id="chatUnloadButton" type="button" hidden>Lepaskan model</button>' +
           '<div class="chat-progress" id="chatProgress" hidden><div class="chat-progress-track"><span id="chatProgressBar"></span></div><p id="chatProgressText">Menyiapkan runtime…</p></div>' +
@@ -1636,10 +1645,10 @@
           '<div class="chat-panel-label">PRIVACY CONTROLS</div>' +
           '<label class="chat-save-option"><input id="chatSaveHistory" type="checkbox"><span><b>Simpan riwayat lokal</b><small>Opsional. Disimpan di browser ini dan dapat dihapus.</small></span></label>' +
           '<button class="chat-clear-button" id="chatClearButton" type="button">Hapus riwayat percakapan</button>' +
-          '<div class="chat-local-note">' + icon("shield") + '<p>Prompt dan jawaban diproses oleh model lokal setelah model termuat. Unduhan runtime dan model tetap membutuhkan koneksi internet.</p></div>' +
+          '<div class="chat-local-note">' + icon("shield") + '<p id="chatProcessingNote">Prompt dan jawaban diproses oleh model lokal setelah model termuat. Unduhan runtime dan model tetap membutuhkan koneksi internet.</p></div>' +
         '</aside>' +
         '<section class="chat-conversation">' +
-          '<div class="chat-conversation-top"><div><b>Private session</b><small id="chatConversationModel">Belum ada model aktif</small></div><span class="chat-session-indicator"><i></i> LOCAL SESSION</span></div>' +
+          '<div class="chat-conversation-top"><div><b>Private session</b><small id="chatConversationModel">Belum ada model aktif</small></div><span class="chat-session-indicator" id="chatSessionIndicator"><i></i> LOCAL SESSION</span></div>' +
           '<div class="chat-messages" id="chatMessages" aria-live="polite"></div>' +
           '<form class="chat-composer" id="chatComposer">' +
             '<textarea id="chatInput" rows="2" maxlength="8000" placeholder="Muat model lokal untuk mulai bertanya…" disabled></textarea>' +
@@ -1647,11 +1656,10 @@
           '</form>' +
         '</section>' +
       '</div>' +
-      '<div class="chat-footer-note">Model: Llama 3.2 Instruct · WebLLM 0.2.87 · Model file disediakan melalui Hugging Face/MLC. Perkiraan VRAM bukan jaminan kompatibilitas.</div>' +
+      '<div class="chat-footer-note">Model lokal menggunakan WebLLM 0.2.87. GPT diproses melalui secure gateway setelah autentikasi dan persetujuan sesi. Cloudflare Access dan gateway produksi belum diaktifkan pada preview lokal.</div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Local-first by design.</span></footer>' +
     '</div>';
   }
-
 
   function renderCodingWorkspace() {
     return '<div class="chat-page coding-page">' +
