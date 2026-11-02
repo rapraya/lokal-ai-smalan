@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import vm from "node:vm";
+import { readFile } from "node:fs/promises";
+
+const app = await readFile("assets/js/app.js", "utf8");
+const start = app.indexOf("  function buildPersonalContextMessage()");
+const end = app.indexOf("  function renderPersonalWorkspace()", start);
+assert.ok(start >= 0 && end > start, "Personal AI context builder was not found.");
+const source = 'let personalContextEnabled = false;\nlet personalPreferences = { language: "id", tone: "natural", detail: "balanced" };\nlet personalMemories = [];\n' + app.slice(start, end) + "\n({ buildPersonalContextMessage })";
+const context = vm.createContext({});
+const api = vm.runInNewContext(source, context);
+assert.equal(api.buildPersonalContextMessage(), null, "Context must be disabled by default.");
+vm.runInContext('personalContextEnabled = true; personalPreferences.language = "en"; personalPreferences.tone = "formal"; personalMemories = Array.from({ length: 14 }, (_, i) => "Note " + i + "x".repeat(300));', context);
+const message = api.buildPersonalContextMessage();
+assert.equal(message.role, "system");
+assert.ok(message.content.includes("English"));
+assert.ok(message.content.includes("Formal"));
+assert.ok(message.content.includes("Note 0"));
+assert.ok(message.content.includes("Note 9"));
+assert.ok(!message.content.includes("Note 10"), "Only ten notes may be shared with a model.");
+assert.ok(!message.content.includes("x".repeat(241)), "Each memory note must be bounded.");
+vm.runInContext("personalContextEnabled = false;", context);
+assert.equal(api.buildPersonalContextMessage(), null, "Disabling permission must stop context injection.");
+console.log("Personal AI tests passed: opt-in gate, bounded context, preference controls, and memory limits.");
