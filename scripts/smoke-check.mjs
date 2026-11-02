@@ -192,4 +192,8 @@ assert.ok(app.includes("listKnowledgeDocumentCoverage(knowledgeDocuments,selecte
 assert.ok(app.includes("const candidateLimit=knowledgePages.length;") && app.includes("findKnowledgeSourcesHybrid(knowledgePages,prompt,queryResult.vectors[0],knowledgeSemanticVectors,knowledgeSemanticPageIndices,candidateLimit)"), "Knowledge workflows must rank the complete loaded collection before evidence selection.");
 assert.ok(app.includes("selectKnowledgeSynthesisSources(knowledgePages,candidates,2,5)"), "Question mode must balance selected evidence across relevant documents without imposing a diversity cap on single-document answers.");
 assert.ok(app.includes("Sintesis bukti dari semua dokumen yang relevan") && app.includes("Jangan menyebut dua hal bertentangan bila konteksnya berbeda"), "Knowledge synthesis must distinguish consistent evidence, contextual differences, and possible conflicts.");
+assert.ok(app.includes("function annotateKnowledgePdfTableContinuations(pages)") && app.includes('type:"repeated-header"'), "PDF Knowledge must detect explicitly repeated table headers on consecutive pages.");
+assert.ok(app.includes('type:"possible"') && app.includes("Kemungkinan lanjutan tabel halaman"), "PDF Knowledge must label uncertain table continuations as possible rather than confirmed.");
+assert.ok(app.includes("Header tabel yang secara eksplisit ditandai berulang") && app.includes("Label kemungkinan lanjutan tabel bukan kepastian"), "Grounded synthesis must distinguish repeated headers from uncertain table continuation.");
+
 console.log("AI Knowledge summary and cross-document comparison mode guard checks passed.");
