@@ -400,6 +400,7 @@
             const viewport=page.getViewport({scale:1.6}),canvas=document.createElement("canvas");
             try{
               const context=canvas.getContext("2d");
+              if(!context)throw new Error("Canvas 2D tidak tersedia di browser ini.");
               canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
               await page.render({canvasContext:context,viewport}).promise;
               const result=await ocrWorker.recognize(canvas);text=(result.data.text||"").replace(/\s+/g," ").trim();
