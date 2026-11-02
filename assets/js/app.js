@@ -282,6 +282,7 @@
     const form = document.getElementById("personalMemoryForm");
     const input = document.getElementById("personalMemoryInput");
     const clear = document.getElementById("personalClear");
+    const status = document.getElementById("personalStatus");
     if (language) language.value = personalPreferences.language;
     if (tone) tone.value = personalPreferences.tone;
     if (detail) detail.value = personalPreferences.detail;
