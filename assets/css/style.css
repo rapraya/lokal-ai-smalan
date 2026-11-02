@@ -97,7 +97,7 @@ body[data-theme="light"] .engine-metric strong{color:#2d4260}
 .chat-message-text{font-size:12px;line-height:1.75;color:#d0dced;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 12px;border:1px solid var(--line);border-radius:4px 10px 10px 10px;background:rgba(255,255,255,.035);max-width:750px}
 .chat-message-user .chat-message-text{background:rgba(112,155,221,.12);border-color:rgba(130,171,232,.15);border-radius:10px 4px 10px 10px;color:#e1ebf9}
 .chat-composer{margin:0 14px 14px;padding:11px;border:1px solid rgba(145,180,232,.22);border-radius:10px;background:rgba(7,13,24,.42);box-shadow:0 8px 24px rgba(0,0,0,.12)}
-.chat-composer textarea{display:block;resize:vertical;width:100%;min-height:42px;max-height:150px;border:0;outline:0;background:transparent;color:#e6eef9;font:10px/1.6 var(--font)}
+.chat-composer textarea{display:block;resize:vertical;width:100%;min-height:42px;max-height:150px;border:0;outline:0;background:transparent;color:#e6eef9;font:12px/1.6 var(--font)}
 .chat-composer textarea::placeholder{color:#7287a2}
 .chat-composer textarea:disabled{opacity:.55;cursor:not-allowed}
 .chat-composer-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
@@ -145,7 +145,7 @@ body[data-theme="light"] .chat-footer-note{color:#8592a5}
 .coding-select-row select{height:34px;min-width:0;padding:0 9px;border:1px solid var(--line-strong);border-radius:7px;background:#0e1828;color:#d7e4f5;font:inherit;font-weight:500}
 .coding-field-label{display:block;margin-top:2px}
 .coding-field-label span{float:right;color:#71859f;font-weight:400}
-.coding-form textarea{width:100%;min-width:0;resize:vertical;padding:11px 12px;border:1px solid var(--line-strong);border-radius:8px;outline:none;background:rgba(8,16,29,.55);color:#d9e5f5;font:10px/1.7 "DM Sans",sans-serif}
+.coding-form textarea{width:100%;min-width:0;resize:vertical;padding:11px 12px;border:1px solid var(--line-strong);border-radius:8px;outline:none;background:rgba(8,16,29,.55);color:#d9e5f5;font:12px/1.7 "DM Sans",sans-serif}
 .coding-form textarea:focus{border-color:rgba(143,181,243,.55);box-shadow:0 0 0 3px rgba(119,164,233,.08)}
 .coding-form textarea::placeholder{color:#6f8199}
 #codingInput{min-height:82px}
@@ -161,7 +161,7 @@ body[data-theme="light"] .chat-footer-note{color:#8592a5}
 .coding-result-head b{font-size:12px;color:#d0deef}
 .coding-result-head button{height:27px;padding:0 9px;border:1px solid var(--line-strong);border-radius:6px;background:rgba(255,255,255,.035);color:#a9c2e3;font-size:12px;cursor:pointer}
 .coding-result-head button:disabled{opacity:.4;cursor:not-allowed}
-.coding-result pre{min-height:220px;max-height:620px;overflow:auto;margin:0;padding:15px;color:#c5d5e9;font:10px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.coding-result pre{min-height:220px;max-height:620px;overflow:auto;margin:0;padding:15px;color:#c5d5e9;font:12px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .coding-status{margin:0;padding:9px 12px;border-top:1px solid var(--line);color:#8196b1;font-size:12px;line-height:1.6}
 .coding-page .chat-footer-note{margin-top:12px}
 body[data-theme="light"] .coding-workbench{background:linear-gradient(155deg,#fff,#f7f9fd)}
