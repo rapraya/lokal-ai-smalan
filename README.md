@@ -6,6 +6,14 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+
+**v0.28.0 — Subject-aware & Table-aware Evidence Verification**
+- Parses TAB-delimited PDF text lines into conservative table records when recognized identity columns and numeric metric/period columns are present.
+- Maps row identity from subject, class, category, indicator, and other recognized label columns; maps metrics from value headers; and keeps year/semester/month scope separate from measurement values.
+- Compares table values only when the normalized row identity and metric key match across different selected source pages. Different names, classes, categories, and indicators are not treated as the same record.
+- Distinguishes value differences, period differences, and unit differences. The review panel shows the subject/row label, metric column, period, data-row index, column index, source document, page, and original TAB-delimited row excerpt.
+- Table-derived numeric values are excluded from the generic prose comparison for that source, avoiding a second comparison that would ignore row identity. Prose evidence continues to use the v0.27 heuristic.
+- Automated tests cover matching subject/class rows, different subjects, different classes, year columns, year fields, unit-aware metric headers, and row/column source provenance. Complex PDF layouts, merged cells, OCR tables, and actual school documents still need browser validation.
 **v0.27.0 — Cross-source Evidence Conflict Detection**
 - Uses PDF.js text coordinates to reconstruct approximate reading lines and preserve wider horizontal gaps as TAB-separated columns.
 - Detects repeated multi-column row patterns as potential table rows and retains a row-count hint on each PDF page. The UI and evidence prompt disclose this as an indication, not guaranteed table reconstruction.
