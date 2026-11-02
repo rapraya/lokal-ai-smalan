@@ -360,7 +360,7 @@
         knowledgeDocuments=knowledgeDocuments.filter(doc=>doc.id!==item.id);knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
         const status=document.getElementById("knowledgeStatus");
         if(knowledgeSemanticEnabled&&knowledgePages.length){knowledgeBusy=true;syncKnowledgeControls();try{await rebuildKnowledgeEmbeddings(status);status.textContent="Dokumen dihapus dan embedding koleksi diperbarui.";}catch(error){knowledgeSemanticEnabled=false;knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];const toggle=document.getElementById("knowledgeSemanticEnabled");if(toggle)toggle.checked=false;stopKnowledgeEmbeddingWorker();status.textContent="Dokumen dihapus. Semantik dinonaktifkan: "+error.message+" BM25 tetap aktif.";}finally{knowledgeBusy=false;syncKnowledgeControls();}}
-        else{knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];status.textContent="Dokumen dihapus dari koleksi sesi.";syncKnowledgeControls();}
+        else{knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];if(!knowledgePages.length){knowledgeSemanticEnabled=false;const toggle=document.getElementById("knowledgeSemanticEnabled");if(toggle)toggle.checked=false;stopKnowledgeEmbeddingWorker();status.textContent="Koleksi kosong. Model semantik dinonaktifkan dan worker ditutup.";}else status.textContent="Dokumen dihapus dari koleksi sesi.";syncKnowledgeControls();}
       });
       row.append(info,remove);list.appendChild(row);
     });
@@ -369,7 +369,7 @@
     const q=document.getElementById("knowledgeQuestion"),ask=document.getElementById("knowledgeAsk"),clear=document.getElementById("knowledgeClear");
     if(q){q.disabled=!knowledgePages.length||!chatEngine||knowledgeBusy||chatGenerating;ask.disabled=q.disabled;}
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
-    const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy;
+    const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy||!knowledgePages.length;
     const file=document.getElementById("knowledgeFile"),ocr=document.getElementById("knowledgeOcrEnabled");
     if(file)file.disabled=knowledgeBusy;if(ocr)ocr.disabled=knowledgeBusy;
     document.querySelectorAll(".knowledge-document-row button").forEach(button=>{button.disabled=knowledgeBusy;});
@@ -586,6 +586,7 @@
   }
   async function enableKnowledgeSemantic(status,toggle){
     if(knowledgeBusy)return;
+    if(!knowledgePages.length){toggle.checked=false;status.textContent="Tambahkan dokumen terlebih dahulu sebelum mengaktifkan pencarian semantik.";syncKnowledgeControls();return;}
     knowledgeBusy=true;syncKnowledgeControls();
     try{
       status.textContent="Memuat runtime dan model embedding lokal…";
@@ -620,7 +621,7 @@
       const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(knowledgeDocuments.some(d=>d.textTruncated)?" Sebagian isi dokumen tidak dimuat karena batas ekstraksi 90.000 karakter per dokumen.":"")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"")+semanticWarning;
       file.value="";knowledgeBusy=false;syncKnowledgeControls();
     });
-    clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];knowledgeSemanticTruncated=false;file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
+    clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];knowledgeSemanticEnabled=false;knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];knowledgeSemanticTruncated=false;semanticToggle.checked=false;stopKnowledgeEmbeddingWorker();file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
     const semanticToggle=document.getElementById("knowledgeSemanticEnabled");
     semanticToggle.addEventListener("change",()=>{
       if(semanticToggle.checked)enableKnowledgeSemantic(status,semanticToggle);
