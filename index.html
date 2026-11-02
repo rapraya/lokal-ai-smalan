@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=0.36.0">
+  <link rel="stylesheet" href="assets/css/style.css?v=0.37.0">
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -47,43 +47,68 @@
         <span class="brand-name"><strong>lokal<span>ai</span></strong><small>SMALAN INTELLIGENCE</small></span>
       </a>
 
-      <div class="workspace-switch">
+      <div class="workspace-switch" aria-label="Workspace aktif">
         <div class="workspace-avatar">S</div>
-        <div><strong>SMALAN Workspace</strong><small>Personal environment</small></div>
-        <span class="switch-chevron">⌄</span>
+        <div class="workspace-switch-copy"><strong>SMALAN Workspace</strong><small>Ruang kerja aktif</small></div>
+        <span class="workspace-status-dot" aria-label="Aktif"></span>
       </div>
 
-      <div class="nav-caption">WORKSPACE</div>
-      <nav class="side-nav" aria-label="Workspace">
-        <button class="nav-link active" data-page="home"><svg><use href="#i-home"/></svg><span>Overview</span></button>
-        <button class="nav-link" data-page="chat"><svg><use href="#i-message"/></svg><span>AI Chat</span><kbd>01</kbd></button>
-        <button class="nav-link" data-page="coding"><svg><use href="#i-code"/></svg><span>AI Coding</span><kbd>02</kbd></button>
-        <button class="nav-link" data-page="image"><svg><use href="#i-image"/></svg><span>Image Studio</span><kbd>03</kbd></button>
-        <button class="nav-link" data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><kbd>04</kbd></button>
-        <button class="nav-link" data-page="video"><svg><use href="#i-video"/></svg><span>Video Studio</span><kbd>05</kbd></button>
-      </nav>
+      <div class="sidebar-navigation">
+        <section class="nav-section">
+          <div class="nav-caption">UTAMA</div>
+          <nav class="side-nav" aria-label="Navigasi utama">
+            <button class="nav-link active" data-page="home"><svg><use href="#i-home"/></svg><span>Overview</span></button>
+          </nav>
+        </section>
 
-      <div class="nav-caption nav-caption-spaced">INTELLIGENCE</div>
-      <nav class="side-nav" aria-label="Intelligence">
-        <button class="nav-link" data-page="text"><svg><use href="#i-type"/></svg><span>Text & Language</span></button>
-        <button class="nav-link" data-page="data"><svg><use href="#i-chart"/></svg><span>Data Analyst</span></button>
-        <button class="nav-link" data-page="assistant"><svg><use href="#i-spark"/></svg><span>AI Assistant</span></button>
-        <button class="nav-link" data-page="personal"><svg><use href="#i-user"/></svg><span>Personal AI</span></button>
-          <button class="nav-link" data-page="knowledge"><svg><use href="#i-file"/></svg><span>AI Knowledge</span></button>
-        <button class="nav-link" data-page="navigation"><svg><use href="#i-compass"/></svg><span>Navigation</span></button>
-      </nav>
+        <section class="nav-section">
+          <div class="nav-caption">AI STUDIO</div>
+          <nav class="side-nav" aria-label="AI Studio">
+            <button class="nav-link" data-page="chat"><svg><use href="#i-message"/></svg><span>AI Chat</span></button>
+            <button class="nav-link" data-page="coding"><svg><use href="#i-code"/></svg><span>AI Coding</span></button>
+          </nav>
+        </section>
+
+        <section class="nav-section">
+          <div class="nav-caption">CREATIVE STUDIO</div>
+          <nav class="side-nav" aria-label="Creative Studio">
+            <button class="nav-link" data-page="image"><svg><use href="#i-image"/></svg><span>Image Studio</span><span class="nav-status nav-status-planned">Rencana</span></button>
+            <button class="nav-link" data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-planned">Rencana</span></button>
+            <button class="nav-link" data-page="video"><svg><use href="#i-video"/></svg><span>Video Studio</span><span class="nav-status nav-status-planned">Rencana</span></button>
+          </nav>
+        </section>
+
+        <section class="nav-section">
+          <div class="nav-caption">INTELLIGENCE</div>
+          <nav class="side-nav" aria-label="Intelligence">
+            <button class="nav-link" data-page="text"><svg><use href="#i-type"/></svg><span>Text & Language</span></button>
+            <button class="nav-link" data-page="data"><svg><use href="#i-chart"/></svg><span>Data Analyst</span></button>
+            <button class="nav-link" data-page="knowledge"><svg><use href="#i-file"/></svg><span>AI Knowledge</span><span class="nav-status nav-status-alpha">Alpha</span></button>
+          </nav>
+        </section>
+
+        <section class="nav-section">
+          <div class="nav-caption">ASSISTANT</div>
+          <nav class="side-nav" aria-label="Assistant">
+            <button class="nav-link" data-page="assistant"><svg><use href="#i-spark"/></svg><span>AI Assistant</span></button>
+            <button class="nav-link" data-page="personal"><svg><use href="#i-user"/></svg><span>Personal AI</span><span class="nav-status nav-status-alpha">Alpha</span></button>
+            <button class="nav-link" data-page="navigation"><svg><use href="#i-compass"/></svg><span>AI Navigator</span><span class="nav-status nav-status-planned">Rencana</span></button>
+          </nav>
+        </section>
+      </div>
 
       <div class="sidebar-bottom">
         <div class="privacy-mini">
           <div class="privacy-mini-icon"><svg><use href="#i-shield"/></svg></div>
-          <div><strong>Privacy first</strong><p>Data tetap dalam kendalimu. Pemrosesan lokal diprioritaskan.</p></div>
+          <div><strong>Privasi dijaga</strong><p>Pemrosesan lokal diprioritaskan.</p></div>
           <span class="privacy-led"></span>
         </div>
-        <nav class="side-nav settings-nav" aria-label="Pengaturan">
+        <div class="nav-caption nav-caption-system">PREFERENSI</div>
+        <nav class="side-nav settings-nav" aria-label="Preferensi">
           <button class="nav-link" data-page="models"><svg><use href="#i-cpu"/></svg><span>Model Engine</span></button>
           <button class="nav-link" data-page="settings"><svg><use href="#i-settings"/></svg><span>Pengaturan</span></button>
         </nav>
-        <div class="sidebar-meta"><span>LOKAL AI <b>·</b> SMALAN</span><span>v0.36.0</span></div>
+        <div class="sidebar-meta"><span>SMALAN INTELLIGENCE</span><span class="app-version">v0.37.0</span></div>
       </div>
     </aside>
 
@@ -92,12 +117,12 @@
       <header class="topbar">
         <div class="topbar-start">
           <button class="icon-control menu-toggle" id="menuToggle" aria-label="Buka menu"><svg><use href="#i-menu"/></svg></button>
-          <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Overview</strong></div>
+          <div class="breadcrumb"><span>Lokal AI</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Overview</strong></div>
         </div>
         <div class="topbar-end">
-          <label class="global-search"><svg><use href="#i-search"/></svg><input id="workspaceSearch" type="search" placeholder="Cari kemampuan..." autocomplete="off"><kbd>⌘ K</kbd></label>
+          <label class="global-search"><svg><use href="#i-search"/></svg><input id="workspaceSearch" type="search" placeholder="Cari fitur atau kemampuan..." autocomplete="off"><kbd>⌘ K</kbd></label>
           <div class="topbar-divider"></div>
-          <div class="runtime-pill"><span class="runtime-dot"></span><span>Local-first mode</span></div>
+          <div class="runtime-pill"><span class="runtime-dot"></span><span>Prioritas lokal</span></div>
           <div class="theme-picker">
             <button class="icon-control theme-toggle" id="themeToggle" type="button" aria-label="Pilih tema tampilan" aria-haspopup="true" aria-expanded="false" title="Pilih tema"><svg id="themeIcon"><use href="#i-palette"/></svg></button>
             <div class="theme-menu" id="themeMenu" role="menu" aria-label="Pilihan tema" hidden>
@@ -107,7 +132,7 @@
               <button class="theme-option" type="button" role="menuitemradio" data-theme-choice="colorful" aria-checked="false"><span class="theme-swatch theme-swatch-colorful"></span><span><b>Colorful</b><small>Pastel cerah dengan aksen warna</small></span><svg><use href="#i-check"/></svg></button>
             </div>
           </div>
-          <div class="profile-chip"><span class="profile-avatar">S</span><span class="profile-chevron">⌄</span></div>
+          <div class="profile-chip" aria-label="Workspace SMALAN"><span class="profile-avatar">S</span><span class="profile-label">SMALAN</span></div>
         </div>
       </header>
 
@@ -115,7 +140,7 @@
         <div class="overview-page">
           <div class="welcome-line">
             <div>
-              <div class="eyebrow"><span class="eyebrow-pulse"></span> YOUR INTELLIGENCE WORKSPACE</div>
+              <div class="eyebrow"><span class="eyebrow-pulse"></span> RUANG KERJA KECERDASAN</div>
               <h1>Ide besar, <span>mulai dari sini.</span></h1>
               <p class="welcome-copy">Satu ruang untuk berpikir, membangun, menganalisis, dan menciptakan hal-hal baru.</p>
             </div>
@@ -124,73 +149,73 @@
 
           <section class="hero-card">
             <div class="hero-copy">
-              <div class="hero-label"><span class="hero-label-icon"><svg><use href="#i-spark"/></svg></span> THE NEXT-GENERATION AI WORKSPACE</div>
+              <div class="hero-label"><span class="hero-label-icon"><svg><use href="#i-spark"/></svg></span> RUANG KERJA AI TERPADU</div>
               <h2>Lebih dari sekadar AI.<br><em>Partner untuk setiap kemungkinan.</em></h2>
               <p>Mulai dari coding hingga kreativitas visual, dari percakapan hingga analisis data. Semua kemampuan dirancang dalam satu workspace dengan kendali privasi yang jelas.</p>
               <div class="hero-actions">
                 <button class="button-primary" data-page="chat">Mulai percakapan <svg><use href="#i-arrow"/></svg></button>
                 <button class="button-quiet" data-scroll="capabilities">Jelajahi kemampuan</button>
               </div>
-              <div class="hero-footnote"><svg><use href="#i-lock"/></svg> Local-first architecture <span>·</span> Your data, your choice</div>
+              <div class="hero-footnote"><svg><use href="#i-lock"/></svg> Pemrosesan lokal diutamakan <span>·</span> Kendali tetap di tanganmu</div>
             </div>
             <div class="hero-visual" aria-hidden="true">
               <div class="visual-ring ring-a"></div><div class="visual-ring ring-b"></div><div class="visual-ring ring-c"></div>
               <div class="visual-aura"></div>
               <div class="visual-core"><div class="visual-core-inner"><span>✳</span></div></div>
               <div class="visual-satellite sat-a"></div><div class="visual-satellite sat-b"></div><div class="visual-satellite sat-c"></div>
-              <div class="visual-float float-a"><span class="float-icon blue"><svg><use href="#i-code"/></svg></span><span><b>Creative</b><small>Build anything</small></span></div>
-              <div class="visual-float float-b"><span class="float-icon mint"><svg><use href="#i-chart"/></svg></span><span><b>Intelligent</b><small>Think deeper</small></span></div>
-              <div class="visual-caption">ONE WORKSPACE <i></i> MANY POSSIBILITIES</div>
+              <div class="visual-float float-a"><span class="float-icon blue"><svg><use href="#i-code"/></svg></span><span><b>Kreatif</b><small>Wujudkan ide</small></span></div>
+              <div class="visual-float float-b"><span class="float-icon mint"><svg><use href="#i-chart"/></svg></span><span><b>Analitis</b><small>Pahami lebih dalam</small></span></div>
+              <div class="visual-caption">SATU RUANG KERJA <i></i> BANYAK KEMAMPUAN</div>
             </div>
             <div class="hero-grain"></div>
           </section>
 
           <div class="section-title-row" id="capabilities">
-            <div><div class="section-kicker">EXPLORE THE ECOSYSTEM</div><h2>Semua kemampuan, satu tempat.</h2><p>Pilih ruang kerja sesuai kebutuhanmu.</p></div>
-            <span class="module-counter"><strong>10</strong> AI capabilities</span>
+            <div><div class="section-kicker">JELAJAHI KEMAMPUAN</div><h2>Semua kemampuan, satu tempat.</h2><p>Pilih ruang kerja sesuai kebutuhanmu.</p></div>
+            <span class="module-counter"><strong>11</strong> kemampuan AI</span>
           </div>
 
           <div class="capability-grid" id="capabilityGrid">
             <button class="capability-card featured-card" data-page="chat" data-search="chat percakapan tanya jawab bahasa ide">
               <span class="card-topline"><span class="capability-icon icon-blue"><svg><use href="#i-message"/></svg></span><span class="capability-status status-foundation">Integrasi awal</span></span>
-              <span class="card-eyebrow">CONVERSATIONAL INTELLIGENCE</span><strong>AI Chat</strong><p>Teman berpikir untuk diskusi, tanya jawab, eksplorasi, dan menyusun ide.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">CONVERSATIONAL INTELLIGENCE</span><strong>AI Chat</strong><p>Teman berpikir untuk diskusi, tanya jawab, eksplorasi, dan menyusun ide.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="coding" data-search="coding program developer debug kode aplikasi">
               <span class="card-topline"><span class="capability-icon icon-violet"><svg><use href="#i-code"/></svg></span><span class="capability-status status-foundation">Integrasi awal</span></span>
-              <span class="card-eyebrow">DEVELOPER INTELLIGENCE</span><strong>AI Coding</strong><p>Tulis, pahami, review, dan perbaiki kode dengan bantuan AI.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">DEVELOPER INTELLIGENCE</span><strong>AI Coding</strong><p>Tulis, pahami, review, dan perbaiki kode dengan bantuan AI.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="image" data-search="gambar image image generation editing design visual">
               <span class="card-topline"><span class="capability-icon icon-rose"><svg><use href="#i-image"/></svg></span><span class="capability-status status-planned">Direncanakan</span></span>
-              <span class="card-eyebrow">GENERATIVE VISUALS</span><strong>Image Studio</strong><p>Buat, edit, olah, dan pahami gambar serta aset visual.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">GENERATIVE VISUALS</span><strong>Image Studio</strong><p>Buat, edit, olah, dan pahami gambar serta aset visual.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="audio" data-search="audio suara musik speech transcription text to speech">
               <span class="card-topline"><span class="capability-icon icon-mint"><svg><use href="#i-audio"/></svg></span><span class="capability-status status-planned">Direncanakan</span></span>
-              <span class="card-eyebrow">SPEECH & SOUND</span><strong>Audio Lab</strong><p>Transkripsi, pemahaman audio, suara sintetis, dan olah audio.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">SPEECH & SOUND</span><strong>Audio Lab</strong><p>Transkripsi, pemahaman audio, suara sintetis, dan olah audio.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="video" data-search="video film motion clip editing generation">
               <span class="card-topline"><span class="capability-icon icon-orange"><svg><use href="#i-video"/></svg></span><span class="capability-status status-planned">Direncanakan</span></span>
-              <span class="card-eyebrow">MOTION & STORYTELLING</span><strong>Video Studio</strong><p>Rancang ide, pahami, olah, dan kembangkan konten video.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">MOTION & STORYTELLING</span><strong>Video Studio</strong><p>Rancang ide, pahami, olah, dan kembangkan konten video.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="text" data-search="text bahasa tulisan translate translation summary ringkasan">
               <span class="card-topline"><span class="capability-icon icon-sky"><svg><use href="#i-type"/></svg></span><span class="capability-status status-foundation">Integrasi awal</span></span>
-              <span class="card-eyebrow">LANGUAGE & KNOWLEDGE</span><strong>Text & Language</strong><p>Menulis, meringkas, menerjemahkan, dan memahami bahasa.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">LANGUAGE & KNOWLEDGE</span><strong>Text & Language</strong><p>Menulis, meringkas, menerjemahkan, dan memahami bahasa.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="data" data-search="data analisis analytics spreadsheet csv chart decision">
               <span class="card-topline"><span class="capability-icon icon-gold"><svg><use href="#i-chart"/></svg></span><span class="capability-status status-foundation">Integrasi awal</span></span>
-              <span class="card-eyebrow">DATA & DECISIONS</span><strong>Data Analyst</strong><p>Impor, cari, urutkan, kelompokkan, analisis, dan ekspor data CSV secara lokal.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">DATA & DECISIONS</span><strong>Data Analyst</strong><p>Impor, cari, urutkan, kelompokkan, analisis, dan ekspor data CSV secara lokal.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
-            <button class="capability-card" data-page="knowledge" data-search="knowledge dokumen pdf document file riset sumber referensi tanya jawab"><span class="card-topline"><span class="capability-icon icon-blue"><svg><use href="#i-file"/></svg></span><span class="capability-status status-foundation">Alpha</span></span><span class="card-eyebrow">DOCUMENT INTELLIGENCE</span><strong>AI Knowledge</strong><p>Kelola beberapa dokumen sekaligus dan cari jawaban lintas sumber dengan kutipan yang dapat diperiksa.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span></button>
+            <button class="capability-card" data-page="knowledge" data-search="knowledge dokumen pdf document file riset sumber referensi tanya jawab"><span class="card-topline"><span class="capability-icon icon-blue"><svg><use href="#i-file"/></svg></span><span class="capability-status status-foundation">Alpha</span></span><span class="card-eyebrow">DOCUMENT INTELLIGENCE</span><strong>AI Knowledge</strong><p>Kelola beberapa dokumen sekaligus dan cari jawaban lintas sumber dengan kutipan yang dapat diperiksa.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span></button>
             <button class="capability-card" data-page="assistant" data-search="assistant asisten virtual tools workflow tasks">
               <span class="card-topline"><span class="capability-icon icon-cyan"><svg><use href="#i-spark"/></svg></span><span class="capability-status status-planned">Direncanakan</span></span>
-              <span class="card-eyebrow">AI AGENT & WORKFLOWS</span><strong>AI Assistant</strong><p>Asisten virtual untuk membantu tugas dan alur kerja sehari-hari.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">AI AGENT & WORKFLOWS</span><strong>AI Assistant</strong><p>Asisten virtual untuk membantu tugas dan alur kerja sehari-hari.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="personal" data-search="personalization personalisasi rekomendasi preference memory">
               <span class="card-topline"><span class="capability-icon icon-violet"><svg><use href="#i-user"/></svg></span><span class="capability-status status-foundation">Alpha</span></span>
-              <span class="card-eyebrow">PERSONAL INTELLIGENCE</span><strong>Personal AI</strong><p>Preferensi, konteks, dan rekomendasi yang dapat kamu kendalikan.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">PERSONAL INTELLIGENCE</span><strong>Personal AI</strong><p>Preferensi, konteks, dan rekomendasi yang dapat kamu kendalikan.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
             <button class="capability-card" data-page="navigation" data-search="navigasi navigation mobility maps location route travel">
               <span class="card-topline"><span class="capability-icon icon-green"><svg><use href="#i-compass"/></svg></span><span class="capability-status status-planned">Direncanakan</span></span>
-              <span class="card-eyebrow">NAVIGATION & MOBILITY</span><strong>AI Navigator</strong><p>Bantu merencanakan perjalanan, lokasi, rute, dan mobilitas.</p><span class="card-bottom"><span>Explore workspace</span><svg><use href="#i-arrow"/></svg></span>
+              <span class="card-eyebrow">NAVIGATION & MOBILITY</span><strong>AI Navigator</strong><p>Bantu merencanakan perjalanan, lokasi, rute, dan mobilitas.</p><span class="card-bottom"><span>Buka ruang kerja</span><svg><use href="#i-arrow"/></svg></span>
             </button>
           </div>
           <div class="search-empty" id="searchEmpty" hidden>Tidak ada kemampuan yang cocok dengan pencarianmu.</div>
@@ -204,11 +229,11 @@
             <div class="readiness-main"><div class="readiness-emblem"><svg><use href="#i-cpu"/></svg></div><div><span class="section-kicker">DEVICE & MODEL READINESS</span><h3>Siapkan perangkatmu untuk AI.</h3><p>Periksa dukungan browser sebelum mengunduh dan menjalankan model lokal.</p></div></div>
             <div class="readiness-status"><div class="readiness-item"><span>WebGPU</span><strong id="webgpuStatus">Memeriksa…</strong></div><div class="readiness-item"><span>Secure context</span><strong id="secureStatus">Memeriksa…</strong></div><button class="button-outline" data-page="models">Buka Model Engine <svg><use href="#i-arrow"/></svg></button></div>
           </section>
-          <footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Designed for ideas without limits.</span></footer>
+          <footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Dirancang untuk ide tanpa batas.</span></footer>
         </div>
       </section>
     </main>
   </div>
-  <script src="assets/js/app.js?v=0.36.0"></script>
+  <script src="assets/js/app.js?v=0.37.0"></script>
 </body>
 </html>
