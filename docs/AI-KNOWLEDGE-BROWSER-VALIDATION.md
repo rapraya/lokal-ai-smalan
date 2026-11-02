@@ -162,3 +162,16 @@ Isi setelah pengujian nyata dilakukan.
 7. Buka kutipan sumber dan cocokkan angka, tanda desimal, mata uang, satuan, tanggal, periode, subjek, pengecualian, dan ruang lingkup dengan dokumen asli.
 
 **Batasan:** normalisasi angka menggunakan aturan format umum dan dapat ambigu pada dokumen dengan locale campuran. Daftar satuan serta penanda konteks tidak lengkap. Perbandingan tanggal bergantung pada format yang dikenali. Nilai yang sama dapat muncul dalam konteks berbeda, sedangkan sinonim dan parafrasa dapat luput. Semua peringatan harus diperlakukan sebagai petunjuk pemeriksaan, bukan penentu kebenaran atau kontradiksi.
+
+
+## 15. Konflik nilai antar-sumber
+
+1. Siapkan dua dokumen uji yang membahas konsep sama dengan satuan yang sama, misalnya jumlah peserta didik aktif. Gunakan nilai berbeda tanpa periode yang berbeda. Pastikan panel menandai **Potensi konflik nilai** dan menampilkan kedua kutipan serta identitas [S#].
+2. Ulangi dengan nilai berbeda tetapi tahun yang eksplisit berbeda. Sistem harus menandai **Perbedaan periode/cakupan**, bukan menyatakan konflik langsung.
+3. Uji konsep yang tidak berhubungan, misalnya jumlah peserta didik dibanding nilai anggaran. Sistem tidak boleh membandingkan keduanya hanya karena sama-sama mengandung angka.
+4. Uji angka yang sama dengan satuan berbeda, misalnya berat 10 kg dan 10 gram. Sistem harus menampilkan **Perbedaan satuan** secara terpisah.
+5. Periksa apakah sumber berasal dari halaman berbeda dalam dokumen yang sama atau dari beberapa dokumen. Identitas dokumen, halaman/bagian, dan kedua cuplikan harus tetap sesuai.
+6. Uji halaman tabel dengan banyak baris, angka tahun, nomor halaman, dan beberapa metrik. Pastikan angka yang tidak memiliki satuan atau konteks bersama yang cukup tidak memicu perbandingan yang menyesatkan.
+7. Periksa dokumen asli sebelum menyimpulkan konflik. Cermati periode, populasi, definisi, status data, metode pengukuran, versi dokumen, dan satuan.
+
+**Batasan:** pendeteksi menggunakan kesamaan istilah konteks dan angka bersatuan sebagai sinyal awal. Ia belum memahami kesetaraan makna, relasi tabel, identitas subjek per baris, atau otoritas versi dokumen. Kutipan yang dipilih juga bukan keseluruhan koleksi. Label **Potensi konflik** berarti perlu pemeriksaan manusia, bukan bukti bahwa sumber saling membantah atau salah.
