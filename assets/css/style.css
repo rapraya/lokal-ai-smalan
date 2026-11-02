@@ -1516,3 +1516,36 @@ body[data-theme="colorful"] .global-search input{color:#33365a}
 body[data-theme="colorful"] .profile-chip{background:#fff;border-color:#e9e5f4}
 body[data-theme="colorful"] .capability-card.featured-card{background:linear-gradient(145deg,#eff3ff,#f8f1ff 65%,#fff7fb)}
 body[data-theme="colorful"] .capability-card.featured-card>strong{color:#39345f}
+
+
+/* v0.37.1 — desktop sidebar collapse/restore */
+@media(min-width:801px){
+  .menu-toggle{
+    display:grid;
+    place-items:center;
+    flex:0 0 38px;
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .sidebar{
+    transition:transform .24s cubic-bezier(.2,.75,.25,1);
+    will-change:transform;
+  }
+  .main-area{
+    transition:width .24s cubic-bezier(.2,.75,.25,1),margin-left .24s cubic-bezier(.2,.75,.25,1);
+  }
+  .app-shell.sidebar-collapsed .sidebar{
+    transform:translateX(calc(-1 * var(--layout-sidebar) - 4px));
+    box-shadow:none;
+    pointer-events:none;
+  }
+  .app-shell.sidebar-collapsed .main-area{
+    width:100%;
+    margin-left:0;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .sidebar,.main-area{transition:none!important}
+}
