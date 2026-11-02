@@ -6,6 +6,13 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.22.0 — Section-aware Advanced RAG**
+- Preserves line breaks exposed by PDF.js instead of flattening every native-text page into one paragraph, improving heading recognition without changing the page citation identity.
+- Detects Markdown, numbered, and short uppercase section headings; section labels carry forward to following pages/chunks until another heading is found. Heading detection is heuristic, not a full layout parser.
+- BM25 retrieval can use matching section-title terms as a small additional signal, while retaining body-text relevance. Hybrid semantic retrieval still falls back to BM25 when needed.
+- Groups selected evidence by normalized section heading across documents and keeps original [S#] citation numbering intact.
+- Automated tests cover heading detection, section carry-forward, section-title retrieval, cross-document grouping, and stable citation numbering. Real PDFs, OCR layout, browser memory, and actual model quality still require manual validation.
+
 **v0.21.0 — Document Summaries & Comparison**
 - Adds three explicit AI Knowledge workflows: ask the collection, summarize each document, and compare evidence across documents.
 - Document summaries use up to three representative sections per file (early, middle, and late) with visible page/section references and a clear note that the summary is not exhaustive.
