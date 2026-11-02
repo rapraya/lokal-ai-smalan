@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
   readFile("assets/js/webllm-worker.js", "utf8"),
   readFile("README.md", "utf8"),
   readFile("docs/UI-DESIGN-SYSTEM.md", "utf8"),
+  readFile("assets/js/model-engine-core.js", "utf8"),
 ]);
 
 const requiredModules = [
@@ -62,6 +63,27 @@ assert.ok(css.includes('body[data-theme="light"] .sidebar') &&
   "Redesigned navigation must be styled consistently in all three themes.");
 assert.ok(app.includes('<strong>11</strong> kemampuan AI'),
   "Overview search must display the correct localized capability count.");
+
+const registryScriptIndex = html.indexOf('assets/js/model-engine-core.js?v=');
+const appScriptIndex = html.indexOf('assets/js/app.js?v=');
+assert.ok(registryScriptIndex >= 0 && appScriptIndex > registryScriptIndex,
+  "The Model Engine registry must load before the application script.");
+assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
+  modelEngineCore.includes('id: "openai"') &&
+  modelEngineCore.includes('id: "anthropic"') &&
+  modelEngineCore.includes('id: "google"'),
+  "The Model Engine registry must list the local provider and the three cloud integration targets.");
+assert.ok(modelEngineCore.includes('availability: "gateway-required"') &&
+  modelEngineCore.includes("function attachRuntime") &&
+  modelEngineCore.includes("function clearRuntime"),
+  "Cloud providers must remain gated until a secure gateway is available, with a shared runtime lifecycle.");
+assert.ok(app.includes('function renderModelEngineWorkspace()') &&
+  app.includes('modelEngine.attachRuntime("local-webllm"') &&
+  app.includes('modelEngine.clearRuntime(runtimeToUnload)'),
+  "The Model Engine dashboard must report and manage the shared local WebLLM runtime.");
+assert.ok(app.includes("Gateway diperlukan") &&
+  app.includes("Kredensial tidak disimpan di browser."),
+  "The Model Engine UI must disclose cloud gateway and credential requirements.");
 
 assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
   html.includes('data-theme-choice="colorful"'), "The theme picker must expose Dark, Light, and Colorful modes.");
