@@ -708,6 +708,52 @@
     const used=Array.from(new Set(markers));
     return {used,invalid:used.filter(index=>!Number.isInteger(index)||index<1||index>sourceCount),missing:markers.length===0};
   }
+  function splitKnowledgeAnswerClaims(response){
+    const stopWords=new Set(["yang","dan","untuk","dari","dengan","pada","dalam","adalah","atau","ini","itu","juga","akan","dapat","tidak","lebih","sebagai","oleh","karena","agar","sudah","belum","bahwa","the","and","for","from","with","this","that","are","was","were","has","have"]);
+    const lines=String(response||"").split(/\r?\n/);
+    const claims=[];
+    lines.forEach(line=>{
+      const cleaned=line.trim().replace(/^#{1,6}\s+/,"").replace(/^(?:[-*•]|\d+[.)])\s+/,"").replace(/^\*\*(.+)\*\*$/,"$1").trim();
+      if(!cleaned)return;
+      const sentences=cleaned.match(/[^.!?]+(?:[.!?]+|$)/gu)||[cleaned];
+      sentences.forEach(sentence=>{
+        const text=sentence.trim();
+        const terms=(text.replace(/\[S\d+\]/gi,"").toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{3,}/gu)||[]).filter(term=>!stopWords.has(term));
+        if(terms.length>=3||/\[S\d+\]/i.test(text))claims.push({text,terms:Array.from(new Set(terms))});
+      });
+    });
+    return claims;
+  }
+  function verifyKnowledgeAnswerSupport(response,sources){
+    const sourceList=Array.isArray(sources)?sources:[];
+    const markerAudit=inspectKnowledgeCitationMarkers(response,sourceList.length);
+    const claims=splitKnowledgeAnswerClaims(response).map(claim=>{
+      const markers=Array.from(claim.text.matchAll(/\[S(\d+)\]/gi),match=>Number(match[1]));
+      const cited=Array.from(new Set(markers));
+      const invalid=cited.filter(index=>!Number.isInteger(index)||index<1||index>sourceList.length);
+      const valid=cited.filter(index=>Number.isInteger(index)&&index>=1&&index<=sourceList.length);
+      const evidenceTerms=new Set();
+      valid.forEach(index=>{
+        const source=sourceList[index-1]||{};
+        const sourceText=String(source.text||"")+" "+String(source.section||"");
+        (sourceText.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{3,}/gu)||[]).forEach(term=>evidenceTerms.add(term));
+      });
+      const matchedTerms=claim.terms.filter(term=>evidenceTerms.has(term));
+      const ratio=claim.terms.length?matchedTerms.length/claim.terms.length:0;
+      let status="uncited";
+      if(invalid.length)status="invalid";
+      else if(!valid.length)status="uncited";
+      else if(claim.terms.length<3)status="limited";
+      else if(matchedTerms.length>=2&&ratio>=0.45)status="supported";
+      else if(matchedTerms.length>=1&&ratio>=0.2)status="partial";
+      else status="weak";
+      return {...claim,cited,valid,invalid,matchedTerms,ratio,status};
+    });
+    const counts={supported:0,partial:0,weak:0,uncited:0,invalid:0,limited:0};
+    claims.forEach(claim=>{counts[claim.status]=(counts[claim.status]||0)+1;});
+    const status=counts.invalid?"invalid":counts.uncited?"uncited":counts.weak?"weak":counts.partial||counts.limited?"partial":"supported";
+    return {status,markerAudit,claims,counts,claimCount:claims.length};
+  }
   function ensureKnowledgeEmbeddingWorker(){
     if(knowledgeEmbeddingWorker)return knowledgeEmbeddingWorker;
     if(typeof Worker==="undefined")throw new Error("Browser ini tidak mendukung Web Worker untuk embedding lokal.");
