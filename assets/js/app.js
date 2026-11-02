@@ -688,7 +688,7 @@
         if(knowledgeDocuments.length>=5){failed.push("Batas lima dokumen tercapai.");break;}
         if(knowledgeDocuments.some(d=>d.name===f.name&&d.size===f.size)){failed.push(f.name+": sudah ada di koleksi.");continue;}
         status.textContent="Mengekstrak "+f.name+" di browser…";
-        try{const pages=applyKnowledgeSectionMetadata(await readKnowledgeFile(f,{ocrEnabled:ocrOption.checked,onProgress:(page,total,progress)=>{status.textContent="OCR halaman "+page+"/"+total+" · "+Math.round(progress*100)+"%";}}));const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:pages.ocrCount||0,ocrSkipped:!!pages.ocrSkipped,textTruncated:!!pages.textTruncated,ocrNotice:pages.ocrNotice||"",pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});added++;
+        try{const pages=applyKnowledgeSectionMetadata(await readKnowledgeFile(f,{ocrEnabled:ocrOption.checked,onProgress:(page,total,progress)=>{status.textContent="OCR halaman "+page+"/"+total+" · "+Math.round(progress*100)+"%";}}));const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:pages.ocrCount||0,ocrSkipped:!!pages.ocrSkipped,textTruncated:!!pages.textTruncated,ocrNotice:pages.ocrNotice||"",pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});added++;}
         catch(e){failed.push(f.name+": "+e.message);}
       }
       knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
