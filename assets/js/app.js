@@ -380,7 +380,7 @@
       for(let n=1;n<=pdf.numPages&&total<90000;n++){
         const page=await pdf.getPage(n),content=await page.getTextContent();
         let text=content.items.map(x=>x.str||"").join(" ").replace(/\\s+/g," ").trim(),isOcr=false;
-        if(!text&&options.ocrEnabled&&ocrCount<20){
+        if(!text&&options.ocrEnabled&&ocrAttempted<20){\n          ocrAttempted++;
           try{
             if(!ocrWorker){const tesseract=await loadKnowledgeOcr();ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
             const viewport=page.getViewport({scale:1.6}),canvas=document.createElement("canvas"),context=canvas.getContext("2d");
@@ -439,7 +439,7 @@
         catch(e){failed.push(f.name+": "+e.message);}
       }
       knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
-      const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"");
+      const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"");
       file.value="";knowledgeBusy=false;syncKnowledgeControls();
     });
     clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
