@@ -868,3 +868,5 @@ body[data-theme="light"] .knowledge-unverified-draft pre{color:#61758e}
   .knowledge-question-form #knowledgeAsk{width:100%}
   #knowledgeLoadSamples{width:100%}
 }
+
+.knowledge-layout>.assistant-panel:nth-child(2){align-self:start}
