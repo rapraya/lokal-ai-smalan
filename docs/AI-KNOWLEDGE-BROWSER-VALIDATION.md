@@ -135,3 +135,17 @@ Isi setelah pengujian nyata dilakukan.
 7. Bandingkan hasil ekstraksi dengan PDF asli, terutama untuk kolom yang memiliki sel gabungan, baris multiline, atau pemisah vertikal yang rapat.
 
 **Batasan:** hubungan lintas halaman menggunakan urutan halaman, posisi awal/akhir blok, kesamaan header, jumlah kolom, dan perkiraan posisi kolom. Header sama pada dua halaman berurutan menjadi indikasi kuat pengulangan; kesamaan geometri tanpa header hanya menghasilkan label kemungkinan. Sistem belum membuktikan identitas tabel melalui border, merged cells, header bertingkat, atau makna semantik kolom.
+
+## 13. Verifikasi sitasi pada tingkat klaim
+
+1. Muat dokumen uji yang memiliki kutipan teks jelas, lalu jalankan pertanyaan yang menghasilkan beberapa kalimat faktual.
+2. Periksa setiap kalimat yang ditampilkan: klaim dengan penanda [S#] dan istilah yang cocok kuat dengan kutipan akan diberi status **didukung secara tekstual**. Status ini bukan jaminan kebenaran makna.
+3. Uji klaim yang hanya memiliki sebagian istilah sama dengan bukti. Status seharusnya **dukungan parsial** dan panel meminta pemeriksaan manusia.
+4. Uji kalimat dengan sitasi valid tetapi isi yang tidak memiliki kecocokan istilah memadai. Status harus **dukungan lemah**, bukan otomatis dianggap benar hanya karena [S#] tersedia.
+5. Uji jawaban dengan satu kalimat faktual tanpa sitasi. Pastikan status **tanpa sitasi** ditampilkan.
+6. Uji model/hasil jawaban yang menyebut [S9] ketika hanya ada dua kutipan. Pastikan rujukan tersebut ditandai **tidak valid** dan tidak diperlakukan sebagai sumber.
+7. Uji beberapa kalimat sekaligus: satu didukung, satu tidak disitasi, dan satu parsial. Pastikan panel memeriksa masing-masing klaim, bukan hanya keberadaan satu penanda [S#] di seluruh jawaban.
+8. Uji klaim sangat singkat atau judul pendek. Sistem seharusnya menyatakan tidak cukup teks untuk dinilai, bukan menganggapnya didukung.
+9. Buka kutipan di bawah jawaban dan verifikasi ulang nama dokumen, halaman/bagian, angka, satuan, tanggal, pengecualian, serta konteks kalimat.
+
+**Batasan penting:** pemeriksaan otomatis membandingkan istilah pada kalimat dengan teks kutipan yang benar-benar diberikan ke model. Pemeriksaan ini tidak memahami negasi, sinonim, implikasi, hubungan sebab-akibat, konteks hukum, atau kontradiksi semantik secara andal. Skor kecocokan tinggi bukan bukti entailment dan tidak menggantikan pemeriksaan manusia terhadap dokumen asli.
