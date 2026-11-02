@@ -24,6 +24,13 @@ The architecture is **local-first, not local-only**: supported models should run
 - Grounded synthesis guidance asks the local model to distinguish corroborating evidence, contextual differences, and possible conflicts while checking date and scope. It continues to require source markers for factual claims.
 - Automated tests cover coordinate-based column extraction, repeated row detection, row boundaries, unpositioned-text fallback, and source metadata. Real-world PDFs with merged cells, borders, multi-column layouts, and scanned tables still require browser/device validation.
 
+**v0.26.0 — Numerical & Contextual Verification**
+- Extends claim-level citation review to inspect explicit numeric values, percentages, currency amounts, common units, calendar dates, and standalone years in each cited claim.
+- Normalizes common Indonesian number formatting (for example, "1.500.000" and "1,5") and common equivalent date formats before comparison; a value absent from the exact cited excerpts is surfaced for review.
+- Flags same-number/different-unit cases separately and highlights differences in negation, obligation, exception, period, and scope markers such as "tidak", "wajib", "kecuali", "semester", and "tahun ajaran".
+- The panel shows the reason and the claim details that triggered each warning. These are conservative review signals, not proof of contradiction or correctness. Different but equivalent wording, a legitimate scope distinction, or a formatting variation may still need human interpretation.
+- Automated tests cover equivalent currency/date formatting, missing values and years, unit mismatches, and changes in negation/exception language. Real school documents and browser/device behavior still require manual validation.
+
 **v0.22.0 — Section-aware Advanced RAG**
 - Preserves line breaks exposed by PDF.js instead of flattening every native-text page into one paragraph, improving heading recognition without changing the page citation identity.
 - Detects Markdown, numbered, and short uppercase section headings; section labels carry forward to following pages/chunks until another heading is found. Heading detection is heuristic, not a full layout parser.
