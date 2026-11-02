@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme] = await Promise.all([
+const [html, css, app, worker, readme, designSystem] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
   readFile("assets/js/webllm-worker.js", "utf8"),
   readFile("README.md", "utf8"),
+  readFile("docs/UI-DESIGN-SYSTEM.md", "utf8"),
 ]);
 
 const requiredModules = [
@@ -174,6 +175,15 @@ assert.ok(app.includes("if (assistantMessages.length > 12) assistantMessages.spl
 assert.ok(app.includes("Jangan menjalankan atau menandai tugas selesai") && app.includes("Tidak ada tindakan otomatis"), "AI Assistant must not execute or complete tasks automatically.");
 assert.ok(app.includes("function buildDataInterpretationMessages(") && app.includes("max_tokens: 512") && app.includes("history.slice(-8)"), "Local interpretation must use bounded, isolated follow-up messages.");
 assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disertakan"), "Interpretation context must disclose aggregate-only data.");
+
+assert.ok(designSystem.includes("Dark") && designSystem.includes("Light") &&
+  designSystem.includes("Colorful") && designSystem.includes("Checklist untuk modul baru"),
+  "The shared UI design system must document all themes and module acceptance rules.");
+assert.ok(designSystem.includes("minimum 12 px") &&
+  designSystem.includes("Sidebar desktop") &&
+  designSystem.includes("Responsivitas dan aksesibilitas"),
+  "The design system must define typography, layout, responsiveness, and accessibility.");
+
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
