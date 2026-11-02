@@ -6,7 +6,7 @@ const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function buildAssistantMessages(");
 const end = app.indexOf("  function renderAssistantTasks()", start);
 assert.ok(start >= 0 && end > start, "AI Assistant message builder was not found.");
-const source = app.slice(start, end) + "\\n({ buildAssistantMessages })";
+const source = app.slice(start, end) + "\n({ buildAssistantMessages })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 
 const tasks = [
@@ -37,7 +37,7 @@ assert.ok(messages[7].content.includes("Jangan menjalankan atau menandai tugas s
 
 const manyTasks = Array.from({ length: 70 }, (_, index) => ({ title: "Task " + index, completed: false }));
 const bounded = api.buildAssistantMessages(manyTasks, [], "review", "review");
-assert.equal(JSON.parse(bounded[1].content.split("Daftar tugas yang dipilih pengguna (JSON):\\n")[1].split("\\n\\n")[0]).length, 50);
+assert.equal(JSON.parse(bounded[1].content.split("Daftar tugas yang dipilih pengguna (JSON):\n")[1].split("\n\n")[0]).length, 50);
 const chat = api.buildAssistantMessages([], [], "Apa langkah berikut?", "chat");
 assert.ok(chat[0].content.includes("Jawab pertanyaan pengguna"));
 assert.ok(chat[1].content.includes("Apa langkah berikut?"));
