@@ -7,7 +7,7 @@ const start = app.indexOf("  function findKnowledgeSources(");
 const sourceStart = app.indexOf("  function groupKnowledgeSourcesBySection(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
-const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport })";
+const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -401,6 +401,39 @@ const contextMismatchAudit = api.verifyKnowledgeAnswerSupport(
 );
 assert.ok(contextMismatchAudit.claims[0].details.flags.some(flag => flag.code === "contextReview"),
   "Differences in negation, obligation, and exception markers should require contextual review.");
+
+const evidenceConflicts = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "Rekap-A.pdf", page: 2, text: "Jumlah peserta didik aktif mencapai 120 orang." },
+  { sourceNumber: 2, documentName: "Rekap-B.pdf", page: 4, text: "Jumlah peserta didik aktif mencapai 95 orang." }
+]);
+assert.equal(evidenceConflicts.counts.potentialConflict, 1,
+  "Different values with sufficiently similar concepts and units should be raised as a potential conflict.");
+assert.equal(evidenceConflicts.conflicts[0].left.sourceNumber, 1);
+assert.equal(evidenceConflicts.conflicts[0].right.sourceNumber, 2);
+assert.equal(evidenceConflicts.conflicts[0].left.value, "120 orang");
+assert.equal(evidenceConflicts.conflicts[0].right.value, "95 orang");
+
+const scopedEvidenceDifferences = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "Rekap-2024.pdf", page: 1, text: "Jumlah peserta didik aktif pada tahun 2024 mencapai 120 orang." },
+  { sourceNumber: 2, documentName: "Rekap-2025.pdf", page: 1, text: "Jumlah peserta didik aktif pada tahun 2025 mencapai 95 orang." }
+]);
+assert.equal(scopedEvidenceDifferences.counts.scopeDifference, 1,
+  "Different explicit years should be labeled as a scope/period difference rather than a direct conflict.");
+assert.equal(scopedEvidenceDifferences.counts.potentialConflict, 0);
+
+const unrelatedEvidence = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "Siswa.pdf", text: "Jumlah peserta didik aktif mencapai 120 orang." },
+  { sourceNumber: 2, documentName: "Anggaran.pdf", text: "Jumlah anggaran operasional mencapai 95 rupiah." }
+]);
+assert.equal(unrelatedEvidence.total, 0,
+  "Different subjects with insufficient shared context must not be compared as conflicting facts.");
+
+const unitEvidenceDifferences = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "Data-A.pdf", text: "Berat sampel laboratorium adalah 10 kilogram." },
+  { sourceNumber: 2, documentName: "Data-B.pdf", text: "Berat sampel laboratorium adalah 10 gram." }
+]);
+assert.equal(unitEvidenceDifferences.counts.unitDifference, 1,
+  "The same numeric value with different recognized units should be separated from value conflicts.");
 assert.ok(numberMismatchAudit.flaggedCount > 0 && numberMismatchAudit.detailCounts.numberNotFound > 0,
   "The audit summary should expose claim-level detail warning counts.");
 
