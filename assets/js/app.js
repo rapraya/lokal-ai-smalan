@@ -352,13 +352,13 @@
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     if(pdf.numPages>80)throw new Error("PDF melebihi 80 halaman.");
     const pages=[];let total=0;
-    for(let n=1;n<=pdf.numPages&&total<90000;n++){const p=await pdf.getPage(n),c=await p.getTextContent(),t=c.items.map(x=>x.str||"").join(" ").replace(/\\s+/g," ").trim();if(t){pages.push({page:n,text:t.slice(0,12000)});total+=t.length;}}
+    for(let n=1;n<=pdf.numPages&&total<90000;n++){const p=await pdf.getPage(n),c=await p.getTextContent(),t=c.items.map(x=>x.str||"").join(" ").replace(/\s+/g," ").trim();if(t){pages.push({page:n,text:t.slice(0,12000)});total+=t.length;}}
     if(!pages.length)throw new Error("Teks tidak ditemukan. PDF hasil scan membutuhkan OCR yang belum tersedia.");
     return pages;
   }
   function findKnowledgeSources(pages,query){
     const stop=new Set(["yang","dan","untuk","dari","dengan","apa","bagaimana","jelaskan","dokumen","dalam"]);
-    const terms=Array.from(new Set((query.toLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu)||[]).filter(x=>!stop.has(x))));
+    const terms=Array.from(new Set((query.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu)||[]).filter(x=>!stop.has(x))));
     return pages.map(p=>({...p,score:terms.reduce((n,t)=>n+(p.text.toLowerCase().includes(t)?1:0),0)})).filter(p=>p.score>0).sort((a,b)=>b.score-a.score).slice(0,5);
   }
   function bindKnowledgeWorkspace(){
