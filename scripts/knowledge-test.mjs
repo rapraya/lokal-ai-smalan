@@ -45,7 +45,7 @@ console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-d
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
 const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata, extractKnowledgePdfLayout })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
 
 assert.equal(extraction.shouldAttemptKnowledgeOcr(false, 0), false, "OCR must remain disabled unless explicitly enabled.");
@@ -64,6 +64,27 @@ const structuredPages = extraction.applyKnowledgeSectionMetadata([
 ]);
 assert.deepEqual(Array.from(structuredPages, page => page.section), ["Tujuan", "Tujuan", "Ruang Lingkup"]);
 assert.deepEqual(Array.from(structuredPages, page => page.hasSectionHeading), [true, false, true], "Section metadata should carry forward until a new heading is found.");
+const positionedTable = extraction.extractKnowledgePdfLayout([
+  { str: "Nama", transform: [1, 0, 0, 10, 10, 100], width: 24, height: 10 },
+  { str: "Nilai", transform: [1, 0, 0, 10, 150, 100], width: 30, height: 10 },
+  { str: "Siswa A", transform: [1, 0, 0, 10, 10, 80], width: 50, height: 10 },
+  { str: "95", transform: [1, 0, 0, 10, 150, 80], width: 12, height: 10 },
+  { str: "Siswa B", transform: [1, 0, 0, 10, 10, 60], width: 50, height: 10 },
+  { str: "87", transform: [1, 0, 0, 10, 150, 60], width: 12, height: 10 }
+]);
+assert.equal(positionedTable.layoutAware, true, "PDF text with coordinates should use layout-aware extraction.");
+assert.equal(positionedTable.tableRows, 3, "Repeated aligned columns should be detected as potential table rows.");
+assert.match(positionedTable.text, /Nama\\\\tNilai/);
+assert.match(positionedTable.text, /Siswa A\\\\t95/);
+assert.equal(positionedTable.text.split("\\\\n").length, 3, "PDF row boundaries should be preserved.");
+const plainLayout = extraction.extractKnowledgePdfLayout([
+  { str: "Paragraf pertama", hasEOL: true },
+  { str: "Paragraf kedua", hasEOL: true }
+]);
+assert.equal(plainLayout.layoutAware, false, "Text without position metadata should retain the safe fallback path.");
+assert.equal(plainLayout.tableRows, 0, "Unpositioned text must not be labeled as a table.");
+assert.match(plainLayout.text, /Paragraf pertama\\\\nParagraf kedua/);
+
 
 
 const exactChunks = extraction.chunkKnowledgeText("x".repeat(90000));
