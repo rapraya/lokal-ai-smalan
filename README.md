@@ -6,7 +6,7 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.15.0 — AI Assistant Workspace**
+**v0.16.0 — AI Assistant Workspace**
 - Adds an in-session task manager (up to 50 user-entered tasks), completion toggles, and explicit task removal. A local WebLLM planning assistant can review the task list and answer follow-up prompts. Only task titles and the user's prompt are included when the user explicitly requests a recommendation; conversation context is bounded and kept in page memory. The model provides suggestions only: it does not run commands, edit files, send messages, access accounts, or complete tasks. No external service fallback is used.
 
 
@@ -103,3 +103,12 @@ GitHub Pages deployment has not yet been enabled. Keep the site in preview until
 ## License
 
 To be decided by the repository owner.
+
+
+### Personal AI Workspace v0.16.0
+
+- User-managed response preferences (language, tone, and detail level) and up to 20 manually entered memory notes.
+- Memory is never inferred or created automatically. Session-only by default; browser persistence requires an explicit opt-in.
+- A separate opt-in controls whether preferences and up to 10 selected notes are included in requests to the local WebLLM model in AI Chat, AI Coding, Text & Language, and AI Assistant.
+- Users can inspect and delete individual notes or clear all Personal AI data. No cloud sync; chat transcripts are not stored by this feature.
+- Browser local storage is not encrypted; users are warned not to store secrets or sensitive personal information.
