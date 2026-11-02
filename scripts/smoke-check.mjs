@@ -225,3 +225,15 @@ assert.ok(app.includes('"potential-conflict"') && app.includes('"scope-differenc
 assert.ok(app.includes("Konsistensi bukti antar-sumber") && app.includes("conflict.left.sourceNumber") && app.includes("conflict.right.sourceNumber"),
   "Cross-source review must show both source identities and evidence excerpts.");
 console.log("AI Knowledge cross-source conflict detection guard checks passed.");
+
+
+assert.ok(app.includes("function extractKnowledgeTableRows(") && app.includes("function classifyKnowledgeTableHeader("),
+  "AI Knowledge must parse row-aware table evidence with explicit column roles.");
+assert.ok(app.includes("identityKey!==b.identityKey") && app.includes("a.metricKey!==b.metricKey"),
+  "Table values must only be compared when subject identity and metric both match.");
+assert.ok(app.includes("rowIndex:record.rowIndex") && app.includes("columnHeader:record.columnHeader") &&
+  app.includes("Baris tabel ") && app.includes("Kolom "),
+  "Table conflict review must preserve and display row/column provenance.");
+assert.ok(app.includes("periodUnclear") && app.includes("periodTokens"),
+  "Table comparisons must distinguish explicit time-scope information.");
+console.log("AI Knowledge subject-aware and table-aware evidence verification guard checks passed.");
