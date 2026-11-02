@@ -479,7 +479,7 @@
         for(let priorIndex=run[0].index-1;priorIndex>=Math.max(0,run[0].index-3);priorIndex--){
           const prior=structuredLines[priorIndex],cells=prior?.cells||[];
           if(cells.length<2||cells.length>=run[0].cells.length)break;
-          const recognized=cells.filter(value=>classifyKnowledgeTableHeader(value).role!=="unknown").length;
+          const recognized=cells.filter(value=>/\b(identitas|data|nama|siswa|peserta didik|kelas|rombel|kategori|jenis|indikator|program|jumlah|nilai|total|berat|volume|capaian|skor|anggaran|target|realisasi|tahun|semester|periode|tanggal)\b/i.test(value)).length;
           if(!recognized)break;
           const mapped=Array(run[0].cells.length).fill("");
           cells.forEach((value,index)=>{
@@ -493,13 +493,13 @@
         const headerStructure=buildKnowledgeTableHeaderStructure(candidateRows.map(line=>line.cells),run[0].cells.length);
         const headerDepth=headerStructure.ambiguous?1:Math.max(1,headerStructure.headerDepth);
         const columnHeaders=headerStructure.ambiguous?headerCells.slice():headerStructure.headers;
-        const normalizedHeaderKey=columnHeaders.map(value=>normalizeKnowledgeTableHeader(value)).join("|");
+        const normalizedHeaderKey=columnHeaders.map(value=>String(value||"").toLocaleLowerCase("id-ID").replace(/[^\\p{L}\\p{N}%]+/gu," ").replace(/\\s+/g," ").trim()).join("|");
         const headerLines=candidateRows.slice(0,headerDepth);
         tableBlocks.push({
           startLine:headerLines[0]?.index??run[0].index,endLine:run[run.length-1].index,lineCount:structuredLines.length,
           rowCount:run.length+prefixRows.length,columnCount:run[0].cells.length,columnStarts:run[0].columnStarts.slice(),
           headerCells,columnHeaders,headerRows:headerLines.map(line=>line.cells.slice()),
-          headerDepth,dataStartLine:headerLines[headerDepth]?.index??run[0].index,
+          headerDepth,dataStartLine:candidateRows[headerDepth]?.index??run[0].index,
           headerKey:normalizedHeaderKey||headerKey,
           headerAmbiguous:headerStructure.ambiguous
         });
