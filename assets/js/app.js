@@ -1960,6 +1960,10 @@
   }
   async function loadChatModel() {
     if (chatLoading || chatEngine) return;
+    if (chatCloudEngine) {
+      setChatStatus("Lepaskan sesi GPT di AI Chat sebelum memuat model lokal untuk modul lain.", "error");
+      return;
+    }
     if (!window.isSecureContext) {
       setChatStatus("WebGPU memerlukan HTTPS atau localhost", "error");
       return;
