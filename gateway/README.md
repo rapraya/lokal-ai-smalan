@@ -2,6 +2,8 @@
 
 This gateway is a server-side Cloudflare Worker. It is deliberately separate from the static browser application so provider credentials never enter the frontend bundle.
 
+Panduan langkah demi langkah dalam Bahasa Indonesia tersedia di [gateway/PANDUAN-DEPLOYMENT-ID.md](PANDUAN-DEPLOYMENT-ID.md).
+
 ## Current scope
 
 - Cloudflare Access JWT signature, issuer, audience, expiry, and email allowlist validation.
