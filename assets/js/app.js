@@ -1070,6 +1070,11 @@
     const status=!claims.length?"unverifiable":counts.invalid?"invalid":counts.uncited?"uncited":counts.weak?"weak":counts.partial||counts.limited?"partial":"supported";
     return {status,markerAudit,claims,counts,detailCounts,flaggedCount,claimCount:claims.length};
   }
+  function shouldPresentKnowledgeAnswer(audit){
+    if(!audit||!audit.claimCount)return false;
+    if(["uncited","invalid","weak","unverifiable"].includes(audit.status))return false;
+    return (audit.counts?.supported||0)+(audit.counts?.partial||0)>0;
+  }
   function ensureKnowledgeEmbeddingWorker(){
     if(knowledgeEmbeddingWorker)return knowledgeEmbeddingWorker;
     if(typeof Worker==="undefined")throw new Error("Browser ini tidak mendukung Web Worker untuk embedding lokal.");
@@ -1257,10 +1262,22 @@
         const messages=[{role:"system",content:systemPrompt},{role:"user",content:taskPrompt+"\n\nKUTIPAN LINTAS DOKUMEN:\n"+excerpts}];
         const r=await chatEngine.chat.completions.create({messages,temperature:0.2,max_tokens:mode==="question"?850:1200});
         const response=r?.choices?.[0]?.message?.content||"Model tidak menghasilkan jawaban.";
-        answer.replaceChildren();
-        const p=document.createElement("p");p.textContent=response;answer.appendChild(p);
         const auditSources=selected.map((page,index)=>({text:page.text.slice(0,excerptLimit),section:page.section,documentName:page.documentName,page:page.page,sourceNumber:index+1}));
         const supportAudit=verifyKnowledgeAnswerSupport(response,auditSources);
+        answer.replaceChildren();
+        if(shouldPresentKnowledgeAnswer(supportAudit)){
+          const p=document.createElement("p");p.textContent=response;answer.appendChild(p);
+        }else{
+          const warning=document.createElement("section");warning.className="knowledge-unverified";
+          const warningTitle=document.createElement("strong");warningTitle.textContent="Jawaban belum memenuhi pemeriksaan sumber";
+          const warningText=document.createElement("p");warningText.textContent="Model menghasilkan teks yang tidak memiliki rujukan valid atau belum menunjukkan kecocokan yang cukup dengan kutipan dokumen. Teks ini tidak ditampilkan sebagai kesimpulan agar tidak menyesatkan.";
+          warning.append(warningTitle,warningText);
+          const draft=document.createElement("details");draft.className="knowledge-unverified-draft";
+          const draftSummary=document.createElement("summary");draftSummary.textContent="Lihat draf model yang belum terverifikasi";
+          const draftText=document.createElement("pre");draftText.textContent=response;
+          draft.append(draftSummary,draftText);
+          answer.append(warning,draft);
+        }
         const auditPanel=document.createElement("section");auditPanel.className="knowledge-verification";
         const auditTitle=document.createElement("strong");auditTitle.textContent="Verifikasi sitasi otomatis";
         const auditSummary=document.createElement("p");
