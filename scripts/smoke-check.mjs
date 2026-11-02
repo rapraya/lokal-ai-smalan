@@ -20,6 +20,17 @@ for (const module of requiredModules) {
 
 assert.ok(html.includes('id="app"') || html.includes('id="workspace"') || html.includes('id="capabilityGrid"'),
   "Application shell markup was not found.");
+
+assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
+  html.includes('data-theme-choice="colorful"'), "The theme picker must expose Dark, Light, and Colorful modes.");
+assert.ok(app.includes('["dark","light","colorful"].includes(theme)') &&
+  app.includes('localStorage.setItem("lokal-ai-theme", selectedTheme)') &&
+  app.includes('document.addEventListener("change"'), "Theme selection must be validated, persistent, and available from Settings.");
+assert.ok(css.includes('body[data-theme="colorful"]') && css.includes(".theme-menu") &&
+  css.includes(".theme-swatch-colorful"), "The Colorful theme and three-theme picker styles are missing.");
+assert.ok(app.includes('id="themeSetting" class="theme-setting-select"') ||
+  app.includes('id="themeSetting"'), "Settings must expose the current theme selector.");
+
 assert.ok(css.includes(".chat-layout") && css.includes(".chat-composer"),
   "Premium chat workspace styles are missing.");
 
