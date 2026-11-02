@@ -6,7 +6,7 @@ const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function findKnowledgeSources(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && end > start, "Knowledge source retrieval function is missing.");
-const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid })";
+const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, inspectKnowledgeCitationMarkers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -164,6 +164,21 @@ const completeSegments = api.buildKnowledgeEmbeddingSegments([{ text: longParagr
 assert.ok(completeSegments.texts.length > 2);
 assert.ok(completeSegments.texts.every(chunk => chunk.length <= 120));
 assert.equal(completeSegments.truncated, false);
+
+assert.deepEqual(
+  api.inspectKnowledgeCitationMarkers("Klaim didukung [S1] dan [S2].", 2),
+  { used: [1, 2], invalid: [], missing: false }
+);
+assert.deepEqual(
+  api.inspectKnowledgeCitationMarkers("Klaim merujuk [S4].", 2),
+  { used: [4], invalid: [4], missing: false },
+  "References outside the supplied evidence list must be flagged."
+);
+assert.deepEqual(
+  api.inspectKnowledgeCitationMarkers("Jawaban tanpa referensi.", 2),
+  { used: [], invalid: [], missing: true },
+  "Answers without source markers must be flagged."
+);
 
 const semanticPages = [
   { page: 8, documentName: "Beasiswa.pdf", text: "Prosedur pengajuan bantuan pendidikan bagi peserta didik." },
