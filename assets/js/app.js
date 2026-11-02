@@ -385,8 +385,13 @@
     const ext=file.name.split(".").pop().toLowerCase();
     if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");return chunkKnowledgeText(t);}
     if(ext!=="pdf")throw new Error("Gunakan PDF, TXT, atau Markdown.");
-    if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
-    const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+    const dependencies=options.dependencies||{};
+    let lib=dependencies.pdfjs||null;
+    if(!lib){
+      if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
+      lib=await pdfJsPromise;
+    }
+    const pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     if(pdf.numPages>80)throw new Error("PDF melebihi 80 halaman.");
     const pages=[];let total=0,processedPages=0,textTruncated=false,ocrCount=0,ocrAttempted=0,ocrSkipped=false,ocrWorker=null,ocrError="";
     try{
@@ -396,8 +401,8 @@
         if(!text&&shouldAttemptKnowledgeOcr(options.ocrEnabled,ocrAttempted)){
           ocrAttempted++;
           try{
-            if(!ocrWorker){const tesseract=await loadKnowledgeOcr();ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
-            const viewport=page.getViewport({scale:1.6}),canvas=document.createElement("canvas");
+            if(!ocrWorker){const tesseract=await (dependencies.loadOcr?dependencies.loadOcr():loadKnowledgeOcr());ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
+            const viewport=page.getViewport({scale:1.6}),canvas=dependencies.createCanvas?dependencies.createCanvas():document.createElement("canvas");
             try{
               const context=canvas.getContext("2d");
               if(!context)throw new Error("Canvas 2D tidak tersedia di browser ini.");
