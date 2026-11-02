@@ -21,6 +21,32 @@ for (const module of requiredModules) {
 assert.ok(html.includes('id="app"') || html.includes('id="workspace"') || html.includes('id="capabilityGrid"'),
   "Application shell markup was not found.");
 
+
+assert.ok(html.includes('class="sidebar-navigation"') &&
+  html.includes('class="nav-section"') &&
+  html.includes('aria-label="AI Studio"') &&
+  html.includes('aria-label="Creative Studio"') &&
+  html.includes('aria-label="Intelligence"') &&
+  html.includes('aria-label="Assistant"'),
+  "Sidebar must use the professional grouped navigation structure.");
+assert.ok(html.includes('class="nav-status nav-status-planned"') &&
+  html.includes('class="nav-status nav-status-alpha"') &&
+  html.includes('class="workspace-status-dot"'),
+  "Sidebar must expose consistent module maturity and workspace status indicators.");
+assert.ok(!html.includes('<kbd>01</kbd>') && !html.includes('<kbd>05</kbd>'),
+  "Decorative numeric navigation badges must be removed.");
+assert.ok(css.includes("var(--layout-sidebar)") &&
+  css.includes(".sidebar-navigation{") &&
+  css.includes(".nav-section{") &&
+  css.includes(".workspace-status-dot{") &&
+  css.includes(".profile-label{"),
+  "Professional sidebar and topbar layout rules are missing.");
+assert.ok(css.includes('body[data-theme="light"] .sidebar') &&
+  css.includes('body[data-theme="colorful"] .sidebar'),
+  "Redesigned navigation must be styled consistently in all three themes.");
+assert.ok(app.includes('"11</strong> kemampuan AI"'),
+  "Overview search must display the correct localized capability count.");
+
 assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
   html.includes('data-theme-choice="colorful"'), "The theme picker must expose Dark, Light, and Colorful modes.");
 assert.ok(app.includes('["dark","light","colorful"].includes(theme)') &&
