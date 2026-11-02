@@ -123,3 +123,15 @@ Isi setelah pengujian nyata dilakukan.
 6. Periksa setiap klaim faktual dengan penanda [S#], nama dokumen, halaman/bagian, dan kutipan sumber. Jangan menerima kesimpulan yang tidak didukung kutipan terpilih.
 
 **Batasan:** batas bukti per dokumen adalah strategi pemilihan kutipan, bukan penilaian bahwa setiap dokumen memiliki otoritas yang sama. Kualitas sintesis dan interpretasi perbedaan tetap perlu diperiksa manusia terhadap dokumen asli.
+
+## 12. Tabel lintas halaman dan header berulang
+
+1. Siapkan PDF uji dengan tabel yang dimulai di bagian bawah halaman pertama dan berlanjut di halaman berikutnya. Gunakan contoh aman, bukan data pribadi.
+2. Buat variasi pertama dengan header kolom yang diulang pada halaman lanjutan. Pastikan halaman kedua menampilkan keterangan **Header tabel berulang dari halaman N** dan halaman sumber tetap benar.
+3. Buat variasi kedua tanpa header berulang, tetapi dengan jumlah kolom dan posisi kolom yang konsisten. Sistem hanya boleh menampilkan **Kemungkinan lanjutan tabel halaman N**, bukan menyatakan kesinambungan sebagai fakta.
+4. Uji tabel yang berbeda pada halaman berikutnya dengan posisi kolom yang mirip. Periksa apakah penandaan kemungkinan lanjutan masih masuk akal; jangan menganggap kecocokan geometris membuktikan tabel yang sama.
+5. Uji halaman yang tidak berurutan, tabel yang tidak mencapai bagian bawah halaman sebelumnya, dan tabel yang tidak dimulai di bagian atas halaman berikutnya. Sistem tidak boleh menghubungkannya sebagai kelanjutan.
+6. Pastikan header berulang tidak ditafsirkan model sebagai data tambahan dan nilai pada setiap halaman tetap dapat ditelusuri ke sitasi [S#] yang benar.
+7. Bandingkan hasil ekstraksi dengan PDF asli, terutama untuk kolom yang memiliki sel gabungan, baris multiline, atau pemisah vertikal yang rapat.
+
+**Batasan:** hubungan lintas halaman menggunakan urutan halaman, posisi awal/akhir blok, kesamaan header, jumlah kolom, dan perkiraan posisi kolom. Header sama pada dua halaman berurutan menjadi indikasi kuat pengulangan; kesamaan geometri tanpa header hanya menghasilkan label kemungkinan. Sistem belum membuktikan identitas tabel melalui border, merged cells, header bertingkat, atau makna semantik kolom.
