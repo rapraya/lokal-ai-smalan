@@ -391,7 +391,11 @@
             if(text){isOcr=true;ocrCount++;}
           }catch(error){ocrError=error.message;break;}
         }else if(!text&&options.ocrEnabled){ocrSkipped=true;}
-        if(text){if(text.length>12000)textTruncated=true;pages.push({page:n,text:text.slice(0,12000),ocr:isOcr});total+=text.length;}
+        if(text){
+          const remaining=90000-total,limit=Math.min(12000,remaining),excerpt=text.slice(0,limit);
+          if(text.length>excerpt.length)textTruncated=true;
+          pages.push({page:n,text:excerpt,ocr:isOcr});total+=excerpt.length;
+        }
       }
       pages.textTruncated=textTruncated||(total>=90000&&processedPages<pdf.numPages);
     }finally{if(ocrWorker)await ocrWorker.terminate();}
