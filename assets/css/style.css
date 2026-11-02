@@ -372,3 +372,30 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 .data-interpretation-result:not(:empty){padding:14px;margin-top:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}
 body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8faff;border-color:#dce5f0}
 @media(max-width:650px){.data-intelligence-controls{grid-template-columns:1fr}.data-intelligence-actions{display:grid;grid-template-columns:1fr}.data-intelligence-actions button{width:100%}}
+
+/* v0.15.0 — AI Assistant workspace */
+.assistant-workspace-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:20px}
+.assistant-panel{min-width:0;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.assistant-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.assistant-panel h2{margin:7px 0 14px;font-size:19px;letter-spacing:-.035em}
+.assistant-panel-heading h2{margin:5px 0 0}
+.assistant-task-count,.assistant-status{color:var(--muted);font-size:8px;line-height:1.6}
+.assistant-task-form{padding-bottom:15px;border-bottom:1px solid var(--line)}
+.assistant-task-add-row{display:flex;gap:8px;margin-top:8px}
+.assistant-task-add-row input,.assistant-planner textarea{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:9px}
+.assistant-task-add-row button{flex:0 0 auto;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:9px;cursor:pointer}
+.assistant-task-list{display:grid;gap:8px;margin-top:14px}
+.assistant-task-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid var(--line);border-radius:9px}
+.assistant-task-label{display:flex;align-items:flex-start;gap:9px;min-width:0;color:var(--text);font-size:9px;line-height:1.6}
+.assistant-task-label input{margin-top:3px;accent-color:var(--accent)}
+.assistant-task-item.is-complete .assistant-task-label span{color:var(--muted);text-decoration:line-through}
+.assistant-task-remove{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:inherit;font-size:8px;cursor:pointer}
+.assistant-empty{margin:0;padding:12px 2px;color:var(--muted);font-size:9px}
+.assistant-disclosure{margin:0 0 16px;color:var(--muted);font-size:9px;line-height:1.7}
+.assistant-planner textarea{display:block;resize:vertical;margin-top:8px;line-height:1.6}
+.assistant-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.assistant-actions button{width:auto;min-height:38px;padding:0 13px;font-size:9px}
+.assistant-response{max-height:460px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font-size:9px;line-height:1.8}
+.assistant-response:not(:empty){margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+@media(max-width:760px){.assistant-workspace-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.assistant-panel{padding:15px}.assistant-task-add-row{flex-direction:column}.assistant-task-add-row button{min-height:38px}.assistant-actions{display:grid;grid-template-columns:1fr}.assistant-actions button{width:100%}}
