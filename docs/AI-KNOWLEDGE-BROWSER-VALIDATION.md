@@ -175,3 +175,17 @@ Isi setelah pengujian nyata dilakukan.
 7. Periksa dokumen asli sebelum menyimpulkan konflik. Cermati periode, populasi, definisi, status data, metode pengukuran, versi dokumen, dan satuan.
 
 **Batasan:** pendeteksi menggunakan kesamaan istilah konteks dan angka bersatuan sebagai sinyal awal. Ia belum memahami kesetaraan makna, relasi tabel, identitas subjek per baris, atau otoritas versi dokumen. Kutipan yang dipilih juga bukan keseluruhan koleksi. Label **Potensi konflik** berarti perlu pemeriksaan manusia, bukan bukti bahwa sumber saling membantah atau salah.
+
+
+## 16. Verifikasi tabel berdasarkan subjek, metrik, dan periode
+
+1. Siapkan dua PDF uji dengan struktur tabel sejenis: **Nama | Kelas | Jumlah Siswa**. Pastikan nilai berbeda untuk baris nama dan kelas yang sama menghasilkan **Potensi konflik nilai**.
+2. Ubah nama siswa pada dokumen kedua, tetapi pertahankan nilai dan kelas. Sistem tidak boleh membandingkan baris itu sebagai subjek yang sama.
+3. Pertahankan nama siswa tetapi ubah kelasnya. Sistem juga tidak boleh menyamakan dua baris dengan kelas berbeda.
+4. Uji tabel **Indikator | 2024 | 2025**. Nilai dengan indikator dan periode sama dapat dibandingkan; angka pada tahun berbeda harus menjadi **Perbedaan periode/cakupan**.
+5. Uji tabel dengan kolom **Kelas | Tahun | Jumlah Siswa**. Tahun pada kolom baris harus menjadi dimensi periode, bukan diperlakukan sebagai angka metrik yang dapat dibandingkan dengan jumlah siswa.
+6. Uji dua header metrik berbeda seperti **Berat (kg)** dan **Berat (gram)**. Sistem harus menjaga identitas metrik tetapi menampilkan perbedaan satuan sebagai kategori tersendiri.
+7. Buka setiap hasil konflik. Pastikan nomor sumber [S#], dokumen, halaman, baris data, kolom, label subjek, periode, dan teks baris asli sesuai dengan PDF.
+8. Uji tabel dengan sel kosong, nama berulang, kategori bertingkat, header yang terpotong, halaman lanjutan dengan header berulang, dan OCR. Pastikan parser tidak membuat identitas subjek atau relasi kolom yang tidak tampak pada sumber.
+
+**Batasan:** parser memakai header TAB yang dikenali dan belum menjadi parser tabel universal. Header yang tidak dikenali, tabel tanpa kolom identitas, merged cells, tabel bertingkat, OCR yang kehilangan tab, dan baris multiline dapat tidak dipetakan atau dipetakan kurang tepat. Baris yang tidak berhasil dikenali tidak boleh dianggap sudah diperiksa. Verifikasi hasil terhadap dokumen asli tetap wajib.
