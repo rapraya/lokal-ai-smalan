@@ -175,3 +175,8 @@ assert.ok(app.includes("function splitKnowledgeEmbeddingText(value,maxSegmentCha
 assert.ok(app.includes("buildKnowledgeEmbeddingSegments(pages,maxSegmentChars=360,maxSegments=600,overlapChars=60)"), "Semantic chunk preparation must have explicit size, overlap, and collection limits.");
 assert.ok(embeddingWorker.includes("vector.length !== 384") && embeddingWorker.includes("Number.isFinite(Number(value))"), "Embedding worker must validate 384-dimensional finite vectors.");
 console.log("AI Knowledge semantic chunking, source-page mapping, and vector-shape validation checks passed.");
+
+assert.ok(embeddingWorker.includes('const MODEL_REVISION = "2c4055b"') && embeddingWorker.includes("revision: MODEL_REVISION"), "Semantic model artifacts must be pinned to a reviewed immutable revision.");
+assert.ok(app.includes("knowledgeSemanticEnabled") && app.includes("semantic.disabled=knowledgeBusy||!knowledgePages.length"), "Semantic model download must stay unavailable until documents exist.");
+assert.ok(app.includes('semanticToggle.checked=false;stopKnowledgeEmbeddingWorker()'), "Clearing the collection must release the semantic model worker.");
+console.log("AI Knowledge model revision pinning and on-demand memory lifecycle checks passed.");
