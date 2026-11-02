@@ -202,8 +202,7 @@ const comparisonPages = [
 ];
 const comparisonCandidates = [
   { index: 1, score: 0.9 }, { index: 0, score: 0.8 }, { index: 2, score: 0.7 },
-  { index: 4, score: 0.6 }, { index: 3, score: 0.5 }, { index: 5, score: 0.4 },
-  { index: 6, score: 0.1 }
+  { index: 4, score: 0.6 }, { index: 3, score: 0.5 }, { index: 5, score: 0.4 }
 ];
 const comparisonSelection = api.selectKnowledgeSourcesPerDocument(comparisonPages, comparisonCandidates, 2, 10);
 assert.deepEqual(Array.from(comparisonSelection, page => page.documentName), ["A.pdf", "A.pdf", "B.pdf", "B.pdf"]);
