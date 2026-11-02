@@ -6,9 +6,13 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.23.0 — Layout-aware PDF Tables**
+**v0.24.0 — Multi-page Table Continuity**
 - Uses PDF.js text coordinates to reconstruct approximate reading lines and preserve wider horizontal gaps as TAB-separated columns.
 - Detects repeated multi-column row patterns as potential table rows and retains a row-count hint on each PDF page. The UI and evidence prompt disclose this as an indication, not guaranteed table reconstruction.
+- Builds table blocks from consistent column counts and horizontal anchors, then checks adjacent PDF pages for a table reaching the bottom of one page and resuming at the top of the next.
+- Identical leading header cells on consecutive pages are marked as a repeated header. Matching column geometry without an identical header is shown only as a **possible** continuation, never as a confirmed link.
+- Repeated-header and possible-continuation metadata stays attached to the original page citations; the local synthesis prompt is instructed not to count repeated headers as data rows or overstate uncertain continuation.
+- Automated tests cover table-block boundaries, header normalization, repeated headers, possible continuations, and rejection of non-consecutive page links. Complex layouts and real multi-page files still require manual validation.
 - Preserves OCR line breaks when available; OCR-derived content is not falsely labeled as a coordinate-reconstructed table.
 - Local synthesis instructions tell the model to respect visible column/value relationships, avoid inventing headers or units, and disclose incomplete table excerpts.
 - Question mode ranks the complete active collection before selecting evidence. When multiple files contain relevant material, it limits each file to two excerpts (up to five overall) to reduce single-file dominance; when only one file is relevant, its useful excerpts are not unnecessarily capped by diversity.
