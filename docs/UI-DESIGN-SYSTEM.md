@@ -85,6 +85,9 @@ Aturan:
 - Jangan memakai angka urut dekoratif.
 - Status Alpha/Rencana hanya ditampilkan untuk menjelaskan kematangan fitur.
 - Navigasi aktif harus mempertahankan `aria-current="page"`.
+- Pada desktop, tombol hamburger menyembunyikan dan menampilkan kembali sidebar; area konten melebar saat sidebar disembunyikan.
+- Status collapse desktop disimpan di browser dan dipulihkan saat aplikasi dibuka kembali.
+- Pada tablet/ponsel, tombol hamburger tetap mengendalikan drawer sidebar dan overlay; perilaku desktop tidak boleh mengganggu pola ini.
 - Jangan membuat elemen statis tampak seperti tombol yang dapat digunakan.
 
 ## 5. Tipografi
