@@ -193,14 +193,16 @@ The selected model files are downloaded over the network the first time. WebLLM 
 
 ## Model Engine and provider status
 
-The Model Engine workspace and provider registry are available in v0.38.0.
+The unified Model Engine, secure gateway code, and gated GPT Chat adapter are available in v0.40.0.
 
-- **Local:** WebLLM 0.2.87 with the existing Llama 3.2 1B/3B choices. The same loaded runtime is shared across AI Chat, Coding, Text, Assistant, AI Knowledge, and optional Data Analyst interpretation.
-- **Cloud integration targets:** OpenAI (GPT), Anthropic (Claude), and Google (Gemini) appear in the provider registry but are not connected in this release. Their status is gateway-required.
-- **Credentials:** never paste provider API keys into the frontend, browser storage, or public repository. A secure server-side gateway with authentication and usage controls must be implemented before cloud requests can be enabled.
-- **Routing:** local-first. No prompt or document is sent to a cloud provider, and there is no automatic cloud fallback.
+- **Local:** WebLLM 0.2.87 with Llama 3.2 1B/3B. Existing AI Chat, Coding, Text, Assistant, AI Knowledge, and optional Data Analyst interpretation continue to use the shared local runtime.
+- **OpenAI GPT:** a same-origin gateway client and Cloudflare Worker adapter are implemented. AI Chat exposes GPT only when the authenticated gateway health check is ready and requires explicit cloud-session consent. Personal AI context is not automatically appended to GPT Chat requests.
+- **Gateway deployment:** not yet configured or deployed. Cloudflare Access application, allowed-user identities, DNS route, and server-side `OPENAI_API_KEY` secret are still required. Until then, GPT remains unavailable in the preview.
+- **Anthropic Claude and Google Gemini:** registered as future provider targets; adapters are not implemented.
+- **Credentials:** never paste provider API keys into the frontend, browser storage, or public repository. The OpenAI key belongs only in the Cloudflare Worker secret store.
+- **Routing:** local-first. No automatic local-to-cloud fallback, and non-Chat workspaces remain on the local runtime.
 
-See [Model Engine Architecture](docs/MODEL-ENGINE-ARCHITECTURE.md) for the provider contract, security requirements, and delivery phases.
+See [Model Engine Architecture](docs/MODEL-ENGINE-ARCHITECTURE.md) and [Gateway deployment guide](gateway/README.md) for the provider contract, Access setup, and deployment requirements.
 ## Privacy and security principles
 
 1. Local processing is preferred when a supported model and device make it practical.
