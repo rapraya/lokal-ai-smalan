@@ -3405,18 +3405,25 @@
       activeProviderId: null, activeModelId: null, hasActiveRuntime: false,
       gateway: { configured: false, status: "not-configured" }, providers: []
     };
-    const activeText = snapshot.hasActiveRuntime ? "Model lokal aktif" : "Belum ada model yang dimuat";
+    const activeText = snapshot.hasActiveRuntime
+      ? (snapshot.activeProviderId === "openai" ? "Provider OpenAI aktif" : "Model lokal aktif")
+      : "Belum ada model yang dimuat";
     const activeModel = snapshot.activeModelId || "Pilih model dari AI Chat";
     const providerCards = snapshot.providers.map((provider) => {
       const isLocal = provider.category === "local";
-      const statusLabel = isLocal ? (provider.runtimeStatus === "ready" ? "Sedang digunakan" : "Didukung · perlu GPU") : "Gateway diperlukan";
-      const statusClass = isLocal ? "engine-status-local" : "engine-status-pending";
+      const openAiReady = provider.id === "openai" && snapshot.gateway.status === "ready";
+      const statusLabel = isLocal
+        ? (provider.runtimeStatus === "ready" ? "Sedang digunakan" : "Didukung · perlu GPU")
+        : openAiReady ? "Gateway siap" : "Gateway diperlukan";
+      const statusClass = isLocal || openAiReady ? "engine-status-local" : "engine-status-pending";
       const providerIcon = isLocal ? "cpu" : provider.id === "openai" ? "spark" : provider.id === "anthropic" ? "message" : "compass";
       const action = isLocal
         ? '<button class="engine-provider-action" type="button" data-page="chat">Kelola model lokal ' + icon("arrow") + '</button>'
-        : '<span class="engine-provider-footnote">Belum menerima permintaan</span>';
+        : provider.id === "openai" && openAiReady
+          ? '<span class="engine-provider-footnote">Gateway terautentikasi · pemilihan GPT menyusul</span>'
+          : '<span class="engine-provider-footnote">Belum menerima permintaan</span>';
       return '<article class="engine-provider-card ' + (isLocal ? "engine-provider-featured" : "engine-provider-cloud") + '">' +
-        '<div class="engine-provider-top"><span class="engine-provider-icon">' + icon(providerIcon) + '</span><span class="engine-status-chip ' + statusClass + '">' + statusLabel + '</span></div>' +
+        '<div class="engine-provider-top"><span class="engine-provider-icon">' + icon(providerIcon) + '</span><span class="engine-status-chip ' + statusClass + '" data-engine-provider="' + provider.id + '">' + statusLabel + '</span></div>' +
         '<div class="engine-provider-family">' + provider.family + '</div><h3>' + provider.name + '</h3><p>' + provider.description + '</p>' +
         '<div class="engine-provider-privacy">' + icon("shield") + '<span>' + provider.privacy + '</span></div>' + action +
       '</article>';
@@ -3430,11 +3437,11 @@
       '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> UNIFIED MODEL ENGINE</div><h1>Model Engine</h1><p>Kelola runtime lokal dan siapkan koneksi ke berbagai provider AI dari satu tempat.</p></div><span class="chat-build-status"><i></i> Provider registry aktif</span></div>' +
       '<section class="engine-overview-card"><div class="engine-overview-copy"><span class="engine-overview-kicker">MODEL ROUTING</span><h2>Satu pintu untuk berbagai mesin AI.</h2><p>Lokal AI menggunakan model di perangkat sebagai pilihan utama. Provider cloud baru akan digunakan setelah gateway aman tersedia dan kamu menyetujui pengiriman data.</p><span class="engine-local-first-pill"><i></i> LOCAL-FIRST POLICY</span></div><div class="engine-overview-orbit" aria-hidden="true"><span class="engine-orbit orbit-one"></span><span class="engine-orbit orbit-two"></span><span class="engine-orbit-core">' + icon("cpu") + '</span><span class="engine-orbit-dot"></span></div></section>' +
       '<section class="engine-current-runtime"><div class="engine-current-icon">' + icon("cpu") + '</div><div class="engine-current-copy"><span>RUNTIME AKTIF</span><strong>' + activeText + '</strong><small>' + activeModel + '</small></div><div class="engine-current-actions"><button type="button" class="button-outline" data-page="chat">Buka AI Chat ' + icon("arrow") + '</button></div></section>' +
-      '<div class="engine-health-grid"><div class="engine-health-card"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-health-card"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-health-card"><span>Provider cloud</span><strong>Belum tersambung</strong></div></div>' +
+      '<div class="engine-health-grid"><div class="engine-health-card"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-health-card"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-health-card"><span>Secure gateway</span><strong id="engineGatewayHealth">Belum diperiksa</strong></div></div>' +
       '<div class="engine-section-heading"><div><span class="section-kicker">PROVIDER REGISTRY</span><h2>Provider AI</h2><p>Daftar mesin yang tersedia dan target integrasi selanjutnya.</p></div><span class="engine-registry-count">1 lokal · 3 cloud</span></div>' +
       '<div class="engine-provider-grid">' + providerCards + '</div>' +
       '<div class="engine-lower-grid"><section class="engine-catalog-panel"><div class="engine-section-heading compact"><div><span class="section-kicker">LOCAL MODEL CATALOG</span><h2>Katalog model lokal</h2><p>Model yang saat ini terdaftar dalam runtime WebLLM.</p></div></div><div class="engine-model-list">' + localModels + '</div><div class="engine-catalog-note">Estimasi VRAM berasal dari manifest model dan bukan jaminan kebutuhan minimal atau kompatibilitas perangkat.</div><button type="button" class="engine-text-action" data-page="chat">Pilih dan muat model di AI Chat ' + icon("arrow") + '</button></section>' +
-      '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tidak disimpan di browser.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke file frontend atau local storage. Integrasi cloud membutuhkan gateway server-side dengan autentikasi, batas penggunaan, dan persetujuan pengguna.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small>Belum dikonfigurasi · provider cloud tetap nonaktif</small></div></div></aside></div>' +
+      '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tetap di server.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke frontend atau local storage. Gateway memeriksa identitas Cloudflare Access, allowlist akun, dan batas permintaan sebelum meneruskan tugas.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small id="engineGatewayStatus">Belum diperiksa · provider cloud belum aktif</small></div></div><button class="engine-gateway-check" id="engineGatewayCheck" type="button">Periksa koneksi gateway</button></aside></div>' +
       '<div class="engine-footer-note">' + icon("shield") + '<p><strong>Status integrasi:</strong> model lokal WebLLM dapat dimuat melalui AI Chat. Kartu GPT, Claude, dan Gemini merupakan target integrasi dan belum dapat menerima permintaan pada versi ini.</p></div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>One engine · multiple providers · user in control.</span></footer>' +
     '</div>';
@@ -3442,6 +3449,53 @@
 
   function bindModelEngineWorkspace() {
     checkDevice();
+    const button = document.getElementById("engineGatewayCheck");
+    const health = document.getElementById("engineGatewayHealth");
+    const status = document.getElementById("engineGatewayStatus");
+    const openAiBadge = document.querySelector('[data-engine-provider="openai"]');
+    const openAiCard = openAiBadge ? openAiBadge.closest(".engine-provider-card") : null;
+    const openAiFootnote = openAiCard ? openAiCard.querySelector(".engine-provider-footnote") : null;
+    const stateLabels = {
+      ready: "Siap · autentikasi terverifikasi",
+      checking: "Sedang memeriksa…",
+      "session-required": "Perlu login Cloudflare Access",
+      "access-denied": "Akun tidak diizinkan",
+      "not-deployed": "Endpoint belum dipasang",
+      "not-configured": "Konfigurasi server belum lengkap",
+      unreachable: "Tidak dapat dijangkau"
+    };
+    const refreshGateway = async () => {
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Memeriksa gateway…";
+      }
+      if (health) health.textContent = "Memeriksa…";
+      if (status) status.textContent = "Memeriksa identitas dan konfigurasi gateway…";
+      let gateway;
+      if (modelEngine && typeof modelEngine.checkGateway === "function") {
+        gateway = await modelEngine.checkGateway();
+      } else {
+        gateway = { status: "not-configured", message: "Registry gateway tidak tersedia." };
+      }
+      const label = stateLabels[gateway.status] || "Belum siap";
+      if (health) health.textContent = label;
+      if (status) status.textContent = gateway.message || label;
+      if (openAiBadge) {
+        const ready = gateway.status === "ready";
+        openAiBadge.textContent = ready ? "Gateway siap" : "Gateway diperlukan";
+        openAiBadge.classList.toggle("engine-status-local", ready);
+        openAiBadge.classList.toggle("engine-status-pending", !ready);
+      }
+      if (openAiFootnote && gateway.status === "ready") {
+        openAiFootnote.textContent = "Gateway terautentikasi · pemilihan GPT menyusul";
+      }
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Periksa ulang koneksi";
+      }
+    };
+    if (button) button.addEventListener("click", refreshGateway);
+    refreshGateway();
   }
 
   function renderSettingsPanel() {
