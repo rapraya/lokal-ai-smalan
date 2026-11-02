@@ -404,7 +404,7 @@
   }
   function findKnowledgeSources(pages,query){
     const stop=new Set(["yang","dan","untuk","dari","dengan","apa","bagaimana","jelaskan","dokumen","dalam","adalah","atau","pada","the","and","for","from","this","that"]);
-    const tokenize=value=>(value.toLocaleLowerCase("id-ID").match(/[\\p{L}\\p{N}]{2,}/gu)||[]).filter(term=>!stop.has(term));
+    const tokenize=value=>(value.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{2,}/gu)||[]).filter(term=>!stop.has(term));
     const queryTerms=Array.from(new Set(tokenize(query)));
     if(!queryTerms.length||!pages.length)return [];
     const documents=pages.map((page,index)=>{const tokens=tokenize(page.text),counts=new Map();tokens.forEach(term=>counts.set(term,(counts.get(term)||0)+1));return {...page,index,tokens,counts,length:tokens.length};});
