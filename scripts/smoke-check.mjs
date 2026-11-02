@@ -152,6 +152,13 @@ assert.ok(app.includes("personalStorageEnabled = false") && app.includes("person
 assert.ok(app.includes("buildPersonalContextMessage()") && app.includes("localStorage.removeItem(personalStorageKey)"), "Personal AI context and deletion controls are missing.");
 
 assert.ok(app.includes("function renderKnowledgeWorkspace()") && app.includes("function bindKnowledgeWorkspace()"), "AI Knowledge workspace is missing.");
+assert.ok(app.includes('id="knowledgeQuestionForm" class="knowledge-question-form"'),
+  "AI Knowledge question form must use its full-width grid layout class.");
+assert.ok(css.includes(".knowledge-question-form{") && css.includes(".knowledge-question-form textarea"),
+  "AI Knowledge question controls must fill the available panel width.");
+assert.ok(app.includes('id="knowledgeSemanticEnabled" type="checkbox"'),
+  "AI Knowledge semantic search must require an explicit opt-in on a fresh session.");
+
 assert.ok(app.includes("async function readKnowledgeFile(file, options={})") && app.includes("function findKnowledgeSources(pages,query,limit=5)"), "Local document extraction and source retrieval are missing.");
 assert.ok(app.includes('page === "knowledge"') && app.includes('application/pdf'), "AI Knowledge navigation or PDF support is missing.");
 assert.ok(app.includes("knowledgePages = []") && app.includes("knowledgePages=[]"), "Knowledge documents must remain session-only and clearable.");
