@@ -30,8 +30,14 @@ console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-d
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
 const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
+
+assert.equal(extraction.shouldAttemptKnowledgeOcr(false, 0), false, "OCR must remain disabled unless explicitly enabled.");
+assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 0), true, "OCR should be available before the attempt limit.");
+assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 19), true, "The twentieth OCR attempt should be allowed.");
+assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 20), false, "OCR must stop after 20 attempts per document.");
+assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 21), false, "OCR must remain stopped after the limit.");
 
 const exactChunks = extraction.chunkKnowledgeText("x".repeat(90000));
 assert.equal(exactChunks.reduce((sum, item) => sum + item.text.length, 0), 90000);
