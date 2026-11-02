@@ -474,14 +474,43 @@
     if(!leftNorm||!rightNorm)return -1;
     return dot/Math.sqrt(leftNorm*rightNorm);
   }
-  function buildKnowledgeEmbeddingSegments(pages,maxSegmentChars=600,maxSegments=600){
+  function splitKnowledgeEmbeddingText(value,maxSegmentChars=360,overlapChars=60){
+    const text=String(value||"").replace(/\\s+/g," ").trim(),segments=[];
+    if(!text)return segments;
+    const maxChars=Math.max(120,Math.floor(maxSegmentChars)),overlap=Math.max(0,Math.min(Math.floor(overlapChars),Math.floor(maxChars/3)));
+    let start=0;
+    while(start<text.length){
+      let end=Math.min(start+maxChars,text.length);
+      if(end<text.length){
+        const window=text.slice(start,end),minimum=Math.floor(maxChars*0.55);
+        let sentenceBoundary=-1;
+        for(const match of window.matchAll(/[.!?;:]\\s/g)){
+          const candidate=match.index+1;
+          if(candidate>=minimum)sentenceBoundary=start+candidate;
+        }
+        if(sentenceBoundary>start)end=sentenceBoundary;
+        else{
+          const whitespace=text.lastIndexOf(" ",end);
+          if(whitespace>=start+minimum)end=whitespace;
+        }
+      }
+      const segment=text.slice(start,end).trim();
+      if(segment)segments.push(segment);
+      if(end>=text.length)break;
+      const overlapStart=Math.max(start+1,end-overlap);
+      const nextWordBoundary=text.indexOf(" ",overlapStart);
+      const nextStart=nextWordBoundary>=0&&nextWordBoundary<end?nextWordBoundary+1:overlapStart;
+      start=nextStart>start?nextStart:end;
+    }
+    return segments;
+  }
+  function buildKnowledgeEmbeddingSegments(pages,maxSegmentChars=360,maxSegments=600,overlapChars=60){
     const texts=[],pageIndices=[];let truncated=false;
     for(let index=0;index<pages.length;index++){
-      const value=String(pages[index].text||"");
-      for(let offset=0;offset<value.length;offset+=maxSegmentChars){
+      const segments=splitKnowledgeEmbeddingText(pages[index].text,maxSegmentChars,overlapChars);
+      for(const segment of segments){
         if(texts.length>=maxSegments){truncated=true;break;}
-        const segment=value.slice(offset,offset+maxSegmentChars).trim();
-        if(segment){texts.push(segment);pageIndices.push(index);}
+        texts.push(segment);pageIndices.push(index);
       }
       if(truncated)break;
     }
