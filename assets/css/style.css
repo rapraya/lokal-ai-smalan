@@ -429,3 +429,12 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 .knowledge-citation{padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
 .knowledge-citation b{font-size:11px;color:var(--blue)}.knowledge-citation p{font-size:11px;color:var(--muted);margin:7px 0 0}
 @media(max-width:850px){.knowledge-layout{grid-template-columns:1fr}}
+
+
+/* AI Knowledge multi-document collection */
+.knowledge-document-list{display:grid;gap:9px;margin:16px 0}
+.knowledge-document-row{display:flex;align-items:center;gap:10px;min-width:0}
+.knowledge-document-row .knowledge-document{flex:1;min-width:0;display:grid;gap:5px;margin:0}
+.knowledge-document-row .knowledge-document strong{font-size:12px;overflow-wrap:anywhere;color:var(--text)}
+.knowledge-document-row .knowledge-document small{font-size:10px;color:var(--muted)}
+.knowledge-document-row .assistant-task-remove{flex:0 0 auto}
