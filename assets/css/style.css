@@ -799,3 +799,17 @@ body[data-theme="light"] .assistant-task-add-row button{background:#edf3fb;color
   .capability-grid{grid-template-columns:1fr}
   .capability-card{min-height:0}
 }
+
+/* v0.35.1 — visibly separate model drafts that fail source checks */
+.knowledge-unverified{display:grid;gap:8px;padding:16px;border:1px solid rgba(211,151,91,.34);border-radius:13px;background:rgba(211,151,91,.075)}
+.knowledge-unverified>strong{font-size:14px;color:#e4b477}
+.knowledge-unverified>p{margin:0;color:#c1ad91;font-size:13px;line-height:1.7}
+.knowledge-unverified-draft{padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025);color:var(--muted)}
+.knowledge-unverified-draft summary{cursor:pointer;color:var(--text);font-size:13px;font-weight:600}
+.knowledge-unverified-draft pre{max-height:320px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 0;color:var(--muted);font:13px/1.7 var(--font)}
+body[data-theme="light"] .knowledge-unverified{background:#fff8ef;border-color:#f0d8b7}
+body[data-theme="light"] .knowledge-unverified>strong{color:#87511d}
+body[data-theme="light"] .knowledge-unverified>p{color:#765d42}
+body[data-theme="light"] .knowledge-unverified-draft{background:#fbfcff;border-color:#e3eaf4}
+body[data-theme="light"] .knowledge-unverified-draft summary{color:#344963}
+body[data-theme="light"] .knowledge-unverified-draft pre{color:#61758e}
