@@ -459,3 +459,13 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 /* AI Knowledge numerical and contextual verification details */
 .knowledge-verification-item small{line-height:1.55;overflow-wrap:anywhere}
 .knowledge-verification-note{line-height:1.6}
+
+
+/* AI Knowledge cross-source evidence review */
+.knowledge-conflict-panel{display:grid;gap:9px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft,rgba(255,255,255,.025))}
+.knowledge-conflict-panel>strong{font-size:12px;color:var(--text)}
+.knowledge-conflict-panel>p{margin:0;font-size:11px;color:var(--muted);line-height:1.6}
+.knowledge-conflict-item{display:grid;gap:5px;padding:10px 0 0;border-top:1px solid var(--line);min-width:0}
+.knowledge-conflict-item b{font-size:11px;color:var(--text)}
+.knowledge-conflict-item p{margin:0;font-size:11px;color:var(--text);font-weight:600}
+.knowledge-conflict-item small{font-size:10px;line-height:1.55;color:var(--muted);overflow-wrap:anywhere}
