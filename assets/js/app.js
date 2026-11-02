@@ -370,6 +370,9 @@
     if(q){q.disabled=!knowledgePages.length||!chatEngine||knowledgeBusy||chatGenerating;ask.disabled=q.disabled;}
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
     const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy;
+    const file=document.getElementById("knowledgeFile"),ocr=document.getElementById("knowledgeOcrEnabled");
+    if(file)file.disabled=knowledgeBusy;if(ocr)ocr.disabled=knowledgeBusy;
+    document.querySelectorAll(".knowledge-document-row button").forEach(button=>{button.disabled=knowledgeBusy;});
   }
   async function loadKnowledgeOcr() {
     if(!ocrLibraryPromise)ocrLibraryPromise=import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js").catch(error=>{ocrLibraryPromise=null;throw new Error("Tesseract.js gagal dimuat: "+error.message);});
@@ -492,7 +495,7 @@
       const pageIndex=pageIndices[index];if(!Number.isInteger(pageIndex)||pageIndex<0||pageIndex>=pages.length)return;
       const similarity=cosineSimilarity(queryVector,vector);
       const previous=semanticScores.get(pageIndex);
-      if(Number.isFinite(similarity)&&(!Number.isFinite(previous)||similarity>previous))semanticScores.set(pageIndex,similarity);
+      if(similarity>=0.35&&(!Number.isFinite(previous)||similarity>previous))semanticScores.set(pageIndex,similarity);
     });
     return pages.map((page,index)=>{
       const similarity=semanticScores.get(index),lexicalScore=lexicalScores.get(index)||0;
