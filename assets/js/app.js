@@ -414,7 +414,7 @@
         }
       }
       pages.textTruncated=textTruncated||(total>=90000&&processedPages<pdf.numPages);
-    }finally{if(ocrWorker)await ocrWorker.terminate();}
+    }finally{if(ocrWorker){try{await ocrWorker.terminate();}catch(error){ocrError=ocrError||"Worker OCR gagal ditutup: "+error.message;}}}
     if(!pages.length){
       if(options.ocrEnabled&&ocrError)throw new Error("OCR tidak berhasil: "+ocrError);
       if(options.ocrEnabled)throw new Error("Teks tidak ditemukan meski OCR dicoba. Periksa kualitas scan dan bahasa dokumen.");
