@@ -792,6 +792,75 @@
     if(context.length)flags.push({code:"contextReview",label:"Penanda konteks/pengecualian berbeda",detail:context.slice(0,6).join(", ")});
     return {numbers:cn,dates:cd.values,contextMarkers:cc,evidenceNumbers:en,evidenceDates:ed.values,evidenceContextMarkers:ec,flags};
   }
+  function extractKnowledgeConflictContext(value){
+    const ignored=new Set(["yang","dan","untuk","dari","dengan","pada","dalam","adalah","atau","ini","itu","juga","akan","dapat","tidak","lebih","sebagai","oleh","karena","agar","sudah","belum","bahwa","secara","terhadap","dalamnya","tercatat","terdapat","mencapai","sebesar","sebanyak","merupakan","menjadi","dilakukan","dilaksanakan","diperoleh"]);
+    const terms=String(value||"").toLocaleLowerCase("id-ID").match(/[\p{L}]{4,}/gu)||[];
+    return new Set(terms.filter(term=>!ignored.has(term)));
+  }
+  function getKnowledgeScopeYears(dateValues){
+    return new Set((Array.isArray(dateValues)?dateValues:[]).map(value=>{
+      const match=String(value).match(/(?:date:|year:)(\d{4})/);
+      return match?match[1]:"";
+    }).filter(Boolean));
+  }
+  function detectKnowledgeEvidenceConflicts(sources){
+    const items=(Array.isArray(sources)?sources:[]).map((source,index)=>{
+      const text=String(source?.text||"");
+      const dates=extractKnowledgeDates(text);
+      return {
+        sourceNumber:Number(source?.sourceNumber)||index+1,
+        documentName:String(source?.documentName||"Dokumen"),
+        page:source?.page??"",
+        section:String(source?.section||""),
+        text,
+        numbers:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
+        dates:dates.values,
+        scopeYears:getKnowledgeScopeYears(dates.values),
+        context:extractKnowledgeConflictContext(text+" "+String(source?.section||""))
+      };
+    });
+    const conflicts=[];
+    for(let left=0;left<items.length;left++){
+      for(let right=left+1;right<items.length;right++){
+        const a=items[left],b=items[right];
+        const shared=Array.from(a.context).filter(term=>b.context.has(term));
+        if(shared.length<2)continue;
+        const comparisons=[];
+        a.numbers.forEach(first=>{
+          b.numbers.forEach(second=>{
+            if(first.number===second.number&&first.unit!==second.unit){
+              comparisons.push({type:"unit-difference",left:first,right:second});
+            }else if(first.unit===second.unit&&first.number!==second.number){
+              comparisons.push({type:"value-difference",left:first,right:second});
+            }
+          });
+        });
+        comparisons.forEach(comparison=>{
+          const periodsOverlap=a.scopeYears.size&&b.scopeYears.size
+            ?Array.from(a.scopeYears).some(year=>b.scopeYears.has(year))
+            :false;
+          const separatePeriods=a.scopeYears.size>0&&b.scopeYears.size>0&&!periodsOverlap;
+          const type=comparison.type==="unit-difference"
+            ?"unit-difference"
+            :separatePeriods?"scope-difference":"potential-conflict";
+          const key=[a.sourceNumber,b.sourceNumber,comparison.left.number,comparison.left.unit,comparison.right.number,comparison.right.unit,type].join("|");
+          if(conflicts.some(item=>item.key===key))return;
+          conflicts.push({
+            key,type,
+            left:{sourceNumber:a.sourceNumber,documentName:a.documentName,page:a.page,section:a.section,value:comparison.left.raw,text:a.text.replace(/\s+/g," ").trim().slice(0,240)},
+            right:{sourceNumber:b.sourceNumber,documentName:b.documentName,page:b.page,section:b.section,value:comparison.right.raw,text:b.text.replace(/\s+/g," ").trim().slice(0,240)},
+            sharedContext:shared.slice(0,5)
+          });
+        });
+      }
+    }
+    const counts={
+      potentialConflict:conflicts.filter(item=>item.type==="potential-conflict").length,
+      scopeDifference:conflicts.filter(item=>item.type==="scope-difference").length,
+      unitDifference:conflicts.filter(item=>item.type==="unit-difference").length
+    };
+    return {conflicts:conflicts.slice(0,8),counts,total:conflicts.length};
+  }
   function verifyKnowledgeAnswerSupport(response,sources){
     const sourceList=Array.isArray(sources)?sources:[],markerAudit=inspectKnowledgeCitationMarkers(response,sourceList.length);
     const claims=splitKnowledgeAnswerClaims(response).map(claim=>{
@@ -967,7 +1036,7 @@
         const response=r?.choices?.[0]?.message?.content||"Model tidak menghasilkan jawaban.";
         answer.replaceChildren();
         const p=document.createElement("p");p.textContent=response;answer.appendChild(p);
-        const auditSources=selected.map(page=>({text:page.text.slice(0,excerptLimit),section:page.section}));
+        const auditSources=selected.map((page,index)=>({text:page.text.slice(0,excerptLimit),section:page.section,documentName:page.documentName,page:page.page,sourceNumber:index+1}));
         const supportAudit=verifyKnowledgeAnswerSupport(response,auditSources);
         const auditPanel=document.createElement("section");auditPanel.className="knowledge-verification";
         const auditTitle=document.createElement("strong");auditTitle.textContent="Verifikasi sitasi otomatis";
@@ -995,6 +1064,43 @@
           item.append(claimText,details);auditPanel.appendChild(item);
         });
         answer.appendChild(auditPanel);
+        const conflictAudit=detectKnowledgeEvidenceConflicts(auditSources);
+        const conflictPanel=document.createElement("section");
+        conflictPanel.className="knowledge-conflict-panel";
+        const conflictTitle=document.createElement("strong");
+        conflictTitle.textContent="Konsistensi bukti antar-sumber";
+        const conflictSummary=document.createElement("p");
+        conflictSummary.textContent="Pemeriksaan kutipan terpilih: "+conflictAudit.total+" perbedaan nilai/satuan terdeteksi. Potensi konflik: "+conflictAudit.counts.potentialConflict+"; perbedaan periode/cakupan: "+conflictAudit.counts.scopeDifference+"; perbedaan satuan: "+conflictAudit.counts.unitDifference+".";
+        const conflictCaveat=document.createElement("p");
+        conflictCaveat.className="knowledge-verification-note";
+        conflictCaveat.textContent="Ini adalah penanda untuk ditinjau, bukan kesimpulan bahwa salah satu sumber keliru. Dokumen mungkin membahas periode, populasi, definisi, atau satuan yang berbeda. Pemeriksaan hanya mencakup kutipan terpilih.";
+        conflictPanel.append(conflictTitle,conflictSummary,conflictCaveat);
+        const conflictLabels={
+          "potential-conflict":"Potensi konflik nilai",
+          "scope-difference":"Perbedaan periode/cakupan",
+          "unit-difference":"Perbedaan satuan"
+        };
+        conflictAudit.conflicts.forEach(conflict=>{
+          const item=document.createElement("div");
+          item.className="knowledge-conflict-item";
+          const label=document.createElement("b");
+          label.textContent=conflictLabels[conflict.type]||"Perlu ditinjau";
+          const values=document.createElement("p");
+          values.textContent=conflict.left.value+" ↔ "+conflict.right.value+" · konteks bersama: "+conflict.sharedContext.join(", ");
+          const left=document.createElement("small");
+          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+" — "+conflict.left.text;
+          const right=document.createElement("small");
+          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+" — "+conflict.right.text;
+          item.append(label,values,left,right);
+          conflictPanel.appendChild(item);
+        });
+        if(!conflictAudit.total){
+          const empty=document.createElement("p");
+          empty.className="knowledge-verification-note";
+          empty.textContent="Tidak ditemukan perbedaan angka bersatuan dengan konteks kata yang cukup mirip pada kutipan terpilih. Ini bukan jaminan bahwa seluruh dokumen bebas konflik.";
+          conflictPanel.appendChild(empty);
+        }
+        answer.appendChild(conflictPanel);
         const heading=document.createElement("strong");
         heading.textContent=(mode==="summary"?"Cuplikan representatif yang digunakan":mode==="compare"?"Bukti perbandingan yang dipilih":"Sumber yang dipilih")+" · "+selected.length+" bagian dari "+coverage.included.length+" dokumen";
         answer.appendChild(heading);
