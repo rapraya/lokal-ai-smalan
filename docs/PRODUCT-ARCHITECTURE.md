@@ -6,12 +6,15 @@ Lokal AI SMALAN is a browser-based, multi-capability AI workspace for SMALAN. Th
 
 The architecture is **local-first, not local-only**. Supported models should run in the browser whenever practical. Any future feature that needs an external service must identify the provider, disclose what data leaves the device, and require an explicit user choice. Never embed private API keys or secrets in the frontend.
 
-## Current implementation — v0.30.0
+## Current implementation — v0.38.0
 
 The current `main` branch has progressed beyond the original v0.17 architecture notes. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
 ### Application shell and model runtime
-- Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, and browser-stored light/dark theme preference.
+- Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, browser-stored Dark/Light/Colorful themes, and a desktop-collapsible sidebar.
+- Model Engine provider registry with a normalized chat-completions runtime contract. WebLLM is the only active provider in this release; OpenAI GPT, Anthropic Claude, and Google Gemini are registered as cloud integration targets that remain disabled until a secure authenticated gateway is available.
+- The Model Engine dashboard reports the active local runtime, WebGPU/secure-context diagnostics, the current local model catalogue, and cloud gateway readiness.
+- The provider registry does not send network requests or store credentials. Private provider keys must remain server-side; CORS alone is not authentication.
 - Shared WebLLM 0.2.87 language-model runtime through a Web Worker for AI Chat, AI Coding, Text & Language, AI Assistant, and optional Data Analyst interpretation.
 - Llama 3.2 1B/3B model choices, download progress, streaming responses, secure-context/WebGPU adapter checks, and browser caching.
 - WebGPU adapter detection is not a guarantee that a selected model fits the device. Real browser/GPU validation, cancellation, lifecycle recovery, and robust resource handling remain required.
@@ -60,16 +63,19 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 ### Priority 1 — Validate the current AI Knowledge release
 Do not add more heuristic table features until v0.30.0 has been checked in a real browser against representative, non-sensitive documents. Follow the complete checklist in `docs/AI-KNOWLEDGE-BROWSER-VALIDATION.md`. Record browser/device, test file characteristics, expected versus observed output, console/network errors, and pass/fail status. A diagnostic status such as “consistent” is not proof that the PDF was interpreted correctly.
 
-### Priority 2 — Close runtime and user-experience gaps
+### Priority 2 — Complete the secure multi-provider Model Engine
+The provider registry and Model Engine dashboard are now in place, but cloud providers are not connected. Select a server-side gateway host and authentication model before implementing API adapters. Require provider/model allowlists, explicit data consent, usage budgets, and per-user rate limits. Never place a shared secret in the static frontend. See docs/MODEL-ENGINE-ARCHITECTURE.md.
+
+### Priority 3 — Close runtime and user-experience gaps
 Validate WebLLM model loading, streaming, cache/reload behavior, cancellation, error recovery, and browser memory on supported devices. Test Data Analyst with representative CSV exports and verify filtering, pivot tables, trends, charts, and report exports. Evaluate Indonesian drafting, proofreading, and translation quality.
 
-### Priority 3 — Improve reliability from observed failures
+### Priority 4 — Improve reliability from observed failures
 Fix only reproducible issues found in browser/device testing. Add regression fixtures for each failure and keep source citations, privacy boundaries, bounded processing, and deterministic fallbacks intact. Avoid extending PDF layout heuristics without real sample evidence.
 
-### Priority 4 — Implement remaining media capabilities
+### Priority 5 — Implement remaining media capabilities
 Evaluate compatible browser-based image understanding/editing, speech recognition, text-to-speech, and video frame/audio workflows. Treat image/video generation as separate model/runtime evaluations. Do not label a feature “local” until actual inference and device requirements are validated. Any remote provider must be optional and clearly disclosed.
 
-### Priority 5 — Quality and publication
+### Priority 6 — Quality and publication
 Complete functional, accessibility, responsive, privacy, dependency, and browser-compatibility reviews before enabling GitHub Pages or a production domain. Keep deployment disabled until these checks pass.
 
 ## Technology direction
