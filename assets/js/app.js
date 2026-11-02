@@ -1896,41 +1896,60 @@
   }
 
   function syncChatControls() {
+    const activeChatEngine = chatCloudEngine || chatEngine;
     const input = document.getElementById("chatInput");
     const send = document.getElementById("chatSendButton");
     const load = document.getElementById("chatLoadButton");
     const unload = document.getElementById("chatUnloadButton");
     const select = document.getElementById("chatModelSelect");
-    if (input) input.disabled = !chatEngine || chatGenerating;
-    if (send) send.disabled = !chatEngine || chatGenerating;
+    const providerSelect = document.getElementById("chatProviderSelect");
+    const cloudModelSelect = document.getElementById("chatCloudModelSelect");
+    const cloudConsent = document.getElementById("chatCloudConsent");
+    if (input) input.disabled = !activeChatEngine || chatGenerating || (Boolean(chatCloudEngine) && !cloudConsent?.checked);
+    if (send) send.disabled = !activeChatEngine || chatGenerating || (Boolean(chatCloudEngine) && !cloudConsent?.checked);
+
     const codingInput = document.getElementById("codingInput");
     const codingRunButton = document.getElementById("codingRunButton");
     if (codingInput) codingInput.disabled = chatGenerating;
     if (codingRunButton) codingRunButton.disabled = !chatEngine || chatGenerating || !codingInput || !codingInput.value.trim();
+
     const textInput = document.getElementById("textInput");
     const textRunButton = document.getElementById("textRunButton");
     if (textInput) textInput.disabled = chatGenerating;
     if (textRunButton) textRunButton.disabled = !chatEngine || chatGenerating || !textInput || !textInput.value.trim();
+
     if (load) {
-      load.disabled = chatLoading || !!chatEngine;
-      load.hidden = !!chatEngine;
-      load.textContent = chatLoading ? "Menyiapkan model…" : "Muat model lokal";
+      load.disabled = chatLoading || !!activeChatEngine;
+      load.hidden = !!activeChatEngine;
+      load.textContent = chatLoading
+        ? "Menyiapkan model…"
+        : providerSelect?.value === "openai" ? "Hubungkan GPT" : "Muat model lokal";
     }
-    if (unload) unload.hidden = !chatEngine;
-    if (select) select.disabled = chatLoading || !!chatEngine;
+    if (unload) unload.hidden = !activeChatEngine;
+    if (select) select.disabled = chatLoading || !!activeChatEngine;
+    if (providerSelect) providerSelect.disabled = chatGenerating || !!activeChatEngine;
+    if (cloudModelSelect) cloudModelSelect.disabled = chatGenerating || !!activeChatEngine;
+
     const statusMessage = chatLoading
       ? "Memuat model lokal…"
       : chatGenerating
-        ? "Sedang menghasilkan jawaban…"
+        ? (chatCloudEngine ? "Menghubungi OpenAI melalui secure gateway…" : "Sedang menghasilkan jawaban…")
         : chatLastError
           ? chatLastError
-          : chatEngine
-            ? "Model siap · berjalan lokal"
-            : "Model belum aktif";
-    const statusType = chatLoading ? "loading" : chatGenerating ? "loading" : chatLastError ? "error" : chatEngine ? "ready" : "idle";
+          : chatCloudEngine
+            ? "GPT siap · pemrosesan melalui secure gateway"
+            : chatEngine
+              ? "Model siap · berjalan lokal"
+              : "Model belum aktif";
+    const statusType = chatLoading
+      ? "loading"
+      : chatGenerating
+        ? "loading"
+        : chatLastError
+          ? "error"
+          : activeChatEngine ? "ready" : "idle";
     setChatStatus(statusMessage, statusType);
   }
-
   async function loadChatModel() {
     if (chatLoading || chatEngine) return;
     if (!window.isSecureContext) {
