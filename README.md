@@ -11,6 +11,8 @@ The architecture is **local-first, not local-only**: supported models should run
 - Detects repeated multi-column row patterns as potential table rows and retains a row-count hint on each PDF page. The UI and evidence prompt disclose this as an indication, not guaranteed table reconstruction.
 - Preserves OCR line breaks when available; OCR-derived content is not falsely labeled as a coordinate-reconstructed table.
 - Local synthesis instructions tell the model to respect visible column/value relationships, avoid inventing headers or units, and disclose incomplete table excerpts.
+- Question mode ranks the complete active collection before selecting evidence. When multiple files contain relevant material, it limits each file to two excerpts (up to five overall) to reduce single-file dominance; when only one file is relevant, its useful excerpts are not unnecessarily capped by diversity.
+- Grounded synthesis guidance asks the local model to distinguish corroborating evidence, contextual differences, and possible conflicts while checking date and scope. It continues to require source markers for factual claims.
 - Automated tests cover coordinate-based column extraction, repeated row detection, row boundaries, unpositioned-text fallback, and source metadata. Real-world PDFs with merged cells, borders, multi-column layouts, and scanned tables still require browser/device validation.
 
 **v0.22.0 — Section-aware Advanced RAG**
