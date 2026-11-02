@@ -276,6 +276,7 @@
         }
         if (!answer) answer = "Model tidak menghasilkan rekomendasi. Silakan coba lagi.";
         assistantMessages.push({ role: "assistant", content: answer });
+        if (assistantMessages.length > 12) assistantMessages.splice(0, assistantMessages.length - 12);
         if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
         if (status) status.textContent = "Rekomendasi selesai. Tidak ada tindakan yang dijalankan.";
         if (prompt) prompt.value = "";
