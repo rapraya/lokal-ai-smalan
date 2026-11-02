@@ -339,9 +339,9 @@
   }
 
 
-  let knowledgePages = [], knowledgeDocuments = [], knowledgeBusy = false, pdfJsPromise = null, knowledgeSequence = 0;
+  let knowledgePages = [], knowledgeDocuments = [], knowledgeBusy = false, pdfJsPromise = null, ocrLibraryPromise = null, knowledgeSequence = 0;
   function renderKnowledgeWorkspace() {
-    return '<div class="chat-page knowledge-page"><div class="module-back-row"><button class="module-back" data-page="home">← Kembali ke overview</button><span class="chat-private-label">Dokumen hanya di memori browser</span></div><div class="chat-page-heading"><div><div class="eyebrow">DOCUMENT INTELLIGENCE</div><h1>AI Knowledge</h1><p>Bangun koleksi dokumen dan cari jawaban lintas sumber.</p></div><span class="chat-build-status">Knowledge workspace · Alpha 2</span></div><div class="knowledge-layout"><section class="assistant-panel"><div class="chat-panel-label">YOUR KNOWLEDGE BASE</div><h2>Koleksi dokumen</h2><label class="knowledge-dropzone" for="knowledgeFile"><strong>Tambahkan PDF, TXT, atau Markdown</strong><small>Maksimal 5 dokumen · 12 MB per file · PDF hingga 80 halaman</small><input id="knowledgeFile" type="file" multiple accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label><div id="knowledgeDocumentList" class="knowledge-document-list"><p class="knowledge-document">Belum ada dokumen dimuat.</p></div><button id="knowledgeClear" class="chat-unload-button" type="button" disabled>Hapus seluruh koleksi</button><p id="knowledgeStatus" class="assistant-status" role="status">Dokumen diproses di browser, tanpa unggahan.</p></section><section class="assistant-panel"><div class="chat-panel-label">CROSS-DOCUMENT SEARCH</div><h2>Tanya koleksi dokumen</h2><p class="assistant-disclosure">Muat model lokal melalui AI Chat terlebih dahulu. Sistem memilih kutipan dari seluruh dokumen yang dimuat.</p><form id="knowledgeQuestionForm"><label class="chat-field-label" for="knowledgeQuestion">Pertanyaan</label><textarea id="knowledgeQuestion" rows="3" maxlength="2000" placeholder="Bandingkan kebijakan atau temukan informasi di beberapa dokumen…" disabled></textarea><button id="knowledgeAsk" class="coding-run-button" type="submit" disabled>Tanyakan ke koleksi</button></form><div id="knowledgeAnswer" class="knowledge-answer" aria-live="polite">Jawaban dan sumber muncul di sini.</div></section></div><div class="module-privacy"><p><strong>Privasi.</strong> Maksimal lima dokumen diproses di memori halaman. Hanya kutipan terpilih yang dikirim ke WebLLM lokal. PDF.js dimuat dari cdnjs. OCR untuk PDF hasil scan belum tersedia.</p></div></div>';
+    return '<div class="chat-page knowledge-page"><div class="module-back-row"><button class="module-back" data-page="home">← Kembali ke overview</button><span class="chat-private-label">Dokumen hanya di memori browser</span></div><div class="chat-page-heading"><div><div class="eyebrow">DOCUMENT INTELLIGENCE</div><h1>AI Knowledge</h1><p>Kelola dokumen, telusuri sumber, dan baca PDF hasil pemindaian dengan OCR opsional.</p></div><span class="chat-build-status">Knowledge workspace · Alpha 3</span></div><div class="knowledge-layout"><section class="assistant-panel"><div class="chat-panel-label">YOUR KNOWLEDGE BASE</div><h2>Koleksi dokumen</h2><label class="knowledge-dropzone" for="knowledgeFile"><strong>Tambahkan PDF, TXT, atau Markdown</strong><small>Maksimal 5 dokumen · 12 MB per file · PDF hingga 80 halaman</small><input id="knowledgeFile" type="file" multiple accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label><label class="knowledge-ocr-option"><input id="knowledgeOcrEnabled" type="checkbox"><span><strong>Aktifkan OCR untuk halaman PDF hasil scan</strong><small>Opsional · maksimal 20 halaman per PDF · perlu mengunduh Tesseract.js dan data bahasa Indonesia/Inggris dari CDN.</small></span></label><div id="knowledgeDocumentList" class="knowledge-document-list"><p class="knowledge-document">Belum ada dokumen dimuat.</p></div><button id="knowledgeClear" class="chat-unload-button" type="button" disabled>Hapus seluruh koleksi</button><p id="knowledgeStatus" class="assistant-status" role="status">Dokumen diproses di browser, tanpa unggahan.</p></section><section class="assistant-panel"><div class="chat-panel-label">CROSS-DOCUMENT SEARCH</div><h2>Tanya koleksi dokumen</h2><p class="assistant-disclosure">Muat model lokal melalui AI Chat terlebih dahulu. Sistem memilih kutipan dari seluruh dokumen yang dimuat.</p><form id="knowledgeQuestionForm"><label class="chat-field-label" for="knowledgeQuestion">Pertanyaan</label><textarea id="knowledgeQuestion" rows="3" maxlength="2000" placeholder="Bandingkan kebijakan atau temukan informasi di beberapa dokumen…" disabled></textarea><button id="knowledgeAsk" class="coding-run-button" type="submit" disabled>Tanyakan ke koleksi</button></form><div id="knowledgeAnswer" class="knowledge-answer" aria-live="polite">Jawaban dan sumber muncul di sini.</div></section></div><div class="module-privacy"><p><strong>Privasi dan dependensi.</strong> Dokumen tetap di memori halaman. Hanya kutipan terpilih dikirim ke WebLLM lokal. PDF.js, Tesseract.js, dan data bahasa OCR dimuat dari CDN saat fitur digunakan. OCR berjalan di browser; hasilnya dapat keliru pada scan buram atau tata letak kompleks. Semantik/embedding belum diaktifkan.</p></div></div>';
   }
   function renderKnowledgeDocumentList() {
     const list=document.getElementById("knowledgeDocumentList"); if(!list)return;
@@ -363,7 +363,11 @@
     if(q){q.disabled=!knowledgePages.length||!chatEngine||knowledgeBusy||chatGenerating;ask.disabled=q.disabled;}
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
   }
-  async function readKnowledgeFile(file) {
+  async function loadKnowledgeOcr() {
+    if(!ocrLibraryPromise)ocrLibraryPromise=import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js").catch(error=>{ocrLibraryPromise=null;throw new Error("Tesseract.js gagal dimuat: "+error.message);});
+    return ocrLibraryPromise;
+  }
+  async function readKnowledgeFile(file, options={}) {
     if(file.size>12*1024*1024) throw new Error("Ukuran file melebihi 12 MB.");
     const ext=file.name.split(".").pop().toLowerCase();
     if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");const chunks=[];for(let i=0;i<Math.min(t.length,90000);i+=1800)chunks.push({page:Math.floor(i/1800)+1,text:t.slice(i,i+1800)});return chunks;}
@@ -371,9 +375,31 @@
     if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     if(pdf.numPages>80)throw new Error("PDF melebihi 80 halaman.");
-    const pages=[];let total=0;
-    for(let n=1;n<=pdf.numPages&&total<90000;n++){const p=await pdf.getPage(n),c=await p.getTextContent(),t=c.items.map(x=>x.str||"").join(" ").replace(/\s+/g," ").trim();if(t){pages.push({page:n,text:t.slice(0,12000)});total+=t.length;}}
-    if(!pages.length)throw new Error("Teks tidak ditemukan. PDF hasil scan membutuhkan OCR yang belum tersedia.");
+    const pages=[];let total=0,ocrCount=0,ocrWorker=null,ocrError="";
+    try{
+      for(let n=1;n<=pdf.numPages&&total<90000;n++){
+        const page=await pdf.getPage(n),content=await page.getTextContent();
+        let text=content.items.map(x=>x.str||"").join(" ").replace(/\\s+/g," ").trim(),isOcr=false;
+        if(!text&&options.ocrEnabled&&ocrCount<20){
+          try{
+            if(!ocrWorker){const tesseract=await loadKnowledgeOcr();ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
+            const viewport=page.getViewport({scale:1.6}),canvas=document.createElement("canvas"),context=canvas.getContext("2d");
+            canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+            await page.render({canvasContext:context,viewport}).promise;
+            const result=await ocrWorker.recognize(canvas);text=(result.data.text||"").replace(/\\s+/g," ").trim();canvas.width=0;canvas.height=0;
+            if(text){isOcr=true;ocrCount++;}
+          }catch(error){ocrError=error.message;break;}
+        }
+        if(text){pages.push({page:n,text:text.slice(0,12000),ocr:isOcr});total+=text.length;}
+      }
+    }finally{if(ocrWorker)await ocrWorker.terminate();}
+    if(!pages.length){
+      if(options.ocrEnabled&&ocrError)throw new Error("OCR tidak berhasil: "+ocrError);
+      if(options.ocrEnabled)throw new Error("Teks tidak ditemukan meski OCR dicoba. Periksa kualitas scan dan bahasa dokumen.");
+      throw new Error("Teks tidak ditemukan. PDF hasil scan terdeteksi; aktifkan opsi OCR sebelum mengunggah ulang.");
+    }
+    pages.ocrCount=ocrCount;
+    pages.ocrNotice=ocrError?"OCR terhenti: "+ocrError:"";
     return pages;
   }
   function findKnowledgeSources(pages,query){
@@ -383,7 +409,7 @@
     return pages.map((p,index)=>{const lower=p.text.toLocaleLowerCase("id-ID");const matched=terms.filter(term=>lower.includes(term));const frequency=matched.reduce((n,term)=>n+Math.min(3,lower.split(term).length-1),0);return {...p,score:matched.length*4+frequency,matchedTerms:matched.length,index};}).filter(p=>p.matchedTerms>0).sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||a.index-b.index).slice(0,5);
   }
   function bindKnowledgeWorkspace(){
-    const file=document.getElementById("knowledgeFile"),status=document.getElementById("knowledgeStatus"),clear=document.getElementById("knowledgeClear"),form=document.getElementById("knowledgeQuestionForm"),q=document.getElementById("knowledgeQuestion"),answer=document.getElementById("knowledgeAnswer");
+    const file=document.getElementById("knowledgeFile"),ocrOption=document.getElementById("knowledgeOcrEnabled"),status=document.getElementById("knowledgeStatus"),clear=document.getElementById("knowledgeClear"),form=document.getElementById("knowledgeQuestionForm"),q=document.getElementById("knowledgeQuestion"),answer=document.getElementById("knowledgeAnswer");
     file.addEventListener("change",async()=>{
       const selected=Array.from(file.files||[]);if(!selected.length)return;
       knowledgeBusy=true;syncKnowledgeControls();let added=0,failed=[];
@@ -391,11 +417,11 @@
         if(knowledgeDocuments.length>=5){failed.push("Batas lima dokumen tercapai.");break;}
         if(knowledgeDocuments.some(d=>d.name===f.name&&d.size===f.size)){failed.push(f.name+": sudah ada di koleksi.");continue;}
         status.textContent="Mengekstrak "+f.name+" di browser…";
-        try{const pages=await readKnowledgeFile(f);const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,pages:pages.map(p=>({...p,documentName:f.name,documentId:id}))});added++;}
+        try{const pages=await readKnowledgeFile(f,{ocrEnabled:ocrOption.checked,onProgress:(page,total,progress)=>{status.textContent="OCR halaman "+page+"/"+total+" · "+Math.round(progress*100)+"%";}});const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:pages.ocrCount||0,ocrNotice:pages.ocrNotice||"",pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});added++;}
         catch(e){failed.push(f.name+": "+e.message);}
       }
       knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
-      status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.");
+      const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"");
       file.value="";knowledgeBusy=false;syncKnowledgeControls();
     });
     clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
