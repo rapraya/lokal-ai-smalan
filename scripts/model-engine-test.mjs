@@ -72,6 +72,11 @@ const missingGateway = await engine.checkGateway({
 });
 assert.equal(missingGateway.status, "not-deployed");
 assert.equal(missingGateway.configured, false);
+const accessRedirect = await engine.checkGateway({
+  fetch: async () => ({ type: "opaqueredirect", status: 0 })
+});
+assert.equal(accessRedirect.status, "session-required");
+assert.equal(accessRedirect.configured, false);
 
 const missingSession = await engine.checkGateway({
   fetch: async () => Response.json({ error: { message: "Login required" } }, { status: 401 })
