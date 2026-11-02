@@ -3,7 +3,7 @@
   "name": "lokal-ai-gateway",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-03",
-  "workers_dev": true,
+  "workers_dev": false,
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
@@ -23,6 +23,12 @@
         "limit": 10,
         "period": 60
       }
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "ai.smalan.sch.id/api/*",
+      "zone_name": "smalan.sch.id"
     }
   ]
 }
