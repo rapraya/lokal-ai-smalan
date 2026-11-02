@@ -343,7 +343,7 @@
   let knowledgeEmbeddingWorker=null,knowledgeEmbeddingRequestId=0,knowledgeEmbeddingRequests=new Map();
   let knowledgeSemanticEnabled=false,knowledgeSemanticVectors=[],knowledgeSemanticPageIndices=[],knowledgeSemanticTruncated=false;
   function renderKnowledgeWorkspace() {
-    return '<div class="chat-page knowledge-page"><div class="module-back-row"><button class="module-back" data-page="home">← Kembali ke overview</button><span class="chat-private-label">Dokumen hanya di memori browser</span></div><div class="chat-page-heading"><div><div class="eyebrow">DOCUMENT INTELLIGENCE</div><h1>AI Knowledge</h1><p>Kelola dokumen, telusuri sumber, dan baca PDF hasil pemindaian dengan OCR opsional.</p></div><span class="chat-build-status">Knowledge workspace · Alpha 3</span></div><div class="knowledge-layout"><section class="assistant-panel"><div class="chat-panel-label">YOUR KNOWLEDGE BASE</div><h2>Koleksi dokumen</h2><label class="knowledge-dropzone" for="knowledgeFile"><strong>Tambahkan PDF, TXT, atau Markdown</strong><small>Maksimal 5 dokumen · 12 MB per file · PDF hingga 80 halaman</small><input id="knowledgeFile" type="file" multiple accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label><label class="knowledge-ocr-option"><input id="knowledgeOcrEnabled" type="checkbox"><span><strong>Aktifkan OCR untuk halaman PDF hasil scan</strong><small>Opsional · maksimal 20 halaman per PDF · perlu mengunduh Tesseract.js dan data bahasa Indonesia/Inggris dari CDN.</small></span></label><label class="knowledge-semantic-option"><input id="knowledgeSemanticEnabled" type="checkbox"><span><strong>Aktifkan pencarian semantik lokal</strong><small>Opsional · unduh runtime dan model multilingual sekitar 118 MB saat diaktifkan. Teks dokumen dan pertanyaan diproses di browser, tidak diunggah.</small></span></label><div id="knowledgeDocumentList" class="knowledge-document-list"><p class="knowledge-document">Belum ada dokumen dimuat.</p></div><button id="knowledgeClear" class="chat-unload-button" type="button" disabled>Hapus seluruh koleksi</button><p id="knowledgeStatus" class="assistant-status" role="status">Dokumen diproses di browser, tanpa unggahan.</p></section><section class="assistant-panel"><div class="chat-panel-label">CROSS-DOCUMENT SEARCH</div><h2>Tanya koleksi dokumen</h2><p class="assistant-disclosure">Muat model lokal melalui AI Chat terlebih dahulu. Sistem memilih kutipan dari seluruh dokumen yang dimuat.</p><form id="knowledgeQuestionForm"><label class="chat-field-label" for="knowledgeTaskMode">Mode kerja</label><select id="knowledgeTaskMode" class="knowledge-task-mode" disabled><option value="question">Tanya koleksi dokumen</option><option value="summary">Ringkas setiap dokumen</option><option value="compare">Bandingkan antardokumen</option></select><label class="chat-field-label" for="knowledgeQuestion">Pertanyaan atau fokus analisis</label><textarea id="knowledgeQuestion" rows="3" maxlength="2000" placeholder="Temukan informasi, kebijakan, atau hal yang ingin dibandingkan…" disabled></textarea><button id="knowledgeAsk" class="coding-run-button" type="submit" disabled>Jalankan analisis</button></form><div id="knowledgeAnswer" class="knowledge-answer" aria-live="polite">Jawaban dan sumber muncul di sini.</div></section></div><div class="module-privacy"><p><strong>Privasi dan dependensi.</strong> Dokumen tetap di memori halaman. Hanya kutipan terpilih dikirim ke WebLLM lokal. PDF.js, Tesseract.js, dan data bahasa OCR dimuat dari CDN saat fitur digunakan. OCR berjalan di browser; hasilnya dapat keliru pada scan buram atau tata letak kompleks. Pencarian semantik lokal menggunakan model multilingual yang diunduh atas persetujuan pengguna; teks dokumen dan pertanyaan tetap diproses di browser. Model dan runtime dimuat dari penyedia CDN/model publik.</p></div></div>';
+    return '<div class="chat-page knowledge-page"><div class="module-back-row"><button class="module-back" data-page="home">← Kembali ke overview</button><span class="chat-private-label">Dokumen hanya di memori browser</span></div><div class="chat-page-heading"><div><div class="eyebrow">DOCUMENT INTELLIGENCE</div><h1>AI Knowledge</h1><p>Kelola dokumen, telusuri sumber, dan baca PDF hasil pemindaian dengan OCR opsional.</p></div><span class="chat-build-status">Knowledge workspace · Alpha 3</span></div><div class="knowledge-layout"><section class="assistant-panel"><div class="chat-panel-label">YOUR KNOWLEDGE BASE</div><h2>Koleksi dokumen</h2><label class="knowledge-dropzone" for="knowledgeFile"><strong>Tambahkan PDF, TXT, atau Markdown</strong><small>Maksimal 5 dokumen · 12 MB per file · PDF hingga 80 halaman</small><input id="knowledgeFile" type="file" multiple accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label><button id="knowledgeLoadSamples" class="chat-unload-button" type="button">Muat 2 dokumen contoh</button><label class="knowledge-ocr-option"><input id="knowledgeOcrEnabled" type="checkbox"><span><strong>Aktifkan OCR untuk halaman PDF hasil scan</strong><small>Opsional · maksimal 20 halaman per PDF · perlu mengunduh Tesseract.js dan data bahasa Indonesia/Inggris dari CDN.</small></span></label><label class="knowledge-semantic-option"><input id="knowledgeSemanticEnabled" type="checkbox" checked><span><strong>Aktifkan pencarian semantik lokal</strong><small>Opsional · unduh runtime dan model multilingual sekitar 118 MB saat diaktifkan. Teks dokumen dan pertanyaan diproses di browser, tidak diunggah.</small></span></label><div id="knowledgeDocumentList" class="knowledge-document-list"><p class="knowledge-document">Belum ada dokumen dimuat.</p></div><button id="knowledgeClear" class="chat-unload-button" type="button" disabled>Hapus seluruh koleksi</button><p id="knowledgeStatus" class="assistant-status" role="status">Dokumen diproses di browser, tanpa unggahan.</p></section><section class="assistant-panel"><div class="chat-panel-label">CROSS-DOCUMENT SEARCH</div><h2>Tanya koleksi dokumen</h2><p class="assistant-disclosure">Tulis pertanyaan atau pilih ringkasan maupun perbandingan. Model lokal akan disiapkan saat analisis dijalankan.</p><form id="knowledgeQuestionForm"><label class="chat-field-label" for="knowledgeTaskMode">Mode kerja</label><select id="knowledgeTaskMode" class="knowledge-task-mode" disabled><option value="question">Tanya koleksi dokumen</option><option value="summary">Ringkas setiap dokumen</option><option value="compare">Bandingkan antardokumen</option></select><label class="chat-field-label" for="knowledgeQuestion">Pertanyaan atau fokus analisis</label><textarea id="knowledgeQuestion" rows="3" maxlength="2000" placeholder="Temukan informasi, kebijakan, atau hal yang ingin dibandingkan…" disabled></textarea><button id="knowledgeAsk" class="coding-run-button" type="submit" disabled>Jalankan analisis</button></form><div id="knowledgeAnswer" class="knowledge-answer" aria-live="polite">Jawaban dan sumber muncul di sini.</div></section></div><div class="module-privacy"><p><strong>Privasi dan dependensi.</strong> Dokumen tetap di memori halaman. Hanya kutipan terpilih dikirim ke WebLLM lokal. PDF.js, Tesseract.js, dan data bahasa OCR dimuat dari CDN saat fitur digunakan. OCR berjalan di browser; hasilnya dapat keliru pada scan buram atau tata letak kompleks. Pencarian semantik lokal menggunakan model multilingual yang diunduh atas persetujuan pengguna; teks dokumen dan pertanyaan tetap diproses di browser. Model dan runtime dimuat dari penyedia CDN/model publik.</p></div></div>';
   }
   function renderKnowledgeDocumentList() {
     const list=document.getElementById("knowledgeDocumentList"); if(!list)return;
@@ -367,7 +367,8 @@
   }
   function syncKnowledgeControls(){
     const q=document.getElementById("knowledgeQuestion"),ask=document.getElementById("knowledgeAsk"),clear=document.getElementById("knowledgeClear");
-    if(q){q.disabled=!knowledgePages.length||!chatEngine||knowledgeBusy||chatGenerating;ask.disabled=q.disabled;}
+    if(q)q.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating;
+    if(ask)ask.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating||(taskMode?.value!=="summary"&&!q?.value.trim());
     const taskMode=document.getElementById("knowledgeTaskMode");if(taskMode)taskMode.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating;
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
     const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy||!knowledgePages.length;
@@ -1135,6 +1136,35 @@
   }
   function bindKnowledgeWorkspace(){
     const file=document.getElementById("knowledgeFile"),ocrOption=document.getElementById("knowledgeOcrEnabled"),status=document.getElementById("knowledgeStatus"),clear=document.getElementById("knowledgeClear"),form=document.getElementById("knowledgeQuestionForm"),taskMode=document.getElementById("knowledgeTaskMode"),q=document.getElementById("knowledgeQuestion"),answer=document.getElementById("knowledgeAnswer");
+    q.addEventListener("input",syncKnowledgeControls);
+    const sampleButton=document.getElementById("knowledgeLoadSamples");
+    if(sampleButton)sampleButton.addEventListener("click",async()=>{
+      sampleButton.disabled=true;knowledgeBusy=true;syncKnowledgeControls();
+      try{
+        const samples=[
+          ["knowledge-semantic-policy.md","https://raw.githubusercontent.com/rapraya/lokal-ai-smalan/main/docs/test-fixtures/knowledge-semantic-policy.md"],
+          ["knowledge-semantic-program.md","https://raw.githubusercontent.com/rapraya/lokal-ai-smalan/main/docs/test-fixtures/knowledge-semantic-program.md"]
+        ];
+        const files=[];
+        for(const [name,url] of samples){
+          if(knowledgeDocuments.some(doc=>doc.name===name))continue;
+          const response=await fetch(url,{cache:"no-store"});
+          if(!response.ok)throw new Error("Dokumen contoh gagal diambil: "+name+" ("+response.status+")");
+          files.push(new File([await response.text()],name,{type:"text/markdown"}));
+        }
+        for(const f of files){
+          if(knowledgeDocuments.length>=5)throw new Error("Koleksi sudah mencapai batas lima dokumen.");
+          const pages=applyKnowledgeSectionMetadata(await readKnowledgeFile(f,{ocrEnabled:false}));
+          const id=++knowledgeSequence;
+          knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:0,ocrSkipped:false,textTruncated:!!pages.textTruncated,pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});
+        }
+        knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
+        status.textContent="Dua dokumen contoh berhasil dimuat. Menyiapkan pencarian semantik lokal…";
+        semanticToggle.checked=true;
+      }catch(error){status.textContent="Dokumen contoh belum berhasil dimuat: "+error.message;}
+      finally{knowledgeBusy=false;sampleButton.disabled=false;syncKnowledgeControls();}
+      if(knowledgePages.length&&semanticToggle.checked&&!knowledgeSemanticEnabled)await enableKnowledgeSemantic(status,semanticToggle);
+    });
     file.addEventListener("change",async()=>{
       const selected=Array.from(file.files||[]);if(!selected.length)return;
       knowledgeBusy=true;syncKnowledgeControls();let added=0,failed=[];
@@ -1153,6 +1183,7 @@
       }
       const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(knowledgeDocuments.some(d=>d.textTruncated)?" Sebagian isi dokumen tidak dimuat karena batas ekstraksi 90.000 karakter per dokumen.":"")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"")+semanticWarning;
       file.value="";knowledgeBusy=false;syncKnowledgeControls();
+      if(knowledgePages.length&&semanticToggle.checked&&!knowledgeSemanticEnabled)await enableKnowledgeSemantic(status,semanticToggle);
     });
     clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];knowledgeSemanticEnabled=false;knowledgeSemanticVectors=[];knowledgeSemanticPageIndices=[];knowledgeSemanticTruncated=false;semanticToggle.checked=false;stopKnowledgeEmbeddingWorker();file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
     const semanticToggle=document.getElementById("knowledgeSemanticEnabled");
@@ -1170,12 +1201,15 @@
     form.addEventListener("submit",async e=>{
       e.preventDefault();
       const mode=taskMode.value,promptInput=q.value.trim();
-      if((mode!=="summary"&&!promptInput)||!chatEngine||!knowledgePages.length||knowledgeBusy||chatGenerating)return;
+      if((mode!=="summary"&&!promptInput)||!knowledgePages.length||knowledgeBusy||chatGenerating)return;
       const prompt=promptInput||(mode==="summary"?"Buat ringkasan pokok isi, tujuan, kebijakan, dan kesimpulan setiap dokumen.":"");
-      knowledgeBusy=true;chatGenerating=true;syncKnowledgeControls();
+      knowledgeBusy=true;syncKnowledgeControls();
       status.textContent=knowledgeSemanticEnabled?"Menyiapkan bukti dengan semantik lokal dan BM25…":"Menyiapkan bukti dengan BM25…";
       answer.textContent="Menyusun bukti dan analisis…";
       try{
+        if(!chatEngine){status.textContent="Menyiapkan model AI lokal untuk analisis…";await loadChatModel();}
+        if(!chatEngine)throw new Error(chatLastError||"Model AI lokal belum berhasil dimuat. Periksa dukungan WebGPU dan koneksi internet.");
+        chatGenerating=true;syncKnowledgeControls();
         let selected=[],semanticFallbackNotice="";
         if(mode==="summary"){
           selected=selectKnowledgeSummarySources(knowledgePages,3,15);
