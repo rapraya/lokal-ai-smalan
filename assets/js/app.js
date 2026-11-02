@@ -351,7 +351,7 @@
       const row=document.createElement("div");row.className="knowledge-document-row";
       const info=document.createElement("div");info.className="knowledge-document";
       const name=document.createElement("strong");name.textContent=item.name;
-      const meta=document.createElement("small");meta.textContent=item.pages.length+" bagian sumber · "+(item.size/1024).toFixed(0)+" KB";
+      const meta=document.createElement("small");meta.textContent=item.pages.length+" bagian sumber"+(item.ocrCount?" · OCR "+item.ocrCount+" halaman":"")+" · "+(item.size/1024).toFixed(0)+" KB";
       info.append(name,meta);
       const remove=document.createElement("button");remove.type="button";remove.className="assistant-task-remove";remove.textContent="Hapus";remove.setAttribute("aria-label","Hapus "+item.name);
       remove.addEventListener("click",()=>{knowledgeDocuments=knowledgeDocuments.filter(doc=>doc.id!==item.id);knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();document.getElementById("knowledgeStatus").textContent="Dokumen dihapus dari koleksi sesi.";syncKnowledgeControls();});
@@ -403,10 +403,28 @@
     return pages;
   }
   function findKnowledgeSources(pages,query){
-    const stop=new Set(["yang","dan","untuk","dari","dengan","apa","bagaimana","jelaskan","dokumen","dalam","adalah","atau","pada","the","and","for","from"]);
-    const terms=Array.from(new Set((query.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{3,}/gu)||[]).filter(x=>!stop.has(x))));
-    if(!terms.length)return [];
-    return pages.map((p,index)=>{const lower=p.text.toLocaleLowerCase("id-ID");const matched=terms.filter(term=>lower.includes(term));const frequency=matched.reduce((n,term)=>n+Math.min(3,lower.split(term).length-1),0);return {...p,score:matched.length*4+frequency,matchedTerms:matched.length,index};}).filter(p=>p.matchedTerms>0).sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||a.index-b.index).slice(0,5);
+    const stop=new Set(["yang","dan","untuk","dari","dengan","apa","bagaimana","jelaskan","dokumen","dalam","adalah","atau","pada","the","and","for","from","this","that"]);
+    const tokenize=value=>(value.toLocaleLowerCase("id-ID").match(/[\\p{L}\\p{N}]{2,}/gu)||[]).filter(term=>!stop.has(term));
+    const queryTerms=Array.from(new Set(tokenize(query)));
+    if(!queryTerms.length||!pages.length)return [];
+    const documents=pages.map((page,index)=>{const tokens=tokenize(page.text),counts=new Map();tokens.forEach(term=>counts.set(term,(counts.get(term)||0)+1));return {...page,index,tokens,counts,length:tokens.length};});
+    const averageLength=documents.reduce((sum,doc)=>sum+doc.length,0)/Math.max(1,documents.length);
+    const scored=documents.map(doc=>{
+      let score=0;const matched=[];
+      queryTerms.forEach(term=>{
+        const frequency=doc.counts.get(term)||0;if(!frequency)return;
+        matched.push(term);
+        const documentFrequency=documents.reduce((count,item)=>count+(item.counts.has(term)?1:0),0);
+        const inverse=Math.log(1+(documents.length-documentFrequency+0.5)/(documentFrequency+0.5));
+        const denominator=frequency+1.2*(1-0.75+0.75*doc.length/Math.max(1,averageLength));
+        score+=inverse*(frequency*2.2)/denominator;
+      });
+      const normalizedQuery=queryTerms.join(" ");
+      const normalizedText=doc.tokens.join(" ");
+      if(normalizedQuery.length>5&&normalizedText.includes(normalizedQuery))score+=1.25;
+      return {...doc,score,matchedTerms:matched.length};
+    });
+    return scored.filter(item=>item.matchedTerms>0).sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||a.index-b.index).slice(0,5);
   }
   function bindKnowledgeWorkspace(){
     const file=document.getElementById("knowledgeFile"),ocrOption=document.getElementById("knowledgeOcrEnabled"),status=document.getElementById("knowledgeStatus"),clear=document.getElementById("knowledgeClear"),form=document.getElementById("knowledgeQuestionForm"),q=document.getElementById("knowledgeQuestion"),answer=document.getElementById("knowledgeAnswer");
