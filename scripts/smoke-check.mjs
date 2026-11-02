@@ -133,3 +133,7 @@ assert.ok(readme.includes("Validation status") && readme.includes("real browser/
 
 console.log("Lokal AI smoke checks passed.");
 console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, IQR outlier detection, Pearson correlation, statistical findings, aggregate-only local interpretation, follow-up Data Intelligence sessions, and safe text/code output.`);
+
+assert.ok(app.includes("function renderPersonalWorkspace()") && app.includes("function bindPersonalWorkspace()"), "Personal AI workspace is missing.");
+assert.ok(app.includes("personalStorageEnabled = false") && app.includes("personalContextEnabled = false"), "Personal AI permissions must default to disabled.");
+assert.ok(app.includes("buildPersonalContextMessage()") && app.includes("localStorage.removeItem(personalStorageKey)"), "Personal AI context and deletion controls are missing.");
