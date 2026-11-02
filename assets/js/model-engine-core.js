@@ -110,9 +110,13 @@
         method: "GET",
         credentials: "same-origin",
         cache: "no-store",
-        redirect: "error",
+        redirect: "manual",
         headers: { accept: "application/json" }
       });
+      if (response.type === "opaqueredirect" || response.status === 0) {
+        gatewayState = { ...gatewayState, status: "session-required", message: "Login Cloudflare Access diperlukan. Buka halaman login gateway, lalu periksa kembali." };
+        return { ...gatewayState, allowedModels: [] };
+      }
       let result = {};
       try { result = await response.json(); } catch (_) {}
       if (response.status === 401) {
