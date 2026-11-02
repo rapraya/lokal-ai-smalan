@@ -475,7 +475,7 @@
     return dot/Math.sqrt(leftNorm*rightNorm);
   }
   function splitKnowledgeEmbeddingText(value,maxSegmentChars=360,overlapChars=60){
-    const text=String(value||"").replace(/\\s+/g," ").trim(),segments=[];
+    const text=String(value||"").replace(/\s+/g," ").trim(),segments=[];
     if(!text)return segments;
     const maxChars=Math.max(120,Math.floor(maxSegmentChars)),overlap=Math.max(0,Math.min(Math.floor(overlapChars),Math.floor(maxChars/3)));
     let start=0;
@@ -484,7 +484,7 @@
       if(end<text.length){
         const window=text.slice(start,end),minimum=Math.floor(maxChars*0.55);
         let sentenceBoundary=-1;
-        for(const match of window.matchAll(/[.!?;:]\\s/g)){
+        for(const match of window.matchAll(/[.!?;:]\s/g)){
           const candidate=match.index+1;
           if(candidate>=minimum)sentenceBoundary=start+candidate;
         }
