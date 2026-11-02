@@ -156,8 +156,9 @@ assert.ok(app.includes('id="knowledgeQuestionForm" class="knowledge-question-for
   "AI Knowledge question form must use its full-width grid layout class.");
 assert.ok(css.includes(".knowledge-question-form{") && css.includes(".knowledge-question-form textarea"),
   "AI Knowledge question controls must fill the available panel width.");
-assert.ok(app.includes('id="knowledgeSemanticEnabled" type="checkbox"'),
-  "AI Knowledge semantic search must require an explicit opt-in on a fresh session.");
+const semanticToggleMarkup = app.match(/<input id="knowledgeSemanticEnabled"[^>]*>/)?.[0] || "";
+assert.ok(semanticToggleMarkup && !/\\schecked(?:\\s|>)/.test(semanticToggleMarkup),
+  "AI Knowledge semantic search must default to unchecked and require explicit opt-in on a fresh session.");
 
 assert.ok(app.includes("async function readKnowledgeFile(file, options={})") && app.includes("function findKnowledgeSources(pages,query,limit=5)"), "Local document extraction and source retrieval are missing.");
 assert.ok(app.includes('page === "knowledge"') && app.includes('application/pdf'), "AI Knowledge navigation or PDF support is missing.");
