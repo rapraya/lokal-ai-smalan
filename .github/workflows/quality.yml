@@ -23,6 +23,8 @@ jobs:
           node-version: 22
       - name: Check application JavaScript syntax
         run: node --check assets/js/app.js
+      - name: Run secure AI gateway tests
+        run: node gateway/test/worker.test.mjs
       - name: Check WebLLM worker module syntax
         run: node --input-type=module --check < assets/js/webllm-worker.js
       - name: Check Knowledge embedding worker syntax
