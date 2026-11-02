@@ -151,5 +151,6 @@ assert.ok(app.includes("KUTIPAN LINTAS DOKUMEN") && app.includes("item.documentN
 assert.ok(app.includes("knowledgeOcrEnabled") && app.includes("options.ocrEnabled"), "Scanned PDF OCR must require an explicit user opt-in.");
 assert.ok(app.includes('createWorker("ind+eng"') && app.includes("shouldAttemptKnowledgeOcr(options.ocrEnabled,ocrAttempted)") && app.includes("maxAttempts=20"), "OCR must use bounded Indonesian/English processing.");
 assert.ok(app.includes("finally{canvas.width=0;canvas.height=0;}"), "OCR canvas must be released even when processing fails.");
+assert.ok(app.includes('if(!context)throw new Error("Canvas 2D tidak tersedia di browser ini.");'), "OCR must report when a 2D canvas context is unavailable.");
 assert.ok(app.includes("catch(error){ocrError=ocrError||\"Worker OCR gagal ditutup: \"+error.message;}"), "OCR worker cleanup failures must be reported without discarding extracted pages.");
 assert.ok(app.includes("BM25") || app.includes("documentFrequency"), "Knowledge retrieval must use term relevance scoring.");
