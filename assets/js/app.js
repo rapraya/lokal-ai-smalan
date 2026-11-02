@@ -389,6 +389,38 @@
     const excerpt=text.slice(0,Math.max(0,Math.min(maxPageChars,remaining)));
     return {text:excerpt,truncated:excerpt.length<text.length};
   }
+  function buildKnowledgeTableHeaderStructure(rows,columnCount){
+    const count=Math.max(0,Math.floor(Number(columnCount)||0));
+    if(!count)return {headers:[],columns:[],headerRows:[],headerDepth:0,ambiguous:true};
+    const carry=Array(count).fill("");
+    const parts=Array.from({length:count},()=>[]);
+    const accepted=[];
+    const maxDepth=Math.min(3,Array.isArray(rows)?rows.length:0);
+    for(let index=0;index<maxDepth;index++){
+      const cells=Array.isArray(rows[index])?rows[index].map(value=>String(value||"").trim()):[];
+      if(cells.length!==count)break;
+      const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;
+      if(!recognized)break;
+      for(let column=0;column<count;column++){
+        if(cells[column])carry[column]=cells[column];
+        if(carry[column]&&!parts[column].some(value=>normalizeKnowledgeTableHeader(value)===normalizeKnowledgeTableHeader(carry[column]))){
+          parts[column].push(carry[column]);
+        }
+      }
+      accepted.push(cells);
+    }
+    const headers=parts.map(values=>values.join(" ").trim());
+    const columns=headers.map(classifyKnowledgeTableHeader);
+    const identityColumns=columns.map((column,index)=>column.role==="identity"?index:-1).filter(index=>index>=0);
+    const metricColumns=columns.map((column,index)=>column.role==="metric"?index:-1).filter(index=>index>=0);
+    const periodColumns=columns.map((column,index)=>column.role==="period"?index:-1).filter(index=>index>=0);
+    const valid=identityColumns.length>0&&(metricColumns.length>0||periodColumns.some(index=>Boolean(columns[index].periodToken)));
+    return {
+      headers,columns,headerRows:accepted,headerDepth:accepted.length,
+      identityColumns,metricColumns,periodColumns,
+      ambiguous:!valid
+    };
+  }
   function extractKnowledgePdfLayout(items){
     const source=Array.isArray(items)?items:[];
     const nonEmpty=source.filter(item=>String(item.str||"").trim());
@@ -432,10 +464,17 @@
       if(run.length>=2){
         const headerCells=run[0].cells.slice();
         const headerKey=headerCells.map(value=>value.toLocaleLowerCase("id-ID").replace(/[^\p{L}\p{N}]+/gu," ").trim()).join("|");
+        const headerStructure=buildKnowledgeTableHeaderStructure(run.slice(0,3).map(line=>line.cells),run[0].cells.length);
+        const headerDepth=headerStructure.ambiguous?1:Math.max(1,headerStructure.headerDepth);
+        const columnHeaders=headerStructure.ambiguous?headerCells.slice():headerStructure.headers;
+        const normalizedHeaderKey=columnHeaders.map(value=>normalizeKnowledgeTableHeader(value)).join("|");
         tableBlocks.push({
           startLine:run[0].index,endLine:run[run.length-1].index,lineCount:structuredLines.length,
           rowCount:run.length,columnCount:run[0].cells.length,columnStarts:run[0].columnStarts.slice(),
-          headerCells,headerKey
+          headerCells,columnHeaders,headerRows:headerStructure.headerRows.slice(0,headerDepth),
+          headerDepth,dataStartLine:run[Math.min(headerDepth,run.length-1)]?.index??run[run.length-1].index,
+          headerKey:normalizedHeaderKey||headerKey,
+          headerAmbiguous:headerStructure.ambiguous
         });
       }
       run=[];
@@ -467,7 +506,7 @@
       const alignedColumns=priorBlock.columnStarts.every((x,column)=>Math.abs(x-nextBlock.columnStarts[column])<=24);
       if(sameHeader){
         current.repeatedTableHeader=true;
-        current.tableContinuation={type:"repeated-header",fromPage:previous.page,header:nextBlock.headerCells.slice()};
+        current.tableContinuation={type:"repeated-header",fromPage:previous.page,header:(nextBlock.columnHeaders||nextBlock.headerCells).slice(),headerDepth:nextBlock.headerDepth||1};
         nextBlock.repeatedHeader=true;
       }else if(alignedColumns){
         current.tableContinuation={type:"possible",fromPage:previous.page,header:null};
@@ -824,7 +863,7 @@
       return {role:"metric",key:metric||header,unit:aliases[rawUnit]||rawUnit};
     }
     if(/\b(tahun ajaran|tahun|semester|periode|tanggal|bulan|triwulan|kuartal)\b/.test(header))return {role:"period",key:header};
-    if(/\b(nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(header)){
+    if(/\b(identitas|data peserta didik|data siswa|nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(header)){
       return {role:"identity",key:header};
     }
     return {role:"unknown",key:header};
@@ -845,28 +884,57 @@
     const records=[],recognizedTables=[];
     for(let headerIndex=0;headerIndex<lines.length;headerIndex++){
       if(!lines[headerIndex].includes("\t"))continue;
-      const headers=lines[headerIndex].split("\t").map(value=>value.trim());
-      if(headers.length<2)continue;
-      const columns=headers.map(classifyKnowledgeTableHeader);
-      const identityColumns=columns.map((column,index)=>column.role==="identity"?index:-1).filter(index=>index>=0);
-      const metricColumns=columns.map((column,index)=>column.role==="metric"?index:-1).filter(index=>index>=0);
-      const periodColumns=columns.map((column,index)=>column.role==="period"?index:-1).filter(index=>index>=0);
+      const firstHeaders=lines[headerIndex].split("\t").map(value=>value.trim());
+      if(firstHeaders.length<2)continue;
+      const headerRows=[];
+      for(let level=0;level<3&&headerIndex+level<lines.length;level++){
+        const line=lines[headerIndex+level];
+        if(!line.includes("\t"))break;
+        const cells=line.split("\t").map(value=>value.trim());
+        if(cells.length!==firstHeaders.length)break;
+        const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;
+        if(!recognized)break;
+        headerRows.push(cells);
+      }
+      const headerStructure=buildKnowledgeTableHeaderStructure(headerRows,firstHeaders.length);
+      if(headerStructure.ambiguous||!headerStructure.headerDepth)continue;
+      const headers=headerStructure.headers;
+      const columns=headerStructure.columns;
+      const identityColumns=headerStructure.identityColumns;
+      const metricColumns=headerStructure.metricColumns;
+      const periodColumns=headerStructure.periodColumns;
       const periodValueColumns=periodColumns.filter(index=>Boolean(columns[index].periodToken));
       const rowPeriodColumns=periodColumns.filter(index=>!periodValueColumns.includes(index));
       const hasPeriodValueColumns=periodValueColumns.length>0&&identityColumns.length>0;
       if(!identityColumns.length||(!metricColumns.length&&!hasPeriodValueColumns))continue;
-      let endIndex=headerIndex+1;
+      const dataStartIndex=headerIndex+headerStructure.headerDepth;
+      let endIndex=dataStartIndex;
       while(endIndex<lines.length){
         const row=lines[endIndex].split("\t").map(value=>value.trim());
         if(row.length!==headers.length||!lines[endIndex].includes("\t"))break;
         endIndex++;
       }
-      if(endIndex===headerIndex+1)continue;
+      if(endIndex===dataStartIndex)continue;
       const tableId=recognizedTables.length+1;
-      recognizedTables.push({tableId,headerIndex:headerIndex+1,endIndex,headers});
-      for(let rowIndex=headerIndex+1;rowIndex<endIndex;rowIndex++){
+      recognizedTables.push({
+        tableId,headerIndex:headerIndex+1,headerDepth:headerStructure.headerDepth,
+        headerRows:headerStructure.headerRows.map(row=>row.slice()),
+        headers:headers.slice(),dataStartIndex:dataStartIndex+1,endIndex
+      });
+      const carryIdentity=new Map();
+      for(let rowIndex=dataStartIndex;rowIndex<endIndex;rowIndex++){
         const cells=lines[rowIndex].split("\t").map(value=>value.trim());
-        const identityParts=identityColumns.map(index=>({header:columns[index].key,value:cells[index]||""})).filter(item=>item.value);
+        if(!cells.some(Boolean)){
+          carryIdentity.clear();
+          continue;
+        }
+        let identityInherited=false;
+        const identityParts=identityColumns.map(index=>{
+          const value=cells[index]||"";
+          if(value)carryIdentity.set(index,value);
+          else if(carryIdentity.has(index))identityInherited=true;
+          return {header:headers[index],value:value||carryIdentity.get(index)||""};
+        }).filter(item=>item.value);
         if(!identityParts.length)continue;
         const identityKey=identityParts.map(item=>item.header+":"+normalizeKnowledgeTableHeader(item.value)).join("|");
         const identityLabel=identityParts.map(item=>item.value).join(" · ");
@@ -880,9 +948,10 @@
             records.push({
               sourceIndex,sourceNumber:Number(source?.sourceNumber)||sourceIndex+1,
               documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",
-              section:String(source?.section||""),tableId,rowIndex:rowIndex-headerIndex,
+              section:String(source?.section||""),tableId,rowIndex:rowIndex-dataStartIndex+1,
               columnIndex:columnIndex+1,columnHeader:headers[columnIndex],
-              rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,
+              headerDepth:headerStructure.headerDepth,headerRows:headerStructure.headerRows.map(row=>row.slice()),
+              rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,identityInherited,
               metricKey,periodValue:periodValue||rowPeriodValues.join(" · "),
               periodYears:Array.from(new Set(periodTokens)),
               value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),rawValue:value.raw
@@ -890,7 +959,8 @@
           });
         };
         metricColumns.forEach(columnIndex=>{
-          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",cells[columnIndex]||"",rowPeriodTokens,rowPeriodValues.join(" · "));
+          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",
+            cells[columnIndex]||"",rowPeriodTokens,rowPeriodValues.join(" · "));
         });
         if(hasPeriodValueColumns){
           const rowMetric=identityParts.map(item=>item.value).join(" ");
@@ -967,7 +1037,7 @@
         const makeEvidence=record=>({
           sourceNumber:record.sourceNumber,documentName:record.documentName,page:record.page,section:record.section,
           value:record.rawValue,text:record.rawRow,rowIndex:record.rowIndex,columnIndex:record.columnIndex,
-          columnHeader:record.columnHeader,identity:record.identityLabel,metric:record.metricKey,period:record.periodValue
+          columnHeader:record.columnHeader,identity:record.identityLabel,identityInherited:record.identityInherited,metric:record.metricKey,period:record.periodValue,headerDepth:record.headerDepth,headerRows:record.headerRows
         });
         appendConflict({
           key,type,left:makeEvidence(a),right:makeEvidence(b),
@@ -1210,9 +1280,9 @@
           const values=document.createElement("p");
           values.textContent=(conflict.evidenceType==="table"?(conflict.left.identity||"Subjek sama")+" · "+(conflict.left.columnHeader||conflict.left.metric||"Nilai")+": ":"")+conflict.left.value+" ↔ "+conflict.right.value+(conflict.evidenceType==="table"&&conflict.left.period?" · Periode: "+conflict.left.period:"")+" · konteks: "+conflict.sharedContext.join(", ");
           const left=document.createElement("small");
-          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+(conflict.left.rowIndex?" · Baris tabel "+conflict.left.rowIndex+" · Kolom "+conflict.left.columnIndex+" ("+conflict.left.columnHeader+")":"")+" — "+conflict.left.text;
+          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+(conflict.left.rowIndex?" · Baris tabel "+conflict.left.rowIndex+" · Kolom "+conflict.left.columnIndex+" ("+conflict.left.columnHeader+")":"")+(conflict.left.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+" — "+conflict.left.text;
           const right=document.createElement("small");
-          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+(conflict.right.rowIndex?" · Baris tabel "+conflict.right.rowIndex+" · Kolom "+conflict.right.columnIndex+" ("+conflict.right.columnHeader+")":"")+" — "+conflict.right.text;
+          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+(conflict.right.rowIndex?" · Baris tabel "+conflict.right.rowIndex+" · Kolom "+conflict.right.columnIndex+" ("+conflict.right.columnHeader+")":"")+(conflict.right.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+" — "+conflict.right.text;
           item.append(label,values,left,right);
           conflictPanel.appendChild(item);
         });
