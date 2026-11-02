@@ -6,17 +6,20 @@ Model Engine is the shared provider and runtime layer for Lokal AI SMALAN. It se
 
 The intended product is local-first, not local-only. Provider selection must never silently move user content from the device to a cloud service.
 
-## Current implementation in v0.38.0
+## Current implementation in v0.40.0
 
 - The current browser runtime is WebLLM 0.2.87 running in a Web Worker.
 - Llama 3.2 1B and 3B are registered as the current local model choices.
 - The same loaded local client is shared by AI Chat, AI Coding, Text & Language, AI Assistant, AI Knowledge, and optional Data Analyst interpretation.
-- `assets/js/model-engine-core.js` provides a small provider registry and runtime lifecycle contract.
-- The Model Engine workspace reads the registry and displays local runtime and provider readiness.
-- OpenAI (GPT), Anthropic (Claude), and Google (Gemini) are listed as future cloud integration targets. Their state is `gateway-required`; the browser registry rejects attempts to attach them as active runtimes.
-- No cloud request is made by this registry. There is no API-key input, API-key persistence, or provider credential in the frontend.
+- `assets/js/model-engine-core.js` provides the provider registry, local runtime lifecycle, authenticated gateway discovery, and a same-origin OpenAI-compatible client.
+- The Model Engine workspace displays local runtime/model information and live gateway readiness. AI Chat offers GPT only after the authenticated `/api/health` check returns a configured gateway and allowed-model list.
+- `gateway/src/worker.js` is a Cloudflare Worker that validates `Cf-Access-Jwt-Assertion` signature, issuer, audience, expiry, and allowed email; it uses the server-side `OPENAI_API_KEY` secret and a per-user Cloudflare rate-limit binding.
+- The OpenAI adapter calls the Responses API with `store: false`, bounded input/output, a model allowlist, and streaming. It normalizes output into the Chat Completions stream contract used by the current AI Chat workspace.
+- GPT Chat requires explicit consent for the Chat session. Personal AI context is not automatically appended. Other workspaces remain on the local runtime and must not silently fall back to cloud.
+- The gateway code and automated mock tests are present but **not deployed**. Access application/policy, DNS route, allowed email list, and Worker secret are still deployment prerequisites.
+- Claude and Gemini remain registered targets without provider adapters.
 
-This is the provider foundation and management view, not yet a live multi-cloud integration.
+The release contains a tested gateway implementation and gated GPT UI, but no real cloud request can succeed until the Worker is deployed and configured.
 
 ## Shared runtime contract
 
@@ -75,14 +78,14 @@ A static public app with a shared gateway secret in its JavaScript is not an acc
 
 ## Delivery sequence
 
-### Phase 1 — Provider foundation (current)
+### Phase 1 — Provider foundation (implemented)
 - Register the local provider and future cloud targets.
 - Normalize the runtime lifecycle and shared client contract.
 - Turn the Model Engine page into a truthful provider/status dashboard.
 - Add automated registry and lifecycle checks.
 
-### Phase 2 — Secure gateway decision
-- Select a host/runtime that supports server-side secrets and authenticated access.
+### Phase 2 — Configure and deploy the secure gateway
+- The Cloudflare Worker implementation is selected. Confirm the `smalan.sch.id` zone and Access policy, add the same-origin `/api/*` route, set the Access team domain/AUD/allowlisted email list, configure the rate-limit namespace, and set `OPENAI_API_KEY` as a Worker secret. Complete the deployment and authenticated `/api/health` check before enabling cloud Chat.
 - Define how SMALAN users authenticate and how usage is attributed.
 - Set provider/model allowlists, quotas, timeouts, and cost limits.
 - Review hosting constraints and the privacy implications before enabling provider calls.
