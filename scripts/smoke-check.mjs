@@ -189,5 +189,5 @@ assert.ok(app.includes('id="knowledgeTaskMode"') && app.includes('value="summary
 assert.ok(app.includes("selectKnowledgeSummarySources(knowledgePages,3,15)"), "Per-document summaries must use bounded representative source sections.");
 assert.ok(app.includes("selectKnowledgeSourcesPerDocument(knowledgePages,candidates,2,10)"), "Document comparison must balance evidence across source files.");
 assert.ok(app.includes("listKnowledgeDocumentCoverage(knowledgeDocuments,selected)") && app.includes("Dokumen yang tidak memiliki kutipan terpilih"), "Cross-document analysis must disclose files without selected evidence.");
-assert.ok(app.includes("const candidateLimit=mode===") && app.includes("findKnowledgeSourcesHybrid(knowledgePages,prompt,queryResult.vectors[0],knowledgeSemanticVectors,knowledgeSemanticPageIndices,candidateLimit)"), "Comparison mode must request an expanded hybrid retrieval pool.");
+assert.ok(app.includes("const candidateLimit=mode===\"compare\"?knowledgePages.length:5;") && app.includes("findKnowledgeSourcesHybrid(knowledgePages,prompt,queryResult.vectors[0],knowledgeSemanticVectors,knowledgeSemanticPageIndices,candidateLimit)"), "Comparison mode must rank all loaded pages before selecting balanced per-file evidence.");
 console.log("AI Knowledge summary and cross-document comparison mode guard checks passed.");
