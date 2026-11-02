@@ -27,6 +27,8 @@ jobs:
         run: node --input-type=module --check < assets/js/webllm-worker.js
       - name: Check Knowledge embedding worker syntax
         run: node --check assets/js/knowledge-embedding-worker.js
+      - name: Run Model Engine provider registry tests
+        run: node scripts/model-engine-test.mjs
       - name: Run project smoke checks
         run: node scripts/smoke-check.mjs
       - name: Run deterministic CSV analysis tests
