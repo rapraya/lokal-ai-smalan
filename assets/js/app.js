@@ -535,6 +535,11 @@
       return {...page,index,score,semanticScore,matchedTerms:lexicalMatch?.matchedTerms||0};
     }).filter(Boolean).sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||a.index-b.index).slice(0,5);
   }
+  function inspectKnowledgeCitationMarkers(response,sourceCount){
+    const markers=Array.from(String(response||"").matchAll(/\\[S(\\d+)\\]/gi),match=>Number(match[1]));
+    const used=Array.from(new Set(markers));
+    return {used,invalid:used.filter(index=>!Number.isInteger(index)||index<1||index>sourceCount),missing:markers.length===0};
+  }
   function ensureKnowledgeEmbeddingWorker(){
     if(knowledgeEmbeddingWorker)return knowledgeEmbeddingWorker;
     if(typeof Worker==="undefined")throw new Error("Browser ini tidak mendukung Web Worker untuk embedding lokal.");
@@ -656,7 +661,11 @@
         answer.replaceChildren();const p=document.createElement("p");p.textContent=response;answer.appendChild(p);
         const heading=document.createElement("strong");heading.textContent="Sumber yang dipilih";answer.appendChild(heading);
         selected.forEach((item,i)=>{const block=document.createElement("div");block.className="knowledge-citation";const b=document.createElement("b");b.textContent="[S"+(i+1)+"] "+item.documentName+" · "+(item.documentName.toLowerCase().endsWith(".pdf")?"Halaman ":"Bagian ")+item.page;const ex=document.createElement("p");ex.textContent=item.text.slice(0,520);block.append(b,ex);answer.appendChild(block);});
-        status.textContent=semanticFallbackNotice+" Selesai. "+(knowledgeSemanticEnabled?"Peringkat menggabungkan semantik lokal dan BM25. ":"Peringkat menggunakan BM25. ")+"Verifikasi klaim melalui sumber [S#] di bawah jawaban.";
+        const citationAudit=inspectKnowledgeCitationMarkers(response,selected.length);
+        let citationNote="Penanda sumber sesuai dengan daftar kutipan yang disediakan; periksa kembali apakah isinya benar-benar mendukung klaim.";
+        if(citationAudit.missing)citationNote="Peringatan: jawaban tidak menyertakan penanda sumber [S#]. Periksa setiap klaim terhadap kutipan di bawah.";
+        else if(citationAudit.invalid.length)citationNote="Peringatan: jawaban menyebut sumber yang tidak tersedia ("+citationAudit.invalid.map(index=>"S"+index).join(", ")+"). Jangan gunakan penanda tersebut sebagai rujukan.";
+        status.textContent=semanticFallbackNotice+" Selesai. "+(knowledgeSemanticEnabled?"Peringkat menggabungkan semantik lokal dan BM25. ":"Peringkat menggunakan BM25. ")+citationNote;
       }catch(err){answer.textContent="Gagal: "+err.message;status.textContent="Periksa model lokal lalu coba lagi.";}
       finally{knowledgeBusy=false;chatGenerating=false;syncKnowledgeControls();}
     });
