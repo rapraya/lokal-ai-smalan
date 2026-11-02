@@ -1192,10 +1192,10 @@
         const conflictTitle=document.createElement("strong");
         conflictTitle.textContent="Konsistensi bukti antar-sumber";
         const conflictSummary=document.createElement("p");
-        conflictSummary.textContent="Pemeriksaan kutipan terpilih: "+conflictAudit.total+" perbedaan nilai/satuan terdeteksi. Potensi konflik: "+conflictAudit.counts.potentialConflict+"; perbedaan periode/cakupan: "+conflictAudit.counts.scopeDifference+"; perbedaan satuan: "+conflictAudit.counts.unitDifference+".";
+        conflictSummary.textContent="Pemeriksaan kutipan terpilih: "+conflictAudit.total+" perbedaan nilai/satuan terdeteksi. Potensi konflik: "+conflictAudit.counts.potentialConflict+"; perbedaan periode/cakupan: "+conflictAudit.counts.scopeDifference+"; perbedaan satuan: "+conflictAudit.counts.unitDifference+"; perbandingan berbasis baris tabel: "+conflictAudit.counts.tableComparisons+".";
         const conflictCaveat=document.createElement("p");
         conflictCaveat.className="knowledge-verification-note";
-        conflictCaveat.textContent="Ini adalah penanda untuk ditinjau, bukan kesimpulan bahwa salah satu sumber keliru. Dokumen mungkin membahas periode, populasi, definisi, atau satuan yang berbeda. Pemeriksaan hanya mencakup kutipan terpilih.";
+        conflictCaveat.textContent="Ini adalah penanda untuk ditinjau, bukan kesimpulan bahwa salah satu sumber keliru. Baris tabel dibandingkan hanya bila identitas subjek, kelas/kategori, dan metrik terpetakan sama. Dokumen mungkin tetap berbeda dalam definisi, populasi, atau metode pengukuran. Pemeriksaan hanya mencakup kutipan terpilih.";
         conflictPanel.append(conflictTitle,conflictSummary,conflictCaveat);
         const conflictLabels={
           "potential-conflict":"Potensi konflik nilai",
@@ -1208,11 +1208,11 @@
           const label=document.createElement("b");
           label.textContent=conflictLabels[conflict.type]||"Perlu ditinjau";
           const values=document.createElement("p");
-          values.textContent=conflict.left.value+" ↔ "+conflict.right.value+" · konteks bersama: "+conflict.sharedContext.join(", ");
+          values.textContent=(conflict.evidenceType==="table"?(conflict.left.identity||"Subjek sama")+" · "+(conflict.left.columnHeader||conflict.left.metric||"Nilai")+": ":"")+conflict.left.value+" ↔ "+conflict.right.value+(conflict.evidenceType==="table"&&conflict.left.period?" · Periode: "+conflict.left.period:"")+" · konteks: "+conflict.sharedContext.join(", ");
           const left=document.createElement("small");
-          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+" — "+conflict.left.text;
+          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+(conflict.left.rowIndex?" · Baris tabel "+conflict.left.rowIndex+" · Kolom "+conflict.left.columnIndex+" ("+conflict.left.columnHeader+")":"")+" — "+conflict.left.text;
           const right=document.createElement("small");
-          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+" — "+conflict.right.text;
+          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+(conflict.right.rowIndex?" · Baris tabel "+conflict.right.rowIndex+" · Kolom "+conflict.right.columnIndex+" ("+conflict.right.columnHeader+")":"")+" — "+conflict.right.text;
           item.append(label,values,left,right);
           conflictPanel.appendChild(item);
         });
