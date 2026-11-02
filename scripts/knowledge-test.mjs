@@ -58,9 +58,9 @@ assert.equal(extraction.detectKnowledgeHeading("2.1 Persyaratan Peserta"), "2.1 
 assert.equal(extraction.detectKnowledgeHeading("KEBIJAKAN KEHADIRAN"), "KEBIJAKAN KEHADIRAN", "Short uppercase headings should be recognized.");
 assert.equal(extraction.detectKnowledgeHeading("Peserta didik mengikuti pembelajaran setiap hari."), "", "Ordinary prose must not be misclassified as a heading.");
 const structuredPages = extraction.applyKnowledgeSectionMetadata([
-  { page: 1, text: "# Tujuan\\nIsi bagian tujuan." },
+  { page: 1, text: "# Tujuan\nIsi bagian tujuan." },
   { page: 2, text: "Lanjutan bagian tujuan." },
-  { page: 3, text: "## Ruang Lingkup\\nIsi bagian ruang lingkup." }
+  { page: 3, text: "## Ruang Lingkup\nIsi bagian ruang lingkup." }
 ]);
 assert.deepEqual(Array.from(structuredPages, page => page.section), ["Tujuan", "Tujuan", "Ruang Lingkup"]);
 assert.deepEqual(Array.from(structuredPages, page => page.hasSectionHeading), [true, false, true], "Section metadata should carry forward until a new heading is found.");
@@ -131,6 +131,23 @@ const nativePages = await readerApi.readKnowledgeFile(pdfFile, { dependencies: n
 assert.equal(nativePages[0].text, "Teks PDF asli");
 assert.equal(nativePages.ocrCount, 0);
 assert.equal(nativePages.ocrSkipped, false, "OCR-disabled imports must not be marked as skipped.");
+const structuredPdf = {
+  getDocument: () => ({ promise: Promise.resolve({
+    numPages: 1,
+    getPage: async () => ({
+      getTextContent: async () => ({ items: [
+        { str: "BAB I TUJUAN", hasEOL: true },
+        { str: "Isi tujuan dokumen.", hasEOL: true }
+      ] })
+    })
+  }) })
+};
+const structuredPdfPages = await readerApi.readKnowledgeFile(pdfFile, {
+  dependencies: { pdfjs: structuredPdf }, ocrEnabled: false
+});
+assert.match(structuredPdfPages[0].text, /\\n/, "PDF.js line boundaries should be retained for heading detection.");
+assert.equal(extraction.applyKnowledgeSectionMetadata(structuredPdfPages)[0].section, "BAB I TUJUAN");
+
 
 const scannedPdf = makePdf(["", "Teks PDF asli"]);
 const scannedPages = await readerApi.readKnowledgeFile(pdfFile, { dependencies: scannedPdf.dependencies, ocrEnabled: true });
