@@ -7,6 +7,13 @@ The architecture is **local-first, not local-only**: supported models should run
 ## Current status
 
 
+**v0.32.0 — Responsive Usability & Full-width Workspace**
+- Corrects desktop workspace sizing so the main area uses the full space beside the fixed sidebar without creating horizontal overflow.
+- Removes restrictive maximum widths from module and chat workspaces so working areas expand to the available page width.
+- Applies a consistent minimum 12px readable text floor while preserving larger heading hierarchy.
+- Reinforces narrow-screen layout behavior for module, chat, coding, knowledge, and data-table workspaces.
+- Adds regression checks for full-width layout, mobile sizing, and readable typography. Real browser/device testing is still required.
+
 **v0.30.0 — Table Evidence Traceability & Structural Audit**
 - Preserves the exact extracted text cell, parsed numeric token, one-based extraction line, column identity, and character offsets for each table-derived numeric value. Offsets refer to extracted page/section text, not physical PDF coordinates.
 - Cross-source conflict details show the originating cell and numeric token alongside document, page, data-row, column, and header metadata.
