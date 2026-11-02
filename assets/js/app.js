@@ -108,8 +108,8 @@
       title: "Personal AI", label: "PERSONAL INTELLIGENCE", icon: "user", color: "icon-violet",
       description: "Pengalaman yang menyesuaikan preferensi, kebiasaan kerja, dan rekomendasi berdasarkan pilihan pengguna.",
       headline: "Lebih relevan, tetap dalam kendalimu.",
-      detail: "Personalisasi direncanakan berbasis preferensi yang terlihat dan dapat dihapus. Memori lokal, riwayat, serta rekomendasi tidak akan dibuat tanpa kontrol dan penjelasan yang jelas.",
-      stages: [["Preferences", "Atur gaya respons, bahasa, tema, dan preferensi workspace."], ["Local memory", "Simpan konteks yang dipilih pengguna dalam penyimpanan browser."], ["Recommendations", "Saran yang menjelaskan alasan dan dapat disesuaikan atau dimatikan."]]
+      detail: "Alpha Personal AI menyediakan preferensi bahasa, gaya komunikasi, tingkat detail, dan catatan personal yang dimasukkan sendiri. Penyimpanan perangkat serta penyertaan konteks ke permintaan model lokal memiliki izin terpisah dan nonaktif secara default.",
+      stages: [["Preferences", "Atur bahasa, gaya komunikasi, dan tingkat detail respons."], ["User-managed memory", "Tambahkan, tinjau, dan hapus hingga 20 catatan personal."], ["Privacy controls", "Aktifkan penyimpanan browser dan penyertaan konteks ke model secara terpisah."]]
     },
     navigation: {
       title: "AI Navigator", label: "NAVIGATION & MOBILITY", icon: "compass", color: "icon-green",
