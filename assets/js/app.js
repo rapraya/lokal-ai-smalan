@@ -370,7 +370,6 @@
     if(q){q.disabled=!knowledgePages.length||!chatEngine||knowledgeBusy||chatGenerating;ask.disabled=q.disabled;}
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
     const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy;
-    const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy;
   }
   async function loadKnowledgeOcr() {
     if(!ocrLibraryPromise)ocrLibraryPromise=import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js").catch(error=>{ocrLibraryPromise=null;throw new Error("Tesseract.js gagal dimuat: "+error.message);});
