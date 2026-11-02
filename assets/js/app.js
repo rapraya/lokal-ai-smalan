@@ -751,7 +751,7 @@
     });
     const counts={supported:0,partial:0,weak:0,uncited:0,invalid:0,limited:0};
     claims.forEach(claim=>{counts[claim.status]=(counts[claim.status]||0)+1;});
-    const status=counts.invalid?"invalid":counts.uncited?"uncited":counts.weak?"weak":counts.partial||counts.limited?"partial":"supported";
+    const status=!claims.length?"unverifiable":counts.invalid?"invalid":counts.uncited?"uncited":counts.weak?"weak":counts.partial||counts.limited?"partial":"supported";
     return {status,markerAudit,claims,counts,claimCount:claims.length};
   }
   function ensureKnowledgeEmbeddingWorker(){
@@ -920,7 +920,8 @@
           weak:"Klaim memiliki sitasi, tetapi kecocokan istilah dengan kutipan sangat rendah.",
           uncited:"Ada klaim yang tidak menyertakan sitasi.",
           invalid:"Ada penanda sitasi yang tidak terdapat dalam daftar sumber.",
-          limited:"Ada klaim terlalu singkat untuk dinilai dengan pemeriksaan istilah."
+          limited:"Ada klaim terlalu singkat untuk dinilai dengan pemeriksaan istilah.",
+          unverifiable:"Belum ada kalimat yang cukup untuk diperiksa secara otomatis."
         };
         auditSummary.textContent=supportAudit.claimCount
           ?(auditLabels[supportAudit.status]||"Pemeriksaan selesai.")+" Klaim dianalisis: "+supportAudit.claimCount+". Didukung secara tekstual: "+supportAudit.counts.supported+"; parsial: "+supportAudit.counts.partial+"; lemah: "+supportAudit.counts.weak+"; tanpa sitasi: "+supportAudit.counts.uncited+"; sitasi tidak valid: "+supportAudit.counts.invalid+"; terlalu singkat: "+supportAudit.counts.limited+"."
