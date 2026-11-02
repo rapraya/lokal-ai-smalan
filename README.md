@@ -6,6 +6,13 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.19.0 — OCR & Knowledge Retrieval**
+- Adds explicit opt-in OCR for scanned PDF pages using Tesseract.js in the browser, with Indonesian and English language data.
+- OCR is bounded to 20 pages per PDF; PDF text extraction remains primary, and only pages without extractable text are sent through OCR.
+- Replaces simple term-count ranking with deterministic BM25 relevance scoring across the active multi-document collection.
+- OCR library and language data load from external CDNs only when the user enables OCR. Document content remains in page memory and is not uploaded to an AI service.
+- Embedding-based semantic retrieval is not included yet; browser OCR and real-device validation remain required.
+
 **v0.18.0 — Advanced Knowledge Workspace**
 - Adds an in-session collection of up to five PDF, TXT, or Markdown documents, per-file removal, and clear-all controls.
 - Searches all loaded document chunks with deterministic lexical ranking and preserves source filename plus page/section labels in every retrieved excerpt.
@@ -43,7 +50,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst calculations, AI Assistant prompts, Personal AI privacy gates, and AI Knowledge cross-document lexical retrieval and source identity have automated fixture coverage. PDF parsing and source display still need browser testing. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, and Navigator remain UI and architecture plans. AI Assistant, Personal AI, and AI Knowledge have initial alpha workspaces; browser/device validation remains pending.
+**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst calculations, AI Assistant prompts, Personal AI privacy gates, and AI Knowledge BM25 cross-document retrieval has automated fixture coverage. PDF parsing, OCR accuracy, and source display still need browser testing. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, and Navigator remain UI and architecture plans. AI Assistant, Personal AI, and AI Knowledge have initial alpha workspaces; browser/device validation remains pending.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
@@ -60,7 +67,7 @@ The WebGPU check only detects whether a browser can provide an adapter. It does 
 | Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables with cross-tab count/sum/average, and filtered CSV export. AI interpretation is not yet implemented; statistical decision support uses deterministic IQR and Pearson calculations. |
 | AI Assistant | In-session task planning with the local model; suggestions only, no actions executed. |
 | Personal AI | User-managed preferences and notes, with separate opt-ins for local persistence and model context. |
-| AI Knowledge | Multi-document PDF/TXT/Markdown collection, cross-document lexical retrieval, and local-model Q&A with visible filename/page excerpts. |\n| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
+| AI Knowledge | Multi-document PDF/TXT/Markdown collection, opt-in scanned-PDF OCR, BM25 cross-document retrieval, and local-model Q&A with visible filename/page excerpts. |\n| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
 
 See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for feasibility notes, privacy rules, and delivery phases.
 
