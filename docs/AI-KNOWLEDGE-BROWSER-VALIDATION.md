@@ -77,3 +77,15 @@ Isi setelah pengujian nyata dilakukan.
 | — | — | — | Belum diuji | — |
 
 **Status saat checklist dibuat:** pengujian otomatis CI untuk helper retrieval, batas chunk, metadata sumber, fallback BM25, dan penanda sitasi tersedia. Pengujian browser nyata, unduhan model, kualitas retrieval pada dokumen sekolah, OCR akurat, dan penggunaan RAM belum dinyatakan lulus.
+
+## 8. Mode ringkasan dan perbandingan lintas dokumen
+
+1. Muat dua hingga lima dokumen uji yang topiknya saling berkaitan.
+2. Pilih **Ringkas setiap dokumen** dan jalankan tanpa fokus tambahan. Pastikan setiap dokumen memiliki bagian ringkasan sendiri serta maksimal tiga bagian representatif yang digunakan.
+3. Ulangi ringkasan dengan fokus tertentu, misalnya tujuan program atau persyaratan. Pastikan model tidak menyimpulkan hal yang tidak terlihat di kutipan.
+4. Pilih **Bandingkan antardokumen**, masukkan satu aspek yang sama untuk dibandingkan, lalu jalankan.
+5. Periksa apakah kutipan yang dipilih berasal dari beberapa dokumen, maksimal dua bagian per dokumen dan maksimal sepuluh bagian keseluruhan.
+6. Uji pertanyaan yang hanya relevan untuk satu atau dua file. Dokumen lain yang tidak memiliki bukti terpilih harus ditandai sebagai tidak terwakili; jangan menyimpulkan isi file tersebut.
+7. Periksa semua penanda [S#] satu per satu terhadap nama file, nomor halaman/bagian, dan kutipan yang ditampilkan.
+
+**Batasan:** ringkasan menggunakan sampel awal, tengah, dan akhir, bukan pembacaan menyeluruh setiap halaman. Perbandingan hanya mencakup dokumen yang memiliki bukti terpilih. Kedua mode tetap memerlukan pemeriksaan manusia terhadap jawaban model.
