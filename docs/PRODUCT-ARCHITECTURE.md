@@ -6,7 +6,7 @@ Lokal AI SMALAN is intended to feel like a premium AI product: one cohesive work
 
 The product is **local-first, not local-only**. A browser can run many useful models locally, but not every capability is equally practical on every device. Each module must show where processing happens, what model or provider is used, what it needs, and whether data leaves the device.
 
-## Current implementation — v0.15.0
+## Current implementation — v0.16.0
 
 The current branch contains:
 
@@ -121,3 +121,8 @@ Run functional tests, accessibility checks, responsive browser testing, privacy 
 - Transformers.js documentation: https://huggingface.co/docs/transformers.js
 - Transformers.js pipeline task matrix: https://huggingface.co/docs/transformers.js/pipelines
 - MDN WebGPU API and secure-context requirements: https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API
+
+
+## Personal AI and memory controls (v0.16.0)
+
+Personal AI stores only user-entered preference values and manually added notes. Automatic memory extraction is not implemented. Data stays in page memory unless the user explicitly enables browser persistence. Persistence is stored under a versioned localStorage key with a consent flag; turning it off or clearing data removes that key. Browser storage is not encrypted and is not suitable for secrets or sensitive information. A separate disabled-by-default permission controls whether a bounded preference-and-note context is added to local WebLLM requests from Chat, Coding, Text, and Assistant. No cloud sync or transcript storage is added. The user can inspect and delete each note and clear all stored Personal AI data.
