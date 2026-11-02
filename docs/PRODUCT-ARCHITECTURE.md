@@ -6,13 +6,17 @@ Lokal AI SMALAN is a browser-based, multi-capability AI workspace for SMALAN. Th
 
 The architecture is **local-first, not local-only**. Supported models should run in the browser whenever practical. Any future feature that needs an external service must identify the provider, disclose what data leaves the device, and require an explicit user choice. Never embed private API keys or secrets in the frontend.
 
-## Current implementation — v0.38.0
+## Current implementation — v0.40.0
 
 The current `main` branch has progressed beyond the original v0.17 architecture notes. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
 ### Application shell and model runtime
 - Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, browser-stored Dark/Light/Colorful themes, and a desktop-collapsible sidebar.
-- Model Engine provider registry with a normalized chat-completions runtime contract. WebLLM is the only active provider in this release; OpenAI GPT, Anthropic Claude, and Google Gemini are registered as cloud integration targets that remain disabled until a secure authenticated gateway is available.
+- Model Engine provider registry with a normalized chat-completions runtime contract. The local WebLLM runtime remains the default for existing workspaces.
+- A Cloudflare Worker gateway implementation is present under `gateway/`. It validates Cloudflare Access JWTs and an email allowlist, keeps the OpenAI key in a server-side secret, applies bounded request/model/output controls, and adapts OpenAI Responses API output to the existing Chat Completions stream shape.
+- AI Chat has a gated OpenAI GPT provider choice, a secure-gateway readiness check, and explicit cloud-session consent. Personal AI context is excluded from GPT Chat requests; Coding, Text, Knowledge, Assistant, and Data Analyst continue to use the local runtime.
+- The gateway is not yet deployed. Cloudflare Access, DNS route, allowlisted identities, and OpenAI server secret are not configured; GPT is unavailable until those deployment steps are completed.
+- Anthropic Claude and Google Gemini remain future provider targets; their adapters are not implemented.
 - The Model Engine dashboard reports the active local runtime, WebGPU/secure-context diagnostics, the current local model catalogue, and cloud gateway readiness.
 - The provider registry does not send network requests or store credentials. Private provider keys must remain server-side; CORS alone is not authentication.
 - Shared WebLLM 0.2.87 language-model runtime through a Web Worker for AI Chat, AI Coding, Text & Language, AI Assistant, and optional Data Analyst interpretation.
@@ -63,19 +67,22 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 ### Priority 1 — Validate the current AI Knowledge release
 Do not add more heuristic table features until v0.30.0 has been checked in a real browser against representative, non-sensitive documents. Follow the complete checklist in `docs/AI-KNOWLEDGE-BROWSER-VALIDATION.md`. Record browser/device, test file characteristics, expected versus observed output, console/network errors, and pass/fail status. A diagnostic status such as “consistent” is not proof that the PDF was interpreted correctly.
 
-### Priority 2 — Complete the secure multi-provider Model Engine
-The provider registry and Model Engine dashboard are now in place, but cloud providers are not connected. Select a server-side gateway host and authentication model before implementing API adapters. Require provider/model allowlists, explicit data consent, usage budgets, and per-user rate limits. Never place a shared secret in the static frontend. See docs/MODEL-ENGINE-ARCHITECTURE.md.
+### Priority 2 — Configure and deploy the OpenAI gateway
+The Cloudflare Worker, Cloudflare Access JWT verification, same-origin OpenAI Responses adapter, AI Chat consent controls, and automated tests are implemented. Deployment is still pending. Confirm the `smalan.sch.id` Cloudflare zone and Access policy, add the `/api/*` Worker route, configure the allowed identity list and rate-limit binding, store `OPENAI_API_KEY` as a Worker secret, and validate the authenticated health endpoint before enabling GPT Chat. Follow `gateway/README.md`.
 
-### Priority 3 — Close runtime and user-experience gaps
+### Priority 3 — Add provider adapters after gateway validation
+Once OpenAI is deployed and operational, add Claude and Gemini server-side adapters behind the same gateway contract. Keep per-task consent, model allowlists, user attribution, usage controls, and no automatic cloud fallback.
+
+### Priority 4 — Close runtime and user-experience gaps
 Validate WebLLM model loading, streaming, cache/reload behavior, cancellation, error recovery, and browser memory on supported devices. Test Data Analyst with representative CSV exports and verify filtering, pivot tables, trends, charts, and report exports. Evaluate Indonesian drafting, proofreading, and translation quality.
 
-### Priority 4 — Improve reliability from observed failures
+### Priority 5 — Improve reliability from observed failures
 Fix only reproducible issues found in browser/device testing. Add regression fixtures for each failure and keep source citations, privacy boundaries, bounded processing, and deterministic fallbacks intact. Avoid extending PDF layout heuristics without real sample evidence.
 
-### Priority 5 — Implement remaining media capabilities
+### Priority 6 — Implement remaining media capabilities
 Evaluate compatible browser-based image understanding/editing, speech recognition, text-to-speech, and video frame/audio workflows. Treat image/video generation as separate model/runtime evaluations. Do not label a feature “local” until actual inference and device requirements are validated. Any remote provider must be optional and clearly disclosed.
 
-### Priority 6 — Quality and publication
+### Priority 7 — Quality and publication
 Complete functional, accessibility, responsive, privacy, dependency, and browser-compatibility reviews before enabling GitHub Pages or a production domain. Keep deployment disabled until these checks pass.
 
 ## Technology direction
