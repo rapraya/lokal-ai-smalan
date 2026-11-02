@@ -195,5 +195,10 @@ assert.ok(app.includes("Sintesis bukti dari semua dokumen yang relevan") && app.
 assert.ok(app.includes("function annotateKnowledgePdfTableContinuations(pages)") && app.includes('type:"repeated-header"'), "PDF Knowledge must detect explicitly repeated table headers on consecutive pages.");
 assert.ok(app.includes('type:"possible"') && app.includes("Kemungkinan lanjutan tabel halaman"), "PDF Knowledge must label uncertain table continuations as possible rather than confirmed.");
 assert.ok(app.includes("Header tabel yang secara eksplisit ditandai berulang") && app.includes("Label kemungkinan lanjutan tabel bukan kepastian"), "Grounded synthesis must distinguish repeated headers from uncertain table continuation.");
+assert.ok(app.includes("function verifyKnowledgeAnswerSupport(response,sources)") && app.includes("function splitKnowledgeAnswerClaims(response)"), "AI Knowledge must audit citations at the individual claim level.");
+assert.ok(app.includes('status="supported"') && app.includes('status="partial"') && app.includes('status="weak"') && app.includes('status="uncited"') && app.includes('status="invalid"'), "Citation verification must distinguish evidence overlap, partial support, weak support, missing citations, and invalid references.");
+assert.ok(app.includes("Pemeriksaan ini membandingkan istilah dalam kalimat dengan kutipan yang benar-benar dikirim ke model") && app.includes("Kecocokan kata bukan bukti"), "Citation verification must disclose its lexical heuristic and semantic limitations.");
+assert.ok(app.includes('className="knowledge-verification"'), "Knowledge answers must display claim-level verification feedback.");
+
 
 console.log("AI Knowledge summary and cross-document comparison mode guard checks passed.");
