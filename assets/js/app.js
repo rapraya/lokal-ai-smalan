@@ -377,6 +377,9 @@
     const excerpt=text.slice(0,Math.max(0,Math.min(maxPageChars,remaining)));
     return {text:excerpt,truncated:excerpt.length<text.length};
   }
+  function shouldAttemptKnowledgeOcr(enabled,attempted,maxAttempts=20) {
+    return Boolean(enabled)&&attempted<maxAttempts;
+  }
   async function readKnowledgeFile(file, options={}) {
     if(file.size>12*1024*1024) throw new Error("Ukuran file melebihi 12 MB.");
     const ext=file.name.split(".").pop().toLowerCase();
@@ -390,7 +393,7 @@
       for(let n=1;n<=pdf.numPages&&total<90000;n++){
         const page=await pdf.getPage(n),content=await page.getTextContent();processedPages=n;
         let text=content.items.map(x=>x.str||"").join(" ").replace(/\s+/g," ").trim(),isOcr=false;
-        if(!text&&options.ocrEnabled&&ocrAttempted<20){
+        if(!text&&shouldAttemptKnowledgeOcr(options.ocrEnabled,ocrAttempted)){
           ocrAttempted++;
           try{
             if(!ocrWorker){const tesseract=await loadKnowledgeOcr();ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
