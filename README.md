@@ -6,7 +6,7 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
-**v0.16.0 — AI Assistant Workspace**
+**v0.17.0 — AI Assistant Workspace**
 - Adds an in-session task manager (up to 50 user-entered tasks), completion toggles, and explicit task removal. A local WebLLM planning assistant can review the task list and answer follow-up prompts. Only task titles and the user's prompt are included when the user explicitly requests a recommendation; conversation context is bounded and kept in page memory. The model provides suggestions only: it does not run commands, edit files, send messages, access accounts, or complete tasks. No external service fallback is used.
 
 
@@ -105,10 +105,21 @@ GitHub Pages deployment has not yet been enabled. Keep the site in preview until
 To be decided by the repository owner.
 
 
-### Personal AI Workspace v0.16.0
+### Personal AI Workspace v0.17.0
 
 - User-managed response preferences (language, tone, and detail level) and up to 20 manually entered memory notes.
 - Memory is never inferred or created automatically. Session-only by default; browser persistence requires an explicit opt-in.
 - A separate opt-in controls whether preferences and up to 10 selected notes are included in requests to the local WebLLM model in AI Chat, AI Coding, Text & Language, and AI Assistant.
 - Users can inspect and delete individual notes or clear all Personal AI data. No cloud sync; chat transcripts are not stored by this feature.
 - Browser local storage is not encrypted; users are warned not to store secrets or sensitive personal information.
+
+
+### AI Knowledge Workspace v0.17.0
+
+- Adds an in-browser document workspace for PDF, TXT, and Markdown files.
+- Enforces a 12 MB file limit, an 80-page PDF limit, and bounded extracted text.
+- PDF extraction uses PDF.js 4.10.38 loaded on demand from cdnjs; the library and worker are external static assets, while document bytes and extracted text stay in the browser.
+- Retrieves up to five page/section excerpts using deterministic lexical matching and sends only those excerpts plus the user's question to the already-loaded local WebLLM model.
+- Answers are prompted to cite source markers ([S1], [S2], etc.); the matching excerpts and page/section labels are shown below the answer for verification.
+- Documents remain in page memory only and can be cleared. No document persistence, upload, cloud sync, or external AI provider is used.
+- Scanned PDFs without embedded text are not supported; OCR, embeddings, semantic search, multi-document retrieval, and browser testing remain future work.
