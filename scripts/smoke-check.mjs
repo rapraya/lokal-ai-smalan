@@ -181,8 +181,8 @@ assert.ok(app.includes("knowledgeSemanticEnabled") && app.includes("semantic.dis
 assert.ok(app.includes('semanticToggle.checked=false;stopKnowledgeEmbeddingWorker()'), "Clearing the collection must release the semantic model worker.");
 console.log("AI Knowledge model revision pinning and on-demand memory lifecycle checks passed.");
 
-assert.ok(app.includes("inspectKnowledgeCitationMarkers(response,selected.length)"), "AI Knowledge must validate citation references against the selected evidence list.");
-assert.ok(app.includes("jawaban tidak menyertakan penanda sumber [S#]") && app.includes("menyebut sumber yang tidak tersedia"), "AI Knowledge must warn about missing or unknown citation markers.");
+assert.ok(app.includes("inspectKnowledgeCitationMarkers(response,sourceList.length)") && app.includes("const citationAudit=supportAudit.markerAudit"), "AI Knowledge must validate citation references against the exact selected evidence list.");
+assert.ok(app.includes("status=\"invalid\"") && app.includes("status=\"uncited\"") && app.includes("Tidak ada penanda [S#]"), "AI Knowledge must surface invalid and missing citation warnings.");
 console.log("AI Knowledge citation integrity guard checks passed.");
 
 assert.ok(app.includes('id="knowledgeTaskMode"') && app.includes('value="summary"') && app.includes('value="compare"'), "AI Knowledge must expose question, summary, and comparison modes.");
