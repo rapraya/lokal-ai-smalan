@@ -346,7 +346,7 @@
   async function readKnowledgeFile(file) {
     if(file.size>12*1024*1024) throw new Error("Ukuran file melebihi 12 MB.");
     const ext=file.name.split(".").pop().toLowerCase();
-    if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");return [{page:1,text:t.slice(0,90000)}];}
+    if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");const chunks=[];for(let i=0;i<Math.min(t.length,90000);i+=1800)chunks.push({page:Math.floor(i/1800)+1,text:t.slice(i,i+1800)});return chunks;}
     if(ext!=="pdf")throw new Error("Gunakan PDF, TXT, atau Markdown.");
     if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
