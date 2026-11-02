@@ -26,3 +26,31 @@ assert.deepEqual(Array.from(api.findKnowledgeSources(pages, "apa dan yang")), []
 const across = api.findKnowledgeSources(pages, "pembelajaran");
 assert.ok(new Set(across.map(item => item.documentName)).size >= 3, "Cross-document search should retrieve evidence from multiple documents.");
 console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-document retrieval, bounded excerpts, and no-match handling.");
+
+const helperStart = app.indexOf("  function chunkKnowledgeText(");
+const helperEnd = app.indexOf("\\n  async function readKnowledgeFile(", helperStart);
+assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
+const extractionSource = app.slice(helperStart, helperEnd) + "\\n({ chunkKnowledgeText, limitKnowledgeExcerpt })";
+const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
+
+const exactChunks = extraction.chunkKnowledgeText("x".repeat(90000));
+assert.equal(exactChunks.reduce((sum, item) => sum + item.text.length, 0), 90000);
+assert.equal(exactChunks.length, 50);
+assert.equal(exactChunks.textTruncated, false, "Exactly 90,000 characters should not be marked truncated.");
+const overLimitChunks = extraction.chunkKnowledgeText("x".repeat(90001));
+assert.equal(overLimitChunks.reduce((sum, item) => sum + item.text.length, 0), 90000);
+assert.equal(overLimitChunks.textTruncated, true, "Text beyond 90,000 characters must be marked truncated.");
+assert.equal(overLimitChunks.at(-1).page, 50, "Text chunk numbering should remain sequential.");
+
+const fullPage = extraction.limitKnowledgeExcerpt("x".repeat(15000), 20000);
+assert.equal(fullPage.text.length, 12000);
+assert.equal(fullPage.truncated, true, "PDF page excerpts above 12,000 characters must be marked truncated.");
+const finalPage = extraction.limitKnowledgeExcerpt("x".repeat(15000), 5000);
+assert.equal(finalPage.text.length, 5000, "PDF excerpts must respect the remaining document-wide character budget.");
+assert.equal(finalPage.truncated, true);
+const exactPage = extraction.limitKnowledgeExcerpt("x".repeat(12000), 12000);
+assert.equal(exactPage.truncated, false, "An exact per-page limit should not be marked truncated.");
+const exhausted = extraction.limitKnowledgeExcerpt("remaining text", 0);
+assert.equal(exhausted.text, "");
+assert.equal(exhausted.truncated, true);
+console.log("AI Knowledge extraction tests passed: TXT/Markdown chunk boundaries, 90,000-character document cap, 12,000-character PDF page cap, remaining-budget enforcement, and truncation metadata.");
