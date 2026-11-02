@@ -3374,8 +3374,8 @@
   }
 
   function renderSettingsPanel() {
-    const theme = document.body.dataset.theme === "light" ? "Terang" : "Gelap";
-    return '<div class="stage-side-card" style="margin-top:13px"><h3>Preferensi workspace</h3><div class="settings-row"><span>Tema saat ini</span><strong id="themeSetting">' + theme + '</strong></div><div class="settings-row"><span>Penyimpanan lokal</span><strong>Tema + riwayat Chat opsional</strong></div><div class="settings-row"><span>Riwayat AI</span><strong>Opt-in · hanya browser ini</strong></div></div>';
+    const theme = ["dark","light","colorful"].includes(document.body.dataset.theme) ? document.body.dataset.theme : "dark";
+    return '<div class="stage-side-card settings-theme-panel" style="margin-top:13px"><h3>Preferensi workspace</h3><label class="settings-theme-control" for="themeSetting"><span>Tema tampilan</span><select id="themeSetting" class="theme-setting-select"><option value="dark" ' + (theme === "dark" ? "selected" : "") + '>Gelap</option><option value="light" ' + (theme === "light" ? "selected" : "") + '>Terang</option><option value="colorful" ' + (theme === "colorful" ? "selected" : "") + '>Colorful</option></select></label><p class="settings-theme-hint">Tema tersimpan otomatis di browser ini dan berlaku untuk seluruh workspace.</p><div class="settings-row"><span>Penyimpanan lokal</span><strong>Tema + riwayat Chat opsional</strong></div><div class="settings-row"><span>Riwayat AI</span><strong>Opt-in · hanya browser ini</strong></div></div>';
   }
 
   function checkDevice() {
@@ -3471,19 +3471,48 @@
   }
 
   const themeToggle = document.getElementById("themeToggle");
+  const themeMenu = document.getElementById("themeMenu");
   function applyTheme(theme) {
-    document.body.dataset.theme = theme;
-    try { localStorage.setItem("lokal-ai-theme", theme); } catch (_) {}
-    const themeIcon = document.querySelector("#themeIcon use");
-    if (themeIcon) themeIcon.setAttribute("href", theme === "light" ? "#i-moon" : "#i-sun");
+    const selectedTheme = ["dark","light","colorful"].includes(theme) ? theme : "dark";
+    document.body.dataset.theme = selectedTheme;
+    try { localStorage.setItem("lokal-ai-theme", selectedTheme); } catch (_) {}
     const setting = document.getElementById("themeSetting");
-    if (setting) setting.textContent = theme === "light" ? "Terang" : "Gelap";
+    if (setting) setting.value = selectedTheme;
+    document.querySelectorAll("[data-theme-choice]").forEach((choice) => {
+      const active = choice.dataset.themeChoice === selectedTheme;
+      choice.classList.toggle("active", active);
+      choice.setAttribute("aria-checked", active ? "true" : "false");
+    });
+    if (themeToggle) themeToggle.setAttribute("aria-label", "Tema saat ini: " + ({ dark: "Gelap", light: "Terang", colorful: "Colorful" }[selectedTheme]) + ". Pilih tema tampilan.");
   }
   let savedTheme = "dark";
   try { savedTheme = localStorage.getItem("lokal-ai-theme") || "dark"; } catch (_) {}
-  applyTheme(savedTheme === "light" ? "light" : "dark");
-  themeToggle.addEventListener("click", () => {
-    applyTheme(document.body.dataset.theme === "light" ? "dark" : "light");
+  applyTheme(savedTheme);
+
+  if (themeToggle && themeMenu) {
+    themeToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = themeMenu.hidden;
+      themeMenu.hidden = !open;
+      themeToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  document.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-theme-choice]");
+    if (choice) {
+      applyTheme(choice.dataset.themeChoice);
+      if (themeMenu) themeMenu.hidden = true;
+      if (themeToggle) themeToggle.setAttribute("aria-expanded", "false");
+      return;
+    }
+    if (themeMenu && !event.target.closest(".theme-picker")) {
+      themeMenu.hidden = true;
+      if (themeToggle) themeToggle.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("change", (event) => {
+    const setting = event.target.closest("#themeSetting");
+    if (setting) applyTheme(setting.value);
   });
 
   document.addEventListener("keydown", (event) => {
