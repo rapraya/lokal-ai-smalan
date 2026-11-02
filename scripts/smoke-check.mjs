@@ -149,5 +149,5 @@ assert.ok(app.includes("function renderKnowledgeDocumentList()") && app.includes
 assert.ok(app.includes("KUTIPAN LINTAS DOKUMEN") && app.includes("item.documentName"), "Cross-document answers must retain source file identity.");
 
 assert.ok(app.includes("knowledgeOcrEnabled") && app.includes("options.ocrEnabled"), "Scanned PDF OCR must require an explicit user opt-in.");
-assert.ok(app.includes("createWorker(\\\"ind+eng\\\"") && app.includes("shouldAttemptKnowledgeOcr(options.ocrEnabled,ocrAttempted)") && app.includes("maxAttempts=20"), "OCR must use bounded Indonesian/English processing.");
+assert.ok(app.includes('createWorker("ind+eng"') && app.includes("shouldAttemptKnowledgeOcr(options.ocrEnabled,ocrAttempted)") && app.includes("maxAttempts=20"), "OCR must use bounded Indonesian/English processing.");
 assert.ok(app.includes("BM25") || app.includes("documentFrequency"), "Knowledge retrieval must use term relevance scoring.");
