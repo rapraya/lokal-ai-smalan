@@ -131,6 +131,10 @@ assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disert
 assert.ok(readme.includes("Validation status") && readme.includes("real browser/WebGPU session"),
   "README must disclose that browser/WebGPU runtime validation is pending.");
 
+assert.ok(app.includes("function assessKnowledgeTableStructure(")&&app.includes("function getKnowledgeTableCellOffset("),"AI Knowledge structure diagnostics and cell offsets are missing.");
+assert.ok(app.includes("sourceLineNumber")&&app.includes("valueToken")&&app.includes("sourceSpan"),"AI Knowledge evidence trace is missing.");
+assert.ok(app.includes("tableReviews")&&app.includes("Struktur tabel belum dikenali"),"Unrecognized tables must be surfaced for review.");
+assert.ok(css.includes(".knowledge-table-audit-item"),"AI Knowledge table audit styles are missing.");
 console.log("Lokal AI smoke checks passed.");
 console.log(`Validated ${requiredModules.length} capability modules, shared WebLLM Chat/Coding/Text integration, local CSV analysis, Data Explorer column filters, grouped analytics, pivot analysis, explicit date parsing/trends, visual trend reports, IQR outlier detection, Pearson correlation, statistical findings, aggregate-only local interpretation, follow-up Data Intelligence sessions, and safe text/code output.`);
 

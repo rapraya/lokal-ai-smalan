@@ -854,7 +854,7 @@
       if(dateSpans.some(([s,e])=>start<e&&end>s))continue;
       const number=normalizeKnowledgeNumber(m[2]);if(!number)continue;
       const rawUnit=(m[3]||(m[1]?"rp":"")).toLowerCase().replace(/\s+/g," ").replace(/\.$/,"");
-      out.push({number,unit:aliases[rawUnit]||rawUnit,raw:m[0].trim()});
+      out.push({number,unit:aliases[rawUnit]||rawUnit,raw:m[0].trim(),start,end});
     }
     return out;
   }
@@ -926,102 +926,47 @@
     if(month)tokens.push("month:"+month[1]);
     return Array.from(new Set(tokens));
   }
+  function assessKnowledgeTableStructure(details={}){
+    const headers=Array.isArray(details.headers)?details.headers:[],columns=Array.isArray(details.columns)?details.columns:[],rows=Array.isArray(details.rows)?details.rows:[];
+    const identityColumns=Array.isArray(details.identityColumns)?details.identityColumns:[],metricColumns=Array.isArray(details.metricColumns)?details.metricColumns:[],periodColumns=Array.isArray(details.periodColumns)?details.periodColumns:[];
+    const issues=[],addIssue=(code,label,count=1)=>issues.push({code,label,count}),normalized=headers.map(normalizeKnowledgeTableHeader);
+    const duplicateHeaders=normalized.filter((header,index)=>header&&normalized.indexOf(header)!==index),unknownColumns=columns.filter(column=>!column||column.role==="unknown").length;
+    const missingIdentity=identityColumns.length===0,hasPeriodValues=periodColumns.some(index=>Boolean(columns[index]?.periodToken)),missingMetric=metricColumns.length===0&&!hasPeriodValues;
+    if(duplicateHeaders.length)addIssue("duplicate-header","Nama kolom duplikat",new Set(duplicateHeaders).size);if(unknownColumns)addIssue("unrecognized-columns","Kolom belum dikenali",unknownColumns);
+    if(missingIdentity)addIssue("missing-identity","Kolom identitas tidak dikenali");if(missingMetric)addIssue("missing-metric","Kolom metrik/periode nilai tidak dikenali");if(!rows.length)addIssue("no-data-rows","Tidak ada baris data");
+    const raggedRows=Number(details.raggedRows)||0,inheritedIdentityRows=Number(details.inheritedIdentityRows)||0;if(raggedRows)addIssue("ragged-rows","Jumlah sel pada baris tidak konsisten",raggedRows);if(inheritedIdentityRows)addIssue("inherited-identity","Identitas diwariskan dari sel kosong",inheritedIdentityRows);
+    let candidateCells=0,numericCells=0;rows.forEach(row=>metricColumns.forEach(index=>{const cell=String(row?.[index]||"").trim();if(!cell)return;candidateCells++;if(extractKnowledgeNumbers(cell,extractKnowledgeDates(cell).spans).length)numericCells++;}));
+    const numericCoverage=candidateCells?numericCells/candidateCells:0;if(candidateCells&&numericCoverage<0.5)addIssue("low-numeric-coverage","Banyak sel metrik tidak terbaca sebagai angka",candidateCells-numericCells);
+    const insufficient=missingIdentity||missingMetric||!rows.length;return {status:insufficient?"insufficient":issues.length?"review":"consistent",issues,metrics:{headerDepth:Number(details.headerDepth)||0,columnCount:headers.length,recognizedColumnCount:columns.length-unknownColumns,dataRowCount:rows.length,duplicateHeaderCount:new Set(duplicateHeaders).size,inheritedIdentityRows,raggedRows,numericCellCount:numericCells,metricCellCount:candidateCells,numericCoverage:Number(numericCoverage.toFixed(3))}};
+  }
+  function getKnowledgeTableCellOffset(line,columnIndex){let offset=0;for(let index=0;index<columnIndex;index++){const tab=line.indexOf("\t",offset);if(tab<0)return offset;offset=tab+1;}const nextTab=line.indexOf("\t",offset),rawCell=line.slice(offset,nextTab<0?line.length:nextTab);return offset+rawCell.length-rawCell.trimStart().length;}
   function extractKnowledgeTableRows(source,sourceIndex=0){
-    const lines=String(source?.text||"").split(/\r?\n/);
-    const records=[],recognizedTables=[];
+    const lines=String(source?.text||"").split(/\r?\n/),records=[],recognizedTables=[],tableReviews=[];
     for(let headerIndex=0;headerIndex<lines.length;headerIndex++){
-      if(!lines[headerIndex].includes("\t"))continue;
-      const firstHeaders=lines[headerIndex].split("\t").map(value=>value.trim());
-      if(firstHeaders.length<2)continue;
-      const headerRows=[];
-      for(let level=0;level<3&&headerIndex+level<lines.length;level++){
-        const line=lines[headerIndex+level];
-        if(!line.includes("\t"))break;
-        const cells=line.split("\t").map(value=>value.trim());
-        if(cells.length!==firstHeaders.length)break;
-        const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;
-        if(cells.some(isKnowledgeTableNumericDataCell)||recognized<Math.max(2,Math.ceil(firstHeaders.length*0.66)))break;
-        headerRows.push(cells);
-      }
-      const headerStructure=buildKnowledgeTableHeaderStructure(headerRows,firstHeaders.length);
-      if(headerStructure.ambiguous||!headerStructure.headerDepth)continue;
-      const headers=headerStructure.headers;
-      const columns=headerStructure.columns;
-      const identityColumns=headerStructure.identityColumns;
-      const metricColumns=headerStructure.metricColumns;
-      const periodColumns=headerStructure.periodColumns;
-      const periodValueColumns=periodColumns.filter(index=>Boolean(columns[index].periodToken));
-      const rowPeriodColumns=periodColumns.filter(index=>!periodValueColumns.includes(index));
-      const hasPeriodValueColumns=periodValueColumns.length>0&&identityColumns.length>0;
+      if(!lines[headerIndex].includes("\t"))continue;const firstHeaders=lines[headerIndex].split("\t").map(value=>value.trim());if(firstHeaders.length<2)continue;
+      const headerRows=[];for(let level=0;level<3&&headerIndex+level<lines.length;level++){const line=lines[headerIndex+level];if(!line.includes("\t"))break;const cells=line.split("\t").map(value=>value.trim());if(cells.length!==firstHeaders.length)break;const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;if(cells.some(isKnowledgeTableNumericDataCell)||recognized<Math.max(2,Math.ceil(firstHeaders.length*0.66)))break;headerRows.push(cells);}
+      const hs=buildKnowledgeTableHeaderStructure(headerRows,firstHeaders.length);if(hs.ambiguous||!hs.headerDepth)continue;
+      const headers=hs.headers,columns=hs.columns,identityColumns=hs.identityColumns,metricColumns=hs.metricColumns,periodColumns=hs.periodColumns,periodValueColumns=periodColumns.filter(index=>Boolean(columns[index].periodToken)),rowPeriodColumns=periodColumns.filter(index=>!periodValueColumns.includes(index)),hasPeriodValueColumns=periodValueColumns.length>0&&identityColumns.length>0;
       if(!identityColumns.length||(!metricColumns.length&&!hasPeriodValueColumns))continue;
-      const dataStartIndex=headerIndex+headerStructure.headerDepth;
-      let endIndex=dataStartIndex;
-      while(endIndex<lines.length){
-        const row=lines[endIndex].split("\t").map(value=>value.trim());
-        if(row.length!==headers.length||!lines[endIndex].includes("\t"))break;
-        endIndex++;
-      }
-      if(endIndex===dataStartIndex)continue;
-      const tableId=recognizedTables.length+1;
-      recognizedTables.push({
-        tableId,headerIndex:headerIndex+1,headerDepth:headerStructure.headerDepth,
-        headerRows:headerStructure.headerRows.map(row=>row.slice()),
-        headers:headers.slice(),dataStartIndex:dataStartIndex+1,endIndex
+      const dataStartIndex=headerIndex+hs.headerDepth;let endIndex=dataStartIndex;while(endIndex<lines.length){const row=lines[endIndex].split("\t").map(value=>value.trim());if(row.length!==headers.length||!lines[endIndex].includes("\t"))break;endIndex++;}if(endIndex===dataStartIndex)continue;
+      const tableId=recognizedTables.length+1,dataRows=lines.slice(dataStartIndex,endIndex).map(line=>line.split("\t").map(value=>value.trim()));
+      const tableInfo={tableId,headerIndex:headerIndex+1,startLineNumber:headerIndex+1,headerDepth:hs.headerDepth,headerRows:hs.headerRows.map(row=>row.slice()),headers:headers.slice(),dataStartIndex:dataStartIndex+1,endIndex,endLineNumber:endIndex,dataRowCount:dataRows.length,columns:columns.map(column=>({...column}))};recognizedTables.push(tableInfo);
+      const carryIdentity=new Map();let inheritedIdentityRows=0;
+      dataRows.forEach((cells,dataRowOffset)=>{const rowIndex=dataStartIndex+dataRowOffset,rawLine=lines[rowIndex];if(!cells.some(Boolean)){carryIdentity.clear();return;}let identityInherited=false;
+        const identityParts=identityColumns.map(index=>{const value=cells[index]||"";if(value)carryIdentity.set(index,value);else if(carryIdentity.has(index))identityInherited=true;return {header:headers[index],value:value||carryIdentity.get(index)||""};}).filter(item=>item.value);if(!identityParts.length)return;if(identityInherited)inheritedIdentityRows++;
+        const identityKey=identityParts.map(item=>item.header+":"+normalizeKnowledgeTableHeader(item.value)).join("|"),identityLabel=identityParts.map(item=>item.value).join(" · "),rowPeriodTokens=rowPeriodColumns.flatMap(index=>extractKnowledgePeriodTokens(cells[index]||"")),rowPeriodValues=rowPeriodColumns.map(index=>cells[index]||"").filter(Boolean);
+        const makeRecord=(columnIndex,metricKey,metricUnit,valueCell,periodTokens,periodValue)=>{const dateInfo=extractKnowledgeDates(valueCell),values=extractKnowledgeNumbers(valueCell,dateInfo.spans),cellStart=getKnowledgeTableCellOffset(rawLine,columnIndex);values.forEach(value=>{
+          const unit=value.unit||metricUnit||("table:"+metricKey),sourceSpan={lineNumber:rowIndex+1,columnIndex:columnIndex+1,cellStart,cellEnd:cellStart+valueCell.length,valueStart:cellStart+value.start,valueEnd:cellStart+value.end};
+          const trace={documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",section:String(source?.section||""),tableId,rowIndex:dataRowOffset+1,sourceLineNumber:rowIndex+1,columnIndex:columnIndex+1,columnHeader:headers[columnIndex],cellText:valueCell,valueToken:value.raw,sourceSpan,sourceLine:rawLine};
+          records.push({sourceIndex,sourceNumber:Number(source?.sourceNumber)||sourceIndex+1,documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",section:String(source?.section||""),tableId,rowIndex:dataRowOffset+1,columnIndex:columnIndex+1,columnHeader:headers[columnIndex],headerDepth:hs.headerDepth,headerRows:hs.headerRows.map(row=>row.slice()),rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,identityInherited,metricKey,periodValue:periodValue||rowPeriodValues.join(" · "),periodYears:Array.from(new Set(periodTokens)),value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),rawValue:value.raw,sourceLineNumber:rowIndex+1,cellText:valueCell,valueToken:value.raw,sourceSpan,trace});
+        });};
+        metricColumns.forEach(index=>makeRecord(index,columns[index].key,columns[index].unit||"",cells[index]||"",rowPeriodTokens,rowPeriodValues.join(" · ")));
+        if(hasPeriodValueColumns){const rowMetric=identityParts.map(item=>item.value).join(" ");periodValueColumns.forEach(index=>{const header=columns[index],cell=cells[index]||"",tokens=header.periodToken?[header.periodToken]:extractKnowledgePeriodTokens(header.key||cell);makeRecord(index,"value:"+normalizeKnowledgeTableHeader(rowMetric),"",cell,tokens,header.periodToken||header.key);});}
       });
-      const carryIdentity=new Map();
-      for(let rowIndex=dataStartIndex;rowIndex<endIndex;rowIndex++){
-        const cells=lines[rowIndex].split("\t").map(value=>value.trim());
-        if(!cells.some(Boolean)){
-          carryIdentity.clear();
-          continue;
-        }
-        let identityInherited=false;
-        const identityParts=identityColumns.map(index=>{
-          const value=cells[index]||"";
-          if(value)carryIdentity.set(index,value);
-          else if(carryIdentity.has(index))identityInherited=true;
-          return {header:headers[index],value:value||carryIdentity.get(index)||""};
-        }).filter(item=>item.value);
-        if(!identityParts.length)continue;
-        const identityKey=identityParts.map(item=>item.header+":"+normalizeKnowledgeTableHeader(item.value)).join("|");
-        const identityLabel=identityParts.map(item=>item.value).join(" · ");
-        const rowPeriodTokens=rowPeriodColumns.flatMap(index=>extractKnowledgePeriodTokens(cells[index]||""));
-        const rowPeriodValues=rowPeriodColumns.map(index=>cells[index]||"").filter(Boolean);
-        const makeRecord=(columnIndex,metricKey,metricUnit,valueCell,periodTokens,periodValue)=>{
-          const dateInfo=extractKnowledgeDates(valueCell);
-          const values=extractKnowledgeNumbers(valueCell,dateInfo.spans);
-          values.forEach(value=>{
-            const unit=value.unit||metricUnit||("table:"+metricKey);
-            records.push({
-              sourceIndex,sourceNumber:Number(source?.sourceNumber)||sourceIndex+1,
-              documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",
-              section:String(source?.section||""),tableId,rowIndex:rowIndex-dataStartIndex+1,
-              columnIndex:columnIndex+1,columnHeader:headers[columnIndex],
-              headerDepth:headerStructure.headerDepth,headerRows:headerStructure.headerRows.map(row=>row.slice()),
-              rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,identityInherited,
-              metricKey,periodValue:periodValue||rowPeriodValues.join(" · "),
-              periodYears:Array.from(new Set(periodTokens)),
-              value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),rawValue:value.raw
-            });
-          });
-        };
-        metricColumns.forEach(columnIndex=>{
-          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",
-            cells[columnIndex]||"",rowPeriodTokens,rowPeriodValues.join(" · "));
-        });
-        if(hasPeriodValueColumns){
-          const rowMetric=identityParts.map(item=>item.value).join(" ");
-          periodValueColumns.forEach(columnIndex=>{
-            const header=columns[columnIndex],valueCell=cells[columnIndex]||"";
-            const periodTokens=header.periodToken?[header.periodToken]:extractKnowledgePeriodTokens(header.key||valueCell);
-            makeRecord(columnIndex,"value:"+normalizeKnowledgeTableHeader(rowMetric),"",valueCell,
-              periodTokens,header.periodToken||header.key);
-          });
-        }
-      }
-      headerIndex=endIndex-1;
+      const raggedRows=endIndex<lines.length&&lines[endIndex].includes("\t")?1:0;tableInfo.quality=assessKnowledgeTableStructure({headers,columns,rows:dataRows,identityColumns,metricColumns,periodColumns,headerDepth:hs.headerDepth,inheritedIdentityRows,raggedRows});tableInfo.quality.metrics.numericEvidenceCount=records.filter(record=>record.tableId===tableId&&record.sourceIndex===sourceIndex).length;headerIndex=endIndex-1;
     }
-    return {records,tables:recognizedTables};
+    for(let lineIndex=0;lineIndex<lines.length;){if(!lines[lineIndex].includes("\t")){lineIndex++;continue;}const start=lineIndex;while(lineIndex<lines.length&&lines[lineIndex].includes("\t"))lineIndex++;const end=lineIndex;if(end-start<2)continue;const covered=recognizedTables.some(table=>table.headerIndex-1<=start&&table.endIndex>=end);if(covered)continue;tableReviews.push({sourceNumber:Number(source?.sourceNumber)||sourceIndex+1,documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",startLineNumber:start+1,endLineNumber:end,rowCount:end-start,issue:"unrecognized-structure",label:"Struktur tabel belum dikenali",preview:lines.slice(start,Math.min(end,start+3))});}
+    return {records,tables:recognizedTables,tableReviews};
   }
   function detectKnowledgeEvidenceConflicts(sources){
     const sourceList=Array.isArray(sources)?sources:[];
@@ -1034,7 +979,7 @@
         numbers:tableData.tables.length||text.includes("\t")?[]:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
         dates:dates.values,scopeYears:getKnowledgeScopeYears(dates.values),
         context:extractKnowledgeConflictContext(text+" "+String(source?.section||"")),
-        tableRecords:tableData.records,tables:tableData.tables
+        tableRecords:tableData.records,tables:tableData.tables,tableReviews:tableData.tableReviews
       };
     });
     const conflicts=[];
@@ -1084,7 +1029,8 @@
         const makeEvidence=record=>({
           sourceNumber:record.sourceNumber,documentName:record.documentName,page:record.page,section:record.section,
           value:record.rawValue,text:record.rawRow,rowIndex:record.rowIndex,columnIndex:record.columnIndex,
-          columnHeader:record.columnHeader,identity:record.identityLabel,identityInherited:record.identityInherited,metric:record.metricKey,period:record.periodValue,headerDepth:record.headerDepth,headerRows:record.headerRows
+          columnHeader:record.columnHeader,identity:record.identityLabel,identityInherited:record.identityInherited,metric:record.metricKey,period:record.periodValue,headerDepth:record.headerDepth,headerRows:record.headerRows,
+          sourceLineNumber:record.sourceLineNumber,cellText:record.cellText,valueToken:record.valueToken,sourceSpan:record.sourceSpan,trace:record.trace
         });
         appendConflict({
           key,type,left:makeEvidence(a),right:makeEvidence(b),
@@ -1098,7 +1044,9 @@
       unitDifference:conflicts.filter(item=>item.type==="unit-difference").length,
       tableComparisons:conflicts.filter(item=>item.evidenceType==="table").length
     };
-    return {conflicts:conflicts.slice(0,8),counts,total:conflicts.length};
+    const tables=items.flatMap(item=>item.tables.map(table=>({documentName:item.documentName,page:item.page,tableId:table.tableId,startLineNumber:table.startLineNumber,dataRowCount:table.dataRowCount,headerDepth:table.headerDepth,headers:table.headers,quality:table.quality})));
+    const tableReviews=items.flatMap(item=>item.tableReviews);
+    return {conflicts:conflicts.slice(0,8),counts,total:conflicts.length,tables,tableReviews};
   }
   function verifyKnowledgeAnswerSupport(response,sources){
     const sourceList=Array.isArray(sources)?sources:[],markerAudit=inspectKnowledgeCitationMarkers(response,sourceList.length);
@@ -1309,11 +1257,26 @@
         const conflictTitle=document.createElement("strong");
         conflictTitle.textContent="Konsistensi bukti antar-sumber";
         const conflictSummary=document.createElement("p");
-        conflictSummary.textContent="Pemeriksaan kutipan terpilih: "+conflictAudit.total+" perbedaan nilai/satuan terdeteksi. Potensi konflik: "+conflictAudit.counts.potentialConflict+"; perbedaan periode/cakupan: "+conflictAudit.counts.scopeDifference+"; perbedaan satuan: "+conflictAudit.counts.unitDifference+"; perbandingan berbasis baris tabel: "+conflictAudit.counts.tableComparisons+".";
+        const consistentTables=conflictAudit.tables.filter(table=>table.quality.status==="consistent").length;
+         const reviewTables=conflictAudit.tables.filter(table=>table.quality.status!=="consistent").length;
+         conflictSummary.textContent="Pemeriksaan kutipan terpilih: "+conflictAudit.total+" perbedaan nilai/satuan terdeteksi. Potensi konflik: "+conflictAudit.counts.potentialConflict+"; perbedaan periode/cakupan: "+conflictAudit.counts.scopeDifference+"; perbedaan satuan: "+conflictAudit.counts.unitDifference+"; perbandingan berbasis baris tabel: "+conflictAudit.counts.tableComparisons+". Audit struktur: "+consistentTables+" konsisten, "+reviewTables+" perlu ditinjau, "+conflictAudit.tableReviews.length+" belum dikenali.";
         const conflictCaveat=document.createElement("p");
         conflictCaveat.className="knowledge-verification-note";
         conflictCaveat.textContent="Ini adalah penanda untuk ditinjau, bukan kesimpulan bahwa salah satu sumber keliru. Baris tabel dibandingkan hanya bila identitas subjek, kelas/kategori, dan metrik terpetakan sama. Dokumen mungkin tetap berbeda dalam definisi, populasi, atau metode pengukuran. Pemeriksaan hanya mencakup kutipan terpilih.";
         conflictPanel.append(conflictTitle,conflictSummary,conflictCaveat);
+         conflictAudit.tables.slice(0,6).forEach(table=>{
+           const item=document.createElement("div");item.className="knowledge-table-audit-item";
+           const title=document.createElement("b");title.textContent=table.documentName+(table.page!==""?" · Halaman/bagian "+table.page:"")+" · Tabel "+table.tableId;
+           const detail=document.createElement("small"),labels={consistent:"Struktur konsisten secara diagnostik",review:"Struktur perlu ditinjau",insufficient:"Struktur belum memadai"};
+           detail.textContent=(labels[table.quality.status]||"Perlu ditinjau")+" · "+table.quality.metrics.dataRowCount+" baris data · "+table.quality.metrics.columnCount+" kolom · header "+table.headerDepth+" tingkat"+(table.quality.issues.length?" · "+table.quality.issues.map(issue=>issue.label).join("; "):"");
+           item.append(title,detail);conflictPanel.appendChild(item);
+         });
+         conflictAudit.tableReviews.slice(0,6).forEach(review=>{
+           const item=document.createElement("div");item.className="knowledge-table-audit-item";
+           const title=document.createElement("b");title.textContent=review.label+" · "+review.documentName+(review.page!==""?" · Halaman/bagian "+review.page:"");
+           const detail=document.createElement("small");detail.textContent="Baris ekstraksi "+review.startLineNumber+"–"+review.endLineNumber+" · "+review.rowCount+" baris bertab. Tidak dipakai untuk perbandingan angka karena struktur kolom belum cukup dikenali.";
+           item.append(title,detail);conflictPanel.appendChild(item);
+         });
         const conflictLabels={
           "potential-conflict":"Potensi konflik nilai",
           "scope-difference":"Perbedaan periode/cakupan",
@@ -1327,9 +1290,9 @@
           const values=document.createElement("p");
           values.textContent=(conflict.evidenceType==="table"?(conflict.left.identity||"Subjek sama")+" · "+(conflict.left.columnHeader||conflict.left.metric||"Nilai")+": ":"")+conflict.left.value+" ↔ "+conflict.right.value+(conflict.evidenceType==="table"&&conflict.left.period?" · Periode: "+conflict.left.period:"")+" · konteks: "+conflict.sharedContext.join(", ");
           const left=document.createElement("small");
-          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+(conflict.left.rowIndex?" · Baris tabel "+conflict.left.rowIndex+" · Kolom "+conflict.left.columnIndex+" ("+conflict.left.columnHeader+")":"")+(conflict.left.headerDepth>1?" · Header bertingkat "+conflict.left.headerDepth+" tingkat":"")+(conflict.left.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+" — "+conflict.left.text;
+          left.textContent="[S"+conflict.left.sourceNumber+"] "+conflict.left.documentName+(conflict.left.page!==""?" · Halaman/bagian "+conflict.left.page:"")+(conflict.left.rowIndex?" · Baris tabel "+conflict.left.rowIndex+" · Kolom "+conflict.left.columnIndex+" ("+conflict.left.columnHeader+")":"")+(conflict.left.sourceLineNumber?" · Baris ekstraksi "+conflict.left.sourceLineNumber:"")+(conflict.left.headerDepth>1?" · Header bertingkat "+conflict.left.headerDepth+" tingkat":"")+(conflict.left.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+(conflict.left.cellText?" · Sel sumber: "+conflict.left.cellText:"")+(conflict.left.valueToken?" · Token angka: "+conflict.left.valueToken:"")+" — "+conflict.left.text;
           const right=document.createElement("small");
-          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+(conflict.right.rowIndex?" · Baris tabel "+conflict.right.rowIndex+" · Kolom "+conflict.right.columnIndex+" ("+conflict.right.columnHeader+")":"")+(conflict.right.headerDepth>1?" · Header bertingkat "+conflict.right.headerDepth+" tingkat":"")+(conflict.right.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+" — "+conflict.right.text;
+          right.textContent="[S"+conflict.right.sourceNumber+"] "+conflict.right.documentName+(conflict.right.page!==""?" · Halaman/bagian "+conflict.right.page:"")+(conflict.right.rowIndex?" · Baris tabel "+conflict.right.rowIndex+" · Kolom "+conflict.right.columnIndex+" ("+conflict.right.columnHeader+")":"")+(conflict.right.sourceLineNumber?" · Baris ekstraksi "+conflict.right.sourceLineNumber:"")+(conflict.right.headerDepth>1?" · Header bertingkat "+conflict.right.headerDepth+" tingkat":"")+(conflict.right.identityInherited?" · Identitas diwariskan dari sel kosong/tergabung":"")+(conflict.right.cellText?" · Sel sumber: "+conflict.right.cellText:"")+(conflict.right.valueToken?" · Token angka: "+conflict.right.valueToken:"")+" — "+conflict.right.text;
           item.append(label,values,left,right);
           conflictPanel.appendChild(item);
         });

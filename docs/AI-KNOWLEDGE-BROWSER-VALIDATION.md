@@ -203,3 +203,16 @@ Isi setelah pengujian nyata dilakukan.
 8. Uji scan/OCR, sel gabungan, header bertingkat lebih dari tiga baris, dan baris multiline. Catat kasus yang belum dapat dipetakan; jangan memperlakukan ketiadaan peringatan sebagai bukti struktur berhasil dikenali.
 
 **Batasan:** pengenalan header bertingkat menggunakan maksimal tiga baris berurutan, istilah header yang dikenali, urutan TAB, dan peran kolom. Pemetaan label grup berdasarkan peran kolom merupakan heuristik. Identitas yang diwariskan dari sel kosong juga merupakan inferensi. Parser belum menjamin pembacaan merged cells PDF, header bertingkat yang tidak sejajar, tabel bersarang, maupun tata letak OCR. Semua relasi harus diperiksa terhadap dokumen asli.
+
+
+## 18. Jejak sel sumber dan audit struktur tabel
+
+1. Impor PDF teks dengan tabel sederhana Nama, Kelas, Jumlah Siswa dan beberapa angka; jalankan pertanyaan/perbandingan yang memunculkan bukti tabel.
+2. Buka setiap hasil perbandingan. Cocokkan dokumen, halaman, baris ekstraksi, baris data, kolom, sel sumber, dan token angka dengan teks hasil ekstraksi. Baris ekstraksi adalah nomor baris pada teks hasil ekstraksi halaman/bagian, bukan koordinat fisik pada halaman PDF.
+3. Uji angka ribuan/desimal dan satuan seperti 1.250 orang, 1.250,50 persen, atau Rp 2.500,75. Pastikan token yang diparsing tetap sama dengan rentang teks sumbernya.
+4. Uji header duplikat, kolom yang tidak dikenali, baris dengan jumlah sel berbeda, sel metrik kosong/nonangka, dan identitas yang diwariskan. Panel audit harus menandai kasus yang perlu ditinjau.
+5. Uji tabel dengan header yang tidak dikenal. Blok tersebut harus muncul sebagai Struktur tabel belum dikenali, tidak ikut dibandingkan sebagai bukti tabel, dan tidak jatuh ke pembandingan angka paragraf umum.
+6. Bandingkan dua sumber dengan nilai berbeda. Pastikan kedua sisi menampilkan sel sumber dan token angka asli.
+7. Periksa tabel berstatus Struktur konsisten secara diagnostik terhadap PDF asli. Status itu hanya berarti pola header/baris yang dikenali parser tampak konsisten; bukan jaminan kebenaran angka, semantik, atau hasil OCR.
+
+**Batasan:** rentang karakter dihitung pada baris teks hasil ekstraksi setelah pemrosesan PDF/TXT/Markdown, bukan pada posisi piksel atau koordinat asli PDF. Layout PDF kompleks, OCR, tabel hasil scan, sel gabungan visual, dan baris multiline dapat menggeser atau menghilangkan relasi sel. Audit bersifat heuristik dan wajib diverifikasi terhadap dokumen asli.

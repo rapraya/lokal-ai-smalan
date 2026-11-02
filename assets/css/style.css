@@ -474,3 +474,8 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 /* AI Knowledge table row identity and provenance */
 .knowledge-conflict-item small{overflow-wrap:anywhere}
 .knowledge-conflict-item p{overflow-wrap:anywhere}
+
+/* AI Knowledge table structure audit and source-cell trace */
+.knowledge-table-audit-item{display:grid;gap:4px;padding:9px 0 0;border-top:1px solid var(--line);min-width:0}
+.knowledge-table-audit-item b{font-size:11px;color:var(--text);overflow-wrap:anywhere}
+.knowledge-table-audit-item small{font-size:10px;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}

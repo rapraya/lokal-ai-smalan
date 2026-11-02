@@ -7,6 +7,13 @@ The architecture is **local-first, not local-only**: supported models should run
 ## Current status
 
 
+**v0.30.0 — Table Evidence Traceability & Structural Audit**
+- Preserves the exact extracted text cell, parsed numeric token, one-based extraction line, column identity, and character offsets for each table-derived numeric value. Offsets refer to extracted page/section text, not physical PDF coordinates.
+- Cross-source conflict details show the originating cell and numeric token alongside document, page, data-row, column, and header metadata.
+- Adds diagnostic structure checks for duplicate headers, unrecognized columns, missing identity/metric roles, inconsistent row widths, inherited identities, and low numeric parsing coverage.
+- Keeps unrecognized TAB-delimited blocks visible as review items and excludes them from numeric table comparisons and generic prose fallback.
+- Automated tests cover decimal/thousands token offsets, exact source-cell tracing, structural status, inherited-identity warnings, and fail-closed handling of unrecognized tables. OCR, visual merged cells, multiline rows, and real PDF layout still require browser/device validation.
+
 **v0.29.0 — Advanced Table Structure Recognition**
 - Recognizes up to three consecutive table-header levels and composes column labels from hierarchical group headers and leaf headers.
 - Attaches shorter, merged group-header rows above the detailed PDF table grid when their recognized identity/metric roles align with the columns below.

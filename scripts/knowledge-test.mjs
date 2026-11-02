@@ -15,7 +15,7 @@ assert.ok(numericHelperStart >= 0 && numericHelperEnd > numericHelperStart &&
   headerHelperEnd > headerHelperStart, "Knowledge table structure helpers are missing.");
 const numericHelper = app.slice(numericHelperStart, numericHelperEnd);
 const headerHelper = app.slice(headerHelperStart, headerHelperEnd);
-const source = numericHelper + "\n" + headerHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows })";
+const source = numericHelper + "\n" + headerHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows, assessKnowledgeTableStructure, extractKnowledgeNumbers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -568,12 +568,21 @@ assert.equal(mergedIdentityTable.records[1].identityInherited, true,
   "Inherited identity must be explicitly marked for human review.");
 assert.equal(mergedIdentityTable.records[1].rowIndex, 2);
 
+assert.deepEqual((()=>{const token=api.extractKnowledgeNumbers("Nilai 1.250,50 persen")[0];return {raw:token.raw,start:token.start,end:token.end};})(),{raw:"1.250,50 persen",start:6,end:21},"Numeric parsing must preserve exact source token offsets.");
+const tracedTable=api.extractKnowledgeTableRows({sourceNumber:6,documentName:"Jejak-Nilai.pdf",page:9,text:"Nama\tKelas\tJumlah Siswa\nRina\tXII-2\t  1.250 orang"});
+assert.equal(tracedTable.records[0].sourceLineNumber,2);assert.equal(tracedTable.records[0].cellText,"1.250 orang");assert.equal(tracedTable.records[0].valueToken,"1.250 orang");
+assert.equal(tracedTable.records[0].sourceSpan.lineNumber,2);assert.equal(tracedTable.records[0].sourceSpan.columnIndex,3);assert.equal(tracedTable.records[0].sourceSpan.valueStart,tracedTable.records[0].sourceSpan.cellStart);
+assert.equal(tracedTable.records[0].trace.sourceLine,"Rina\tXII-2\t  1.250 orang");
+assert.equal(tracedTable.tables[0].quality.status,"consistent","A well-formed table should pass structural diagnostics.");assert.equal(tracedTable.tables[0].quality.metrics.numericCellCount,1);
+assert.equal(mergedIdentityTable.tables[0].quality.status,"review","Inherited identity rows must require review.");assert.ok(mergedIdentityTable.tables[0].quality.issues.some(issue=>issue.code==="inherited-identity"));
 const unrecognizedTable = api.detectKnowledgeEvidenceConflicts([
   { sourceNumber: 1, documentName: "A.pdf", text: "Kolom A\tKolom B\nAlpha\t120" },
   { sourceNumber: 2, documentName: "B.pdf", text: "Kolom A\tKolom B\nAlpha\t95" }
 ]);
 assert.equal(unrecognizedTable.total, 0,
   "Unrecognized tabular layouts must not fall back to context-only prose conflict detection.");
+assert.ok(unrecognizedTable.tableReviews.length>=2,"Unknown TAB blocks must remain visible as review items.");
+assert.equal(unrecognizedTable.tables.length,0,"Unknown table structures must not be marked as recognized.");
 
 assert.ok(numberMismatchAudit.flaggedCount > 0 && numberMismatchAudit.detailCounts.numberNotFound > 0,
   "The audit summary should expose claim-level detail warning counts.");
