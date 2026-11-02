@@ -160,6 +160,14 @@ const semanticRanked = api.findKnowledgeSourcesHybrid(
 assert.equal(semanticRanked[0].documentName, "Beasiswa.pdf", "Semantic ranking should find related wording without exact keyword overlap.");
 assert.equal(semanticRanked[0].page, 8, "Semantic results must retain the original source page.");
 assert.ok(semanticRanked[0].semanticScore > semanticRanked[1].semanticScore);
+const unrelatedOnly = api.findKnowledgeSourcesHybrid(
+  semanticPages,
+  "galaksi dan astronomi",
+  [1, 0],
+  [[0, 1], [0.1, 0.99]],
+  [0, 1]
+);
+assert.deepEqual(Array.from(unrelatedOnly), [], "Weak semantic similarity without lexical matches must not manufacture source evidence.");
 
 const hybridFallback = api.findKnowledgeSourcesHybrid(
   pages,
