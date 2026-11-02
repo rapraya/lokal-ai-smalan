@@ -418,8 +418,14 @@
       if(cells.length!==count)break;
       const recognized=cells.filter(value=>value&&classify(value).role!=="unknown").length;
       if(!recognized)break;
+      let mergedHeaderLabel="";
       for(let column=0;column<count;column++){
-        if(cells[column])carry[column]=cells[column];
+        if(cells[column]){
+          carry[column]=cells[column];
+          mergedHeaderLabel=cells[column];
+        }else if(mergedHeaderLabel&&!carry[column]){
+          carry[column]=mergedHeaderLabel;
+        }
         if(carry[column]&&!parts[column].some(value=>value.toLocaleLowerCase("id-ID")===carry[column].toLocaleLowerCase("id-ID")))parts[column].push(carry[column]);
       }
       accepted.push(cells);
