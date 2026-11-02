@@ -482,10 +482,18 @@
           const recognized=cells.filter(value=>/\b(identitas|data|nama|siswa|peserta didik|kelas|rombel|kategori|jenis|indikator|program|jumlah|nilai|total|berat|volume|capaian|skor|anggaran|target|realisasi|tahun|semester|periode|tanggal)\b/i.test(value)).length;
           if(!recognized)break;
           const mapped=Array(run[0].cells.length).fill("");
+          const detailColumns=buildKnowledgeTableHeaderStructure([run[0].cells],run[0].cells.length).columns;
           cells.forEach((value,index)=>{
-            const first=Math.floor(index*mapped.length/cells.length);
-            const last=Math.floor((index+1)*mapped.length/cells.length);
-            for(let column=first;column<Math.max(first+1,last);column++)mapped[column]=value;
+            const role=/\b(jumlah|nilai|total|berat|volume|persentase|capaian|skor|anggaran|target|realisasi|hasil)\b/i.test(value)?"metric":
+              /\b(tahun|semester|periode|tanggal|bulan|triwulan|kuartal|(?:19|20)\d{2})\b/i.test(value)?"period":
+              /\b(identitas|nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|jabatan|jenjang|status|sekolah)\b/i.test(value)?"identity":"";
+            let targets=role?detailColumns.map((column,columnIndex)=>column.role===role?columnIndex:-1).filter(columnIndex=>columnIndex>=0):[];
+            if(!targets.length){
+              const first=Math.floor(index*mapped.length/cells.length);
+              const last=Math.floor((index+1)*mapped.length/cells.length);
+              targets=Array.from({length:Math.max(1,last-first)},(_,offset)=>Math.min(mapped.length-1,first+offset));
+            }
+            targets.forEach(column=>{mapped[column]=value;});
           });
           prefixRows.unshift({index:priorIndex,cells:mapped});
         }
@@ -493,7 +501,7 @@
         const headerStructure=buildKnowledgeTableHeaderStructure(candidateRows.map(line=>line.cells),run[0].cells.length);
         const headerDepth=headerStructure.ambiguous?1:Math.max(1,headerStructure.headerDepth);
         const columnHeaders=headerStructure.ambiguous?headerCells.slice():headerStructure.headers;
-        const normalizedHeaderKey=columnHeaders.map(value=>String(value||"").toLocaleLowerCase("id-ID").replace(/[^\\p{L}\\p{N}%]+/gu," ").replace(/\\s+/g," ").trim()).join("|");
+        const normalizedHeaderKey=columnHeaders.map(value=>String(value||"").toLocaleLowerCase("id-ID").normalize("NFKD").replace(/[^a-z0-9%]+/g," ").replace(/\s+/g," ").trim()).join("|");
         const headerLines=candidateRows.slice(0,headerDepth);
         tableBlocks.push({
           startLine:headerLines[0]?.index??run[0].index,endLine:run[run.length-1].index,lineCount:structuredLines.length,
