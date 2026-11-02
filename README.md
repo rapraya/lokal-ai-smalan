@@ -6,6 +6,10 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.15.0 — AI Assistant Workspace**
+- Adds an in-session task manager (up to 50 user-entered tasks), completion toggles, and explicit task removal. A local WebLLM planning assistant can review the task list and answer follow-up prompts. Only task titles and the user's prompt are included when the user explicitly requests a recommendation; conversation context is bounded and kept in page memory. The model provides suggestions only: it does not run commands, edit files, send messages, access accounts, or complete tasks. No external service fallback is used.
+
+
 **v0.14.0 — Data Intelligence Workspace**
 - Data Analyst now supports follow-up questions with focus modes (overview, trends, comparisons, anomalies, relationships, and next actions), a bounded in-session conversation history, Markdown report export, and explicit history clearing. Each request includes refreshed aggregate statistics for the active filters; raw CSV rows are not included in model messages. History remains in browser memory for the current session and is not persisted.
 
