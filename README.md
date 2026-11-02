@@ -61,6 +61,10 @@ The architecture is **local-first, not local-only**: supported models should run
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
+## AI Knowledge validation
+
+A real-browser checklist for semantic retrieval, PDF/OCR, privacy/network inspection, citation markers, and memory behavior is available in [`docs/AI-KNOWLEDGE-BROWSER-VALIDATION.md`](docs/AI-KNOWLEDGE-BROWSER-VALIDATION.md). Automated CI coverage does not replace the device/browser checks listed there.
+
 ## Workspace capabilities
 
 | Workspace | Direction |
