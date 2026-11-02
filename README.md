@@ -197,12 +197,12 @@ The unified Model Engine, secure gateway code, and gated GPT Chat adapter are av
 
 - **Local:** WebLLM 0.2.87 with Llama 3.2 1B/3B. Existing AI Chat, Coding, Text, Assistant, AI Knowledge, and optional Data Analyst interpretation continue to use the shared local runtime.
 - **OpenAI GPT:** a same-origin gateway client and Cloudflare Worker adapter are implemented. AI Chat exposes GPT only when the authenticated gateway health check is ready and requires explicit cloud-session consent. Personal AI context is not automatically appended to GPT Chat requests.
-- **Gateway deployment:** not yet configured or deployed. Cloudflare Access application, allowed-user identities, DNS route, and server-side `OPENAI_API_KEY` secret are still required. Until then, GPT remains unavailable in the preview.
+- **Gateway deployment:** not yet configured or deployed. Cloudflare Access must protect only `ai.smalan.sch.id/api/*` (not the public app pages), with the matching allowed-user list, proxied DNS route, and server-side `OPENAI_API_KEY` secret. Until then, GPT remains unavailable in the preview.
 - **Anthropic Claude and Google Gemini:** registered as future provider targets; adapters are not implemented.
 - **Credentials:** never paste provider API keys into the frontend, browser storage, or public repository. The OpenAI key belongs only in the Cloudflare Worker secret store.
 - **Routing:** local-first. No automatic local-to-cloud fallback, and non-Chat workspaces remain on the local runtime.
 
-See [Model Engine Architecture](docs/MODEL-ENGINE-ARCHITECTURE.md) and [Gateway deployment guide](gateway/README.md) for the provider contract, Access setup, and deployment requirements.
+See [Model Engine Architecture](docs/MODEL-ENGINE-ARCHITECTURE.md), [Gateway deployment guide](gateway/README.md), and the [Panduan deployment Bahasa Indonesia](gateway/PANDUAN-DEPLOYMENT-ID.md) for the provider contract, API-only Access setup, and deployment requirements.
 ## Privacy and security principles
 
 1. Local processing is preferred when a supported model and device make it practical.
