@@ -142,3 +142,8 @@ assert.ok(app.includes("function renderKnowledgeWorkspace()") && app.includes("f
 assert.ok(app.includes("async function readKnowledgeFile(file)") && app.includes("findKnowledgeSources(pages,query)"), "Local document extraction and source retrieval are missing.");
 assert.ok(app.includes('page === "knowledge"') && app.includes('application/pdf'), "AI Knowledge navigation or PDF support is missing.");
 assert.ok(app.includes("knowledgePages = []") && app.includes("knowledgePages=[]"), "Knowledge documents must remain session-only and clearable.");
+
+assert.ok(app.includes("let knowledgePages = [], knowledgeDocuments = []"), "AI Knowledge must support an in-session document collection.");
+assert.ok(app.includes("multiple accept=") && app.includes("knowledgeDocuments.length>=5"), "AI Knowledge must support a bounded multi-file import.");
+assert.ok(app.includes("function renderKnowledgeDocumentList()") && app.includes("Hapus seluruh koleksi"), "Document management and deletion controls are missing.");
+assert.ok(app.includes("KUTIPAN LINTAS DOKUMEN") && app.includes("item.documentName"), "Cross-document answers must retain source file identity.");
