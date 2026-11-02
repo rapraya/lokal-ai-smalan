@@ -159,7 +159,8 @@ const semanticRanked = api.findKnowledgeSourcesHybrid(
 );
 assert.equal(semanticRanked[0].documentName, "Beasiswa.pdf", "Semantic ranking should find related wording without exact keyword overlap.");
 assert.equal(semanticRanked[0].page, 8, "Semantic results must retain the original source page.");
-assert.ok(semanticRanked[0].semanticScore > semanticRanked[1].semanticScore);
+assert.equal(semanticRanked.length, 1, "Weak semantic-only matches must be excluded by the confidence threshold.");
+assert.ok(semanticRanked[0].semanticScore > 0.9);
 const unrelatedOnly = api.findKnowledgeSourcesHybrid(
   semanticPages,
   "galaksi dan astronomi",
