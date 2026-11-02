@@ -6,7 +6,7 @@ Lokal AI SMALAN is a browser-based, multi-capability AI workspace for SMALAN. Th
 
 The architecture is **local-first, not local-only**. Supported models should run in the browser whenever practical. Any future feature that needs an external service must identify the provider, disclose what data leaves the device, and require an explicit user choice. Never embed private API keys or secrets in the frontend.
 
-## Current implementation — v0.41.0
+## Current implementation — v0.41.1
 
 The current `main` branch has progressed beyond the original v0.17 architecture notes. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
