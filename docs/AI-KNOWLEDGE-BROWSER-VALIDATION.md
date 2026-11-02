@@ -189,3 +189,17 @@ Isi setelah pengujian nyata dilakukan.
 8. Uji tabel dengan sel kosong, nama berulang, kategori bertingkat, header yang terpotong, halaman lanjutan dengan header berulang, dan OCR. Pastikan parser tidak membuat identitas subjek atau relasi kolom yang tidak tampak pada sumber.
 
 **Batasan:** parser memakai header TAB yang dikenali dan belum menjadi parser tabel universal. Header yang tidak dikenali, tabel tanpa kolom identitas, merged cells, tabel bertingkat, OCR yang kehilangan tab, dan baris multiline dapat tidak dipetakan atau dipetakan kurang tepat. Baris yang tidak berhasil dikenali tidak boleh dianggap sudah diperiksa. Verifikasi hasil terhadap dokumen asli tetap wajib.
+
+
+## 17. Header bertingkat dan sel gabungan
+
+1. Siapkan PDF teks asli dengan header dua tingkat, misalnya baris grup **Identitas** dan **Capaian**, lalu baris detail **Nama | Kelas | Jumlah Siswa**. Pastikan metadata PDF menyimpan kedalaman header dan nama kolom gabungan.
+2. Uji header grup yang lebih pendek daripada jumlah kolom rinci. Sistem seharusnya memetakan label grup ke kolom dengan peran yang cocok; bila pemetaan tidak jelas, jangan menganggapnya sebagai struktur yang pasti.
+3. Bandingkan dua tabel dengan header bertingkat yang setara dan baris subjek/kelas yang sama. Pastikan nilai dibandingkan berdasarkan identitas serta metrik, bukan hanya nomor kolom.
+4. Siapkan tabel dengan identitas yang tampak digabung vertikal: nama dan kelas muncul pada baris pertama, sementara baris berikutnya memiliki sel identitas kosong tetapi berisi angka. Panel dapat mewariskan identitas, tetapi harus menampilkan keterangan **Identitas diwariskan dari sel kosong/tergabung**.
+5. Periksa nomor baris data setelah beberapa baris header. Nomor baris yang terlihat pada jejak sumber harus dimulai dari baris data, bukan dari baris header.
+6. Uji tabel yang headernya tidak dikenal atau kolom identitasnya tidak dapat dipastikan. Sistem tidak boleh memperlakukannya sebagai bukti tabel yang sudah tervalidasi, dan tidak boleh membandingkan seluruh angka tabel sebagai paragraf biasa.
+7. Uji header bertingkat yang diulang pada halaman lanjutan. Pastikan metadata header gabungan, identitas tabel, dan halaman asal tetap terlihat pada masing-masing sumber.
+8. Uji scan/OCR, sel gabungan, header bertingkat lebih dari tiga baris, dan baris multiline. Catat kasus yang belum dapat dipetakan; jangan memperlakukan ketiadaan peringatan sebagai bukti struktur berhasil dikenali.
+
+**Batasan:** pengenalan header bertingkat menggunakan maksimal tiga baris berurutan, istilah header yang dikenali, urutan TAB, dan peran kolom. Pemetaan label grup berdasarkan peran kolom merupakan heuristik. Identitas yang diwariskan dari sel kosong juga merupakan inferensi. Parser belum menjamin pembacaan merged cells PDF, header bertingkat yang tidak sejajar, tabel bersarang, maupun tata letak OCR. Semua relasi harus diperiksa terhadap dokumen asli.
