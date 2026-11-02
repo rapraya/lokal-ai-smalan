@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWorker, gatewayReadme, gatewayConfig] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -9,6 +9,9 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore] = await Pr
   readFile("README.md", "utf8"),
   readFile("docs/UI-DESIGN-SYSTEM.md", "utf8"),
   readFile("assets/js/model-engine-core.js", "utf8"),
+  readFile("gateway/src/worker.js", "utf8"),
+  readFile("gateway/README.md", "utf8"),
+  readFile("gateway/wrangler.jsonc", "utf8"),
 ]);
 
 const requiredModules = [
@@ -82,8 +85,31 @@ assert.ok(app.includes('function renderModelEngineWorkspace()') &&
   app.includes('modelEngine.clearRuntime(runtimeToUnload)'),
   "The Model Engine dashboard must report and manage the shared local WebLLM runtime.");
 assert.ok(app.includes("Gateway diperlukan") &&
-  app.includes("Kredensial tidak disimpan di browser."),
-  "The Model Engine UI must disclose cloud gateway and credential requirements.");
+  app.includes("Kredensial tetap di server.") &&
+  app.includes('id="engineGatewayCheck"') &&
+  app.includes("modelEngine.checkGateway()"),
+  "The Model Engine UI must disclose cloud gateway status and expose its readiness check.");
+assert.ok(modelEngineCore.includes("async function checkGateway") &&
+  modelEngineCore.includes("function createOpenAIClient") &&
+  modelEngineCore.includes('credentials: "same-origin"'),
+  "The browser Model Engine must discover the authenticated gateway and use same-origin GPT requests.");
+assert.ok(gatewayWorker.includes("verifyAccessAssertion") &&
+  gatewayWorker.includes("cf-access-jwt-assertion") &&
+  gatewayWorker.includes("ALLOWED_EMAILS") &&
+  gatewayWorker.includes("OPENAI_API_KEY") &&
+  gatewayWorker.includes("CHAT_LIMITER"),
+  "The gateway must verify Access identity, allowlist users, keep provider credentials server-side, and rate-limit requests.");
+assert.ok(gatewayWorker.includes("https://api.openai.com/v1/responses") &&
+  gatewayWorker.includes("max_output_tokens") &&
+  gatewayWorker.includes("store: false") &&
+  gatewayWorker.includes("makeStreamingResponse"),
+  "The OpenAI adapter must enforce bounded Responses API requests, avoid response storage, and support streaming.");
+assert.ok(gatewayReadme.includes("Cloudflare Access") &&
+  gatewayReadme.includes("same hostname") &&
+  gatewayReadme.includes("not deployed"),
+  "Gateway deployment documentation must cover Access authentication, same-origin routing, and deployment status.");
+assert.ok(gatewayConfig.includes("CHAT_LIMITER") && gatewayConfig.includes("OPENAI_ALLOWED_MODELS"),
+  "The Cloudflare Worker configuration must expose rate limiting and an explicit model allowlist.");
 
 assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
   html.includes('data-theme-choice="colorful"'), "The theme picker must expose Dark, Light, and Colorful modes.");
