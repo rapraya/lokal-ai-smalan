@@ -9,9 +9,13 @@ const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
 const numericHelperStart = app.indexOf("  function isKnowledgeTableNumericDataCell(");
 const numericHelperEnd = app.indexOf("\n  function buildKnowledgeTableHeaderStructure(", numericHelperStart);
-assert.ok(numericHelperStart >= 0 && numericHelperEnd > numericHelperStart, "Knowledge table numeric-cell helper is missing.");
+const headerHelperStart = numericHelperEnd;
+const headerHelperEnd = app.indexOf("\n  function extractKnowledgePdfLayout(", headerHelperStart);
+assert.ok(numericHelperStart >= 0 && numericHelperEnd > numericHelperStart &&
+  headerHelperEnd > headerHelperStart, "Knowledge table structure helpers are missing.");
 const numericHelper = app.slice(numericHelperStart, numericHelperEnd);
-const source = numericHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows })";
+const headerHelper = app.slice(headerHelperStart, headerHelperEnd);
+const source = numericHelper + "\n" + headerHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
