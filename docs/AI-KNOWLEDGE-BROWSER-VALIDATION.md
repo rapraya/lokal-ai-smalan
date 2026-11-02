@@ -99,4 +99,16 @@ Isi setelah pengujian nyata dilakukan.
 5. Uji juga dokumen tanpa heading. Bagian tersebut harus tetap dapat dicari dan diberi label fallback **Bagian awal**, bukan hilang dari koleksi.
 6. Bandingkan hasil PDF teks asli dengan PDF hasil scan/OCR. Heading OCR mungkin tidak dikenali karena pemisahan baris dan kualitas pengenalan teks berbeda-beda.
 
-**Batasan:** heading dideteksi secara heuristik dari Markdown, pola penomoran, dan baris pendek huruf kapital. Fitur ini belum membaca outline/bookmark PDF, struktur tabel, posisi visual judul, atau struktur dokumen kompleks. Periksa label bagian terhadap dokumen asli.
+**Batasan:** heading dideteksi secara heuristik dari Markdown, pola penomoran, dan baris pendek huruf kapital. Ekstraksi tabel menggunakan koordinat teks PDF dan jarak horizontal sebagai perkiraan; fitur ini belum memahami outline/bookmark PDF, header berulang, sel gabungan, border, tabel bersarang, atau struktur dokumen kompleks. Periksa label bagian dan setiap baris/kolom terhadap dokumen asli.
+
+## 10. Ekstraksi kolom PDF dan indikasi tabel (Advanced RAG)
+
+1. Siapkan PDF teks asli dengan tabel sederhana minimal dua kolom dan beberapa baris, misalnya **Nama | Nilai**. Gunakan salinan data uji, bukan data pribadi.
+2. Impor PDF dan jalankan pertanyaan yang membutuhkan hubungan antara label kolom dan nilainya.
+3. Periksa kutipan sumber. Baris tabel semestinya mempertahankan urutan baca dan pemisah TAB; label sumber dapat menampilkan **Indikasi tabel N baris** bila pola kolom berulang terdeteksi.
+4. Bandingkan nilai pada kutipan dengan tabel asli. Pastikan kolom tidak tertukar dan jangan menganggap label indikasi tabel sebagai jaminan semua sel berhasil diekstrak.
+5. Uji PDF tanpa metadata posisi teks yang lengkap. Jalur fallback harus tetap menampilkan teks dan tidak menambahkan label tabel secara keliru.
+6. Uji OCR dengan scan tabel. OCR hanya mempertahankan baris yang dikenali; tabel hasil OCR belum memakai rekonstruksi koordinat kolom sehingga hasilnya harus diperiksa lebih teliti.
+7. Uji tabel dengan header berulang, beberapa kolom, halaman lanjutan, angka desimal, sel kosong, serta teks paragraf biasa yang memiliki indentasi lebar untuk melihat potensi salah deteksi.
+
+**Batasan:** pemisah TAB dan jumlah baris adalah perkiraan dari posisi teks yang diekstrak PDF.js. Header, satuan, sel gabungan, garis tabel, dan makna setiap kolom tidak dipahami secara penuh oleh parser. Model hanya menerima kutipan yang terpilih dan dibatasi panjangnya; tabel panjang dapat terpotong. Hasil harus diverifikasi terhadap PDF asli.
