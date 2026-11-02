@@ -389,6 +389,11 @@
     const excerpt=text.slice(0,Math.max(0,Math.min(maxPageChars,remaining)));
     return {text:excerpt,truncated:excerpt.length<text.length};
   }
+  function isKnowledgeTableNumericDataCell(value){
+    const text=String(value||"").trim();
+    if(!text||/^(?:19|20)\d{2}$/.test(text))return false;
+    return /^(?:Rp\.?\s*)?-?(?:\d{1,3}(?:[.,]\d{3})+|\d+)(?:[,.]\d+)?(?:\s*(?:%|persen|peserta didik|orang|siswa|kg|kilogram|gram|g|km|meter|m|hari|bulan|tahun|unit|kali|rupiah))?$/i.test(text);
+  }
   function buildKnowledgeTableHeaderStructure(rows,columnCount){
     const count=Math.max(0,Math.floor(Number(columnCount)||0));
     if(!count)return {headers:[],columns:[],headerRows:[],headerDepth:0,ambiguous:true};
@@ -417,7 +422,7 @@
       const cells=Array.isArray(rows[index])?rows[index].map(value=>String(value||"").trim()):[];
       if(cells.length!==count)break;
       const recognized=cells.filter(value=>value&&classify(value).role!=="unknown").length;
-      if(!recognized)break;
+      if(cells.some(isKnowledgeTableNumericDataCell)||recognized<Math.max(2,Math.ceil(count*0.66)))break;
       let mergedHeaderLabel="";
       for(let column=0;column<count;column++){
         if(cells[column]){
@@ -934,7 +939,7 @@
         const cells=line.split("\t").map(value=>value.trim());
         if(cells.length!==firstHeaders.length)break;
         const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;
-        if(!recognized)break;
+        if(cells.some(isKnowledgeTableNumericDataCell)||recognized<Math.max(2,Math.ceil(firstHeaders.length*0.66)))break;
         headerRows.push(cells);
       }
       const headerStructure=buildKnowledgeTableHeaderStructure(headerRows,firstHeaders.length);
