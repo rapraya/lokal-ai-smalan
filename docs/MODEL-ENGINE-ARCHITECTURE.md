@@ -6,7 +6,7 @@ Model Engine is the shared provider and runtime layer for Lokal AI SMALAN. It se
 
 The intended product is local-first, not local-only. Provider selection must never silently move user content from the device to a cloud service.
 
-## Current implementation in v0.40.0
+## Current implementation in v0.41.0
 
 - The current browser runtime is WebLLM 0.2.87 running in a Web Worker.
 - Llama 3.2 1B and 3B are registered as the current local model choices.
