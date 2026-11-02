@@ -125,7 +125,7 @@ The architecture is **local-first, not local-only**: supported models should run
 
 - Modern responsive dashboard and navigation for 11 capability areas.
 - Dedicated workspaces for AI Chat, AI Coding alpha, Text & Language alpha, and a deterministic local Data Analyst alpha; other capability areas retain their roadmap views.
-- Global capability search, responsive layout, and dark/light theme preference stored in the browser.
+- Global capability search, responsive layout, and Dark, Light, and Colorful theme preference stored in the browser, with a desktop-collapsible sidebar.
 - Secure-context and WebGPU adapter checks before model initialization.
 - Shared WebLLM 0.2.87 runtime through a Web Worker, so Chat and Coding can use the same loaded model.
 - Llama 3.2 1B and 3B model options, download progress, and streaming responses.
@@ -191,6 +191,16 @@ The launcher uses Python 3 when available, or PHP CLI as a fallback. It checks t
 
 The selected model files are downloaded over the network the first time. WebLLM uses browser caching for model artifacts by default, so subsequent loads may reuse cached files. The actual first-run download size and performance depend on the model assets and cache state.
 
+## Model Engine and provider status
+
+The Model Engine workspace and provider registry are available in v0.38.0.
+
+- **Local:** WebLLM 0.2.87 with the existing Llama 3.2 1B/3B choices. The same loaded runtime is shared across AI Chat, Coding, Text, Assistant, AI Knowledge, and optional Data Analyst interpretation.
+- **Cloud integration targets:** OpenAI (GPT), Anthropic (Claude), and Google (Gemini) appear in the provider registry but are not connected in this release. Their status is gateway-required.
+- **Credentials:** never paste provider API keys into the frontend, browser storage, or public repository. A secure server-side gateway with authentication and usage controls must be implemented before cloud requests can be enabled.
+- **Routing:** local-first. No prompt or document is sent to a cloud provider, and there is no automatic cloud fallback.
+
+See [Model Engine Architecture](docs/MODEL-ENGINE-ARCHITECTURE.md) for the provider contract, security requirements, and delivery phases.
 ## Privacy and security principles
 
 1. Local processing is preferred when a supported model and device make it practical.
