@@ -6,6 +6,12 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.18.0 — Advanced Knowledge Workspace**
+- Adds an in-session collection of up to five PDF, TXT, or Markdown documents, per-file removal, and clear-all controls.
+- Searches all loaded document chunks with deterministic lexical ranking and preserves source filename plus page/section labels in every retrieved excerpt.
+- Local-model answers can compare evidence across files and display the exact selected excerpts with source markers.
+- Documents remain in page memory only; no persistence or upload. Semantic embeddings and scanned-PDF OCR remain future work.
+
 **v0.17.0 — AI Knowledge Workspace**
 - Adds PDF, TXT, and Markdown document import, browser-local extraction, lexical retrieval of up to five relevant excerpts, and local-model Q&A with visible page/section citations. PDF.js is loaded from cdnjs on demand; document contents are never uploaded or persisted. Scanned PDF OCR and semantic retrieval are not yet available.
 
@@ -37,7 +43,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst calculations, AI Assistant prompts, Personal AI privacy gates, and AI Knowledge lexical retrieval have automated fixture coverage. PDF parsing and source display still need browser testing. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, and Navigator remain UI and architecture plans. AI Assistant, Personal AI, and AI Knowledge have initial alpha workspaces; browser/device validation remains pending.
+**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst calculations, AI Assistant prompts, Personal AI privacy gates, and AI Knowledge cross-document lexical retrieval and source identity have automated fixture coverage. PDF parsing and source display still need browser testing. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, and Navigator remain UI and architecture plans. AI Assistant, Personal AI, and AI Knowledge have initial alpha workspaces; browser/device validation remains pending.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
@@ -54,7 +60,7 @@ The WebGPU check only detects whether a browser can provide an adapter. It does 
 | Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables with cross-tab count/sum/average, and filtered CSV export. AI interpretation is not yet implemented; statistical decision support uses deterministic IQR and Pearson calculations. |
 | AI Assistant | In-session task planning with the local model; suggestions only, no actions executed. |
 | Personal AI | User-managed preferences and notes, with separate opt-ins for local persistence and model context. |
-| AI Knowledge | PDF/TXT/Markdown extraction, lexical excerpt retrieval, and local-model Q&A with visible source excerpts. |\n| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
+| AI Knowledge | Multi-document PDF/TXT/Markdown collection, cross-document lexical retrieval, and local-model Q&A with visible filename/page excerpts. |\n| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
 
 See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for feasibility notes, privacy rules, and delivery phases.
 
