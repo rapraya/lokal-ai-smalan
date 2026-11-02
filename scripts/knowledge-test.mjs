@@ -15,7 +15,7 @@ assert.ok(numericHelperStart >= 0 && numericHelperEnd > numericHelperStart &&
   headerHelperEnd > headerHelperStart, "Knowledge table structure helpers are missing.");
 const numericHelper = app.slice(numericHelperStart, numericHelperEnd);
 const headerHelper = app.slice(headerHelperStart, headerHelperEnd);
-const source = numericHelper + "\n" + headerHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows, assessKnowledgeTableStructure, extractKnowledgeNumbers })";
+const source = numericHelper + "\n" + headerHelper + "\n" + app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, shouldPresentKnowledgeAnswer, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows, assessKnowledgeTableStructure, extractKnowledgeNumbers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -386,30 +386,40 @@ assert.equal(supportedAudit.claimCount, 1);
 assert.equal(supportedAudit.claims[0].status, "supported",
   "Claims with strong lexical overlap against their cited excerpt should be marked textually supported.");
 assert.equal(supportedAudit.counts.supported, 1);
+assert.equal(api.shouldPresentKnowledgeAnswer(supportedAudit), true,
+  "A source-grounded answer should be allowed to appear as the primary response.");
 const partialAudit = api.verifyKnowledgeAnswerSupport(
   "Program pembelajaran meningkatkan kompetensi siswa melalui pendampingan intensif [S1].",
   [{ text: "Program pembelajaran rutin dilaksanakan dengan evaluasi semester." }]
 );
 assert.equal(partialAudit.claims[0].status, "partial",
   "Claims with limited but non-zero lexical overlap should require manual review.");
+assert.equal(api.shouldPresentKnowledgeAnswer(partialAudit), true,
+  "Partially matched answers may be shown with an explicit review warning.");
 const weakAudit = api.verifyKnowledgeAnswerSupport(
   "Pemerintah menetapkan anggaran tahunan meningkat drastis [S1].",
   citationEvidence
 );
 assert.equal(weakAudit.claims[0].status, "weak",
   "A valid source marker alone must not imply that the excerpt supports the claim.");
+assert.equal(api.shouldPresentKnowledgeAnswer(weakAudit), false,
+  "An answer with no meaningful overlap against its cited evidence must not appear as verified.");
 const uncitedAudit = api.verifyKnowledgeAnswerSupport(
   "Kegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
   citationEvidence
 );
 assert.equal(uncitedAudit.claims[0].status, "uncited",
   "Factual-looking statements without source markers must be flagged.");
+assert.equal(api.shouldPresentKnowledgeAnswer(uncitedAudit), false,
+  "An answer without citations must be withheld from the verified answer area.");
 const invalidAudit = api.verifyKnowledgeAnswerSupport(
   "Program pembelajaran meningkatkan capaian peserta didik [S4].",
   citationEvidence
 );
 assert.equal(invalidAudit.claims[0].status, "invalid");
 assert.deepEqual(Array.from(invalidAudit.claims[0].invalid), [4]);
+assert.equal(api.shouldPresentKnowledgeAnswer(invalidAudit), false,
+  "An answer with an invalid source marker must be withheld from the verified answer area.");
 const multiClaimAudit = api.verifyKnowledgeAnswerSupport(
   "Program pembelajaran meningkatkan capaian peserta didik [S1].\nKegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
   citationEvidence
