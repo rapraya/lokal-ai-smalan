@@ -1254,7 +1254,7 @@
         if(coverage.missing.length){
           taskPrompt+="\nDokumen yang tidak memiliki kutipan terpilih untuk tugas ini: "+coverage.missing.map(doc=>doc.name).join(", ")+". Jangan membuat kesimpulan tentang isi dokumen tersebut.";
         }
-        const messages=[{role:"system",content:systemPrompt},{role:"user",content:taskPrompt+"\n\nKUTIPAN LINTAS DOKUMEN:\n"+excerpts.join("\n\n")}];
+        const messages=[{role:"system",content:systemPrompt},{role:"user",content:taskPrompt+"\n\nKUTIPAN LINTAS DOKUMEN:\n"+excerpts}];
         const r=await chatEngine.chat.completions.create({messages,temperature:0.2,max_tokens:mode==="question"?850:1200});
         const response=r?.choices?.[0]?.message?.content||"Model tidak menghasilkan jawaban.";
         answer.replaceChildren();
