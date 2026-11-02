@@ -4,9 +4,10 @@ import { readFile } from "node:fs/promises";
 
 const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function findKnowledgeSources(");
+const sourceStart = app.indexOf("  function groupKnowledgeSourcesBySection(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
-assert.ok(start >= 0 && end > start, "Knowledge source retrieval function is missing.");
-const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
+assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
+const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -20,6 +21,20 @@ const ranked = api.findKnowledgeSources(pages, "strategi pembelajaran peserta di
 assert.equal(ranked[0].page, 3, "BM25 should rank the strongest lexical match first.");
 assert.equal(ranked[0].documentName, "Program.pdf", "Retrieved excerpts must retain their source document.");
 assert.ok(ranked[0].score > 0 && ranked[0].matchedTerms >= 2, "Retrieved source should expose positive relevance and matched terms.");
+const headingOnlyMatch = api.findKnowledgeSources([
+  { page: 1, section: "Kebijakan Kehadiran", text: "Peserta didik datang sesuai jadwal." }
+], "kebijakan");
+assert.equal(headingOnlyMatch.length, 1, "Relevant section headings may surface otherwise weak lexical passages.");
+assert.deepEqual(Array.from(headingOnlyMatch[0].matchedSectionTerms), ["kebijakan"]);
+const groupedSections = api.groupKnowledgeSourcesBySection([
+  { page: 1, section: "Tujuan", documentName: "A.pdf", text: "A" },
+  { page: 2, section: "TUJUAN", documentName: "B.pdf", text: "B" },
+  { page: 3, section: "Ruang Lingkup", documentName: "C.pdf", text: "C" }
+]);
+assert.equal(groupedSections.length, 2, "Equivalent headings should be grouped across documents.");
+assert.deepEqual(Array.from(groupedSections[0].items, item => item.sourceNumber), [1, 2], "Grouping must preserve original citation numbering.");
+assert.equal(groupedSections[1].heading, "Ruang Lingkup");
+
 assert.ok(ranked.length <= 5, "Retrieval must be bounded to five source chunks.");
 assert.deepEqual(Array.from(api.findKnowledgeSources(pages, "astronomi galaksi")), []);
 assert.deepEqual(Array.from(api.findKnowledgeSources(pages, "apa dan yang")), [], "Stop words alone must not produce matches.");
@@ -30,7 +45,7 @@ console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-d
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
 const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
 
 assert.equal(extraction.shouldAttemptKnowledgeOcr(false, 0), false, "OCR must remain disabled unless explicitly enabled.");
@@ -38,6 +53,18 @@ assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 0), true, "OCR should be
 assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 19), true, "The twentieth OCR attempt should be allowed.");
 assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 20), false, "OCR must stop after 20 attempts per document.");
 assert.equal(extraction.shouldAttemptKnowledgeOcr(true, 21), false, "OCR must remain stopped after the limit.");
+assert.equal(extraction.detectKnowledgeHeading("# Tujuan dan Ruang Lingkup"), "Tujuan dan Ruang Lingkup", "Markdown headings should be recognized.");
+assert.equal(extraction.detectKnowledgeHeading("2.1 Persyaratan Peserta"), "2.1 Persyaratan Peserta", "Numbered section headings should be recognized.");
+assert.equal(extraction.detectKnowledgeHeading("KEBIJAKAN KEHADIRAN"), "KEBIJAKAN KEHADIRAN", "Short uppercase headings should be recognized.");
+assert.equal(extraction.detectKnowledgeHeading("Peserta didik mengikuti pembelajaran setiap hari."), "", "Ordinary prose must not be misclassified as a heading.");
+const structuredPages = extraction.applyKnowledgeSectionMetadata([
+  { page: 1, text: "# Tujuan\\nIsi bagian tujuan." },
+  { page: 2, text: "Lanjutan bagian tujuan." },
+  { page: 3, text: "## Ruang Lingkup\\nIsi bagian ruang lingkup." }
+]);
+assert.deepEqual(Array.from(structuredPages, page => page.section), ["Tujuan", "Tujuan", "Ruang Lingkup"]);
+assert.deepEqual(Array.from(structuredPages, page => page.hasSectionHeading), [true, false, true], "Section metadata should carry forward until a new heading is found.");
+
 
 const exactChunks = extraction.chunkKnowledgeText("x".repeat(90000));
 assert.equal(exactChunks.reduce((sum, item) => sum + item.text.length, 0), 90000);
