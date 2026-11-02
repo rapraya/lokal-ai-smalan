@@ -71,7 +71,7 @@ console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-d
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
 const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata, extractKnowledgePdfLayout })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata, extractKnowledgePdfLayout, annotateKnowledgePdfTableContinuations })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
 
 assert.equal(extraction.shouldAttemptKnowledgeOcr(false, 0), false, "OCR must remain disabled unless explicitly enabled.");
@@ -100,6 +100,38 @@ const positionedTable = extraction.extractKnowledgePdfLayout([
 ]);
 assert.equal(positionedTable.layoutAware, true, "PDF text with coordinates should use layout-aware extraction.");
 assert.equal(positionedTable.tableRows, 3, "Repeated aligned columns should be detected as potential table rows.");
+assert.equal(positionedTable.tableBlocks.length, 1, "A contiguous aligned row sequence should form one table block.");
+assert.equal(positionedTable.tableBlocks[0].columnCount, 2);
+assert.deepEqual(Array.from(positionedTable.tableBlocks[0].headerCells), ["Nama", "Nilai"]);
+assert.equal(positionedTable.tableBlocks[0].headerKey, "nama|nilai");
+const multiPageTables = extraction.annotateKnowledgePdfTableContinuations([
+  { page: 4, tableBlocks: [
+    { startLine: 3, endLine: 12, lineCount: 13, rowCount: 10, columnCount: 2, columnStarts: [10, 150], headerCells: ["Nama", "Nilai"], headerKey: "nama|nilai" }
+  ] },
+  { page: 5, tableBlocks: [
+    { startLine: 0, endLine: 8, lineCount: 9, rowCount: 9, columnCount: 2, columnStarts: [10, 150], headerCells: ["Nama", "Nilai"], headerKey: "nama|nilai" }
+  ] }
+]);
+assert.equal(multiPageTables[1].repeatedTableHeader, true, "A matching header at the top of the next page should be recognized as repeated.");
+assert.deepEqual(multiPageTables[1].tableContinuation, {
+  type: "repeated-header", fromPage: 4, header: ["Nama", "Nilai"]
+});
+const possibleContinuation = extraction.annotateKnowledgePdfTableContinuations([
+  { page: 8, tableBlocks: [
+    { startLine: 4, endLine: 9, lineCount: 10, rowCount: 6, columnCount: 2, columnStarts: [12, 155], headerCells: ["Nama", "Nilai"], headerKey: "nama|nilai" }
+  ] },
+  { page: 9, tableBlocks: [
+    { startLine: 0, endLine: 5, lineCount: 6, rowCount: 6, columnCount: 2, columnStarts: [12, 155], headerCells: ["Siswa C", "88"], headerKey: "siswa c|88" }
+  ] }
+]);
+assert.equal(possibleContinuation[1].tableContinuation.type, "possible",
+  "Aligned columns at adjacent page edges without a repeated header must be labeled only as a possible continuation.");
+const unrelatedPages = extraction.annotateKnowledgePdfTableContinuations([
+  { page: 1, tableBlocks: [{ startLine: 5, endLine: 8, lineCount: 9, rowCount: 4, columnCount: 2, columnStarts: [10, 150], headerKey: "nama|nilai", headerCells: ["Nama", "Nilai"] }] },
+  { page: 3, tableBlocks: [{ startLine: 0, endLine: 3, lineCount: 4, rowCount: 4, columnCount: 2, columnStarts: [10, 150], headerKey: "nama|nilai", headerCells: ["Nama", "Nilai"] }] }
+]);
+assert.equal(unrelatedPages[1].tableContinuation, null, "Non-consecutive pages must not be linked as a table continuation.");
+
 assert.ok(positionedTable.text.includes("Nama\tNilai"));
 assert.ok(positionedTable.text.includes("Siswa A\t95"));
 assert.equal(positionedTable.text.split("\n").length, 3, "PDF row boundaries should be preserved.");
