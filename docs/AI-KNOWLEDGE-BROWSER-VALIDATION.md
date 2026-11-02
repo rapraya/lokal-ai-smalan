@@ -216,3 +216,35 @@ Isi setelah pengujian nyata dilakukan.
 7. Periksa tabel berstatus Struktur konsisten secara diagnostik terhadap PDF asli. Status itu hanya berarti pola header/baris yang dikenali parser tampak konsisten; bukan jaminan kebenaran angka, semantik, atau hasil OCR.
 
 **Batasan:** rentang karakter dihitung pada baris teks hasil ekstraksi setelah pemrosesan PDF/TXT/Markdown, bukan pada posisi piksel atau koordinat asli PDF. Layout PDF kompleks, OCR, tabel hasil scan, sel gabungan visual, dan baris multiline dapat menggeser atau menghilangkan relasi sel. Audit bersifat heuristik dan wajib diverifikasi terhadap dokumen asli.
+
+
+
+## 19. Paket uji aman yang tersedia di repository
+
+Gunakan dua fixture Markdown berikut. Keduanya berisi data sintetis, bukan data peserta didik atau dokumen internal.
+
+- `docs/test-fixtures/knowledge-semantic-policy.md`
+- `docs/test-fixtures/knowledge-semantic-program.md`
+
+### Retrieval semantik dan fallback
+
+1. Muat kedua file ke AI Knowledge.
+2. Dengan semantik nonaktif, ajukan: **Apa dukungan finansial yang tersedia untuk siswa?** Catat hasil BM25.
+3. Aktifkan semantik secara eksplisit dan tunggu proses unduhan model selesai. Ulangi pertanyaan yang sama.
+4. Ajukan parafrasa: **Bagaimana sekolah membantu murid agar tetap bisa mengikuti pendidikan ketika keluarganya kesulitan ekonomi?**
+5. Periksa apakah dokumen Pedoman Dukungan Pendidikan muncul sebagai sumber relevan. Dokumen Program Layanan Peserta Didik dapat menjadi sumber pendukung untuk subsidi kebutuhan belajar.
+6. Pastikan nama dokumen, bagian, kutipan, dan nomor sumber tetap tepat. Jangan menerima jawaban yang menyatakan nominal bantuan karena fixture tidak memuat nominal.
+7. Hapus salah satu dokumen, ulangi pertanyaan, lalu pastikan kutipan tidak menunjuk sumber yang sudah dihapus.
+8. Hapus seluruh koleksi. Pastikan worker/embedding sesi dihentikan dan semantik tidak aktif kembali tanpa persetujuan pengguna.
+9. Jika unduhan model atau embedding gagal, pastikan aplikasi memberi pesan yang jelas dan pencarian BM25 tetap dapat digunakan.
+
+### Pemeriksaan batas bukti
+
+- Pertanyaan **Berapa nominal bantuan pendidikan?** harus dijawab bahwa dokumen uji tidak menyebutkan nominal; jangan mengarang angka.
+- Pertanyaan **Siapa nama penerima bantuan?** harus dijawab bahwa fixture tidak memuat identitas penerima.
+- Periksa bahwa ringkasan/perbandingan hanya menyatakan hal yang didukung kutipan terpilih.
+- Hasil semantik yang lebih relevan tidak otomatis membuktikan jawaban model benar. Cocokkan setiap klaim dengan teks sumber.
+
+### Catatan hasil
+
+Isi tabel pada bagian 7 setelah pengujian benar-benar dilakukan. Catat browser, perangkat, apakah model berhasil diunduh, waktu pemuatan, hasil tiap pertanyaan, error Console/Network, dan apakah fallback BM25 bekerja. Jangan mengubah status menjadi lulus hanya berdasarkan automated test atau keberadaan fixture.
