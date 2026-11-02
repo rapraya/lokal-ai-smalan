@@ -27,6 +27,8 @@ jobs:
         run: node --check gateway/src/worker.js
       - name: Run secure AI gateway tests
         run: node gateway/test/worker.test.mjs
+      - name: Run gateway deployment readiness tests
+        run: node gateway/test/deploy-readiness.test.mjs
       - name: Check WebLLM worker module syntax
         run: node --input-type=module --check < assets/js/webllm-worker.js
       - name: Check Knowledge embedding worker syntax
