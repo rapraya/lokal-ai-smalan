@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWorker, gatewayReadme, gatewayConfig] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -12,6 +12,8 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWor
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
   readFile("gateway/wrangler.jsonc", "utf8"),
+  readFile("gateway/scripts/deploy-readiness-check.mjs", "utf8"),
+  readFile("gateway/PANDUAN-DEPLOYMENT-ID.md", "utf8"),
 ]);
 
 const requiredModules = [
@@ -138,6 +140,22 @@ assert.ok(app.includes('id="engineGatewayLogin"') &&
   "Model Engine must expose a login link when its health check detects a Cloudflare Access redirect.");
 assert.ok(gatewayConfig.includes("CHAT_LIMITER") && gatewayConfig.includes("OPENAI_ALLOWED_MODELS"),
   "The Cloudflare Worker configuration must expose rate limiting and an explicit model allowlist.");
+
+assert.ok(gatewayConfig.includes('"workers_dev": false') &&
+  gatewayConfig.includes('"pattern": "ai.smalan.sch.id/api/*"') &&
+  gatewayConfig.includes('"zone_name": "smalan.sch.id"') &&
+  !gatewayConfig.includes('"OPENAI_API_KEY"'),
+  "The production Worker must disable workers.dev, bind only the API path, and keep provider secrets out of vars.");
+assert.ok(gatewayDeployCheck.includes("function validateConfig") &&
+  gatewayDeployCheck.includes("EXPECTED_ROUTE") &&
+  gatewayDeployCheck.includes("workers_dev") &&
+  gatewayDeployCheck.includes("OPENAI_API_KEY"),
+  "The deployment readiness check must fail closed on broad routes, public workers.dev, and misplaced API keys.");
+assert.ok(gatewayIndonesianGuide.includes("Jangan melindungi seluruh hostname") &&
+  gatewayIndonesianGuide.includes("npm run check:deploy") &&
+  gatewayIndonesianGuide.includes("npm run deploy"),
+  "An Indonesian deployment guide must describe API-only Access and the guarded deployment commands.");
+
 
 assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
   html.includes('data-theme-choice="colorful"'), "The theme picker must expose Dark, Light, and Colorful modes.");
