@@ -154,3 +154,12 @@ assert.ok(app.includes("finally{canvas.width=0;canvas.height=0;}"), "OCR canvas 
 assert.ok(app.includes('if(!context)throw new Error("Canvas 2D tidak tersedia di browser ini.");'), "OCR must report when a 2D canvas context is unavailable.");
 assert.ok(app.includes("catch(error){ocrError=ocrError||\"Worker OCR gagal ditutup: \"+error.message;}"), "OCR worker cleanup failures must be reported without discarding extracted pages.");
 assert.ok(app.includes("BM25") || app.includes("documentFrequency"), "Knowledge retrieval must use term relevance scoring.");
+
+assert.ok(app.includes('id="knowledgeSemanticEnabled"') && app.includes("enableKnowledgeSemantic(status,semanticToggle)"), "Semantic retrieval must require an explicit user opt-in.");
+assert.ok(app.includes("findKnowledgeSourcesHybrid") && app.includes("buildKnowledgeEmbeddingSegments"), "AI Knowledge must support hybrid semantic and lexical retrieval.");
+assert.ok(app.includes("Peringkat menggabungkan semantik lokal dan BM25"), "Semantic search must disclose hybrid ranking.");
+assert.ok(app.includes("teks dokumen dan pertanyaan tetap diproses di browser"), "Semantic search must disclose local document/query processing.");
+const embeddingWorker = await readFile("assets/js/knowledge-embedding-worker.js", "utf8");
+assert.ok(embeddingWorker.includes("Xenova/paraphrase-multilingual-MiniLM-L12-v2") && embeddingWorker.includes('dtype: "q8"'), "Semantic worker must use the selected multilingual quantized embedding model.");
+assert.ok(embeddingWorker.includes("batchSize = 8") && embeddingWorker.includes("message.texts"), "Semantic embeddings must be batched locally.");
+console.log("AI Knowledge semantic opt-in, local processing disclosure, multilingual model selection, and bounded embedding worker checks passed.");
