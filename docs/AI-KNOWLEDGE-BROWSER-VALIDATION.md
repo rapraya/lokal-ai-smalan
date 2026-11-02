@@ -89,3 +89,14 @@ Isi setelah pengujian nyata dilakukan.
 7. Periksa semua penanda [S#] satu per satu terhadap nama file, nomor halaman/bagian, dan kutipan yang ditampilkan.
 
 **Batasan:** ringkasan menggunakan sampel awal, tengah, dan akhir, bukan pembacaan menyeluruh setiap halaman. Perbandingan hanya mencakup dokumen yang memiliki bukti terpilih. Kedua mode tetap memerlukan pemeriksaan manusia terhadap jawaban model.
+
+## 9. Struktur bagian dan pengelompokan bukti (Advanced RAG)
+
+1. Gunakan dokumen uji PDF yang memiliki judul bagian bernomor atau judul singkat dengan huruf kapital, serta Markdown yang menggunakan heading `#` / `##`.
+2. Muat dokumen tersebut dan jalankan pertanyaan yang relevan dengan salah satu judul bagian. Pastikan kutipan yang sesuai dapat ditemukan meskipun istilah pertanyaan tidak seluruhnya muncul pada isi paragraf.
+3. Periksa sumber yang ditampilkan: bagian/heading harus masuk akal, nomor halaman tetap sesuai, dan penanda [S#] tetap merujuk kutipan yang benar.
+4. Muat dua dokumen dengan heading yang sama (misalnya **Tujuan**) dan pastikan bukti dapat dikelompokkan pada label bagian/topik yang sama tanpa mencampur identitas dokumen atau nomor halamannya.
+5. Uji juga dokumen tanpa heading. Bagian tersebut harus tetap dapat dicari dan diberi label fallback **Bagian awal**, bukan hilang dari koleksi.
+6. Bandingkan hasil PDF teks asli dengan PDF hasil scan/OCR. Heading OCR mungkin tidak dikenali karena pemisahan baris dan kualitas pengenalan teks berbeda-beda.
+
+**Batasan:** heading dideteksi secara heuristik dari Markdown, pola penomoran, dan baris pendek huruf kapital. Fitur ini belum membaca outline/bookmark PDF, struktur tabel, posisi visual judul, atau struktur dokumen kompleks. Periksa label bagian terhadap dokumen asli.
