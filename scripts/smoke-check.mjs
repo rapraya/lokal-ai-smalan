@@ -180,3 +180,7 @@ assert.ok(embeddingWorker.includes('const MODEL_REVISION = "2c4055b"') && embedd
 assert.ok(app.includes("knowledgeSemanticEnabled") && app.includes("semantic.disabled=knowledgeBusy||!knowledgePages.length"), "Semantic model download must stay unavailable until documents exist.");
 assert.ok(app.includes('semanticToggle.checked=false;stopKnowledgeEmbeddingWorker()'), "Clearing the collection must release the semantic model worker.");
 console.log("AI Knowledge model revision pinning and on-demand memory lifecycle checks passed.");
+
+assert.ok(app.includes("inspectKnowledgeCitationMarkers(response,selected.length)"), "AI Knowledge must validate citation references against the selected evidence list.");
+assert.ok(app.includes("jawaban tidak menyertakan penanda sumber [S#]") && app.includes("menyebut sumber yang tidak tersedia"), "AI Knowledge must warn about missing or unknown citation markers.");
+console.log("AI Knowledge citation integrity guard checks passed.");
