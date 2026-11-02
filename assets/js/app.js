@@ -409,7 +409,8 @@
       if(/\b(jumlah|nilai|total|berat|volume|persentase|presentase|capaian|skor|saldo|nominal|frekuensi|kuantitas|hasil|target|realisasi|anggaran|biaya|harga|luas|panjang|tinggi|rata rata|rerata|absensi|kehadiran)\b/.test(text)){
         const unit=text.match(/\b(peserta didik|kilogram|kilometer|gram|meter|siswa|orang|kg|km|cm|mm|liter|ml|persen|rupiah|ton|g|m)\b/);
         const aliases={kilogram:"kg",gram:"g",kilometer:"km",meter:"m",persen:"%",rupiah:"rp",siswa:"orang","peserta didik":"orang"};
-        return {role:"metric",key:text,unit:unit?(aliases[unit[1]]||unit[1]):""};
+        const metric=text.replace(/\b(peserta didik|kilogram|kilometer|gram|meter|siswa|orang|kg|km|cm|mm|liter|ml|persen|rupiah|ton|g|m)\b/g," ").replace(/\s+/g," ").trim();
+        return {role:"metric",key:metric||text,unit:unit?(aliases[unit[1]]||unit[1]):""};
       }
       if(/\b(tahun ajaran|tahun|semester|periode|tanggal|bulan|triwulan|kuartal)\b/.test(text))return {role:"period",key:text};
       if(/\b(identitas|data peserta didik|data siswa|nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(text))return {role:"identity",key:text};
