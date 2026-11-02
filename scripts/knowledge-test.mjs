@@ -166,16 +166,16 @@ assert.ok(completeSegments.texts.every(chunk => chunk.length <= 120));
 assert.equal(completeSegments.truncated, false);
 
 assert.deepEqual(
-  api.inspectKnowledgeCitationMarkers("Klaim didukung [S1] dan [S2].", 2),
+  JSON.parse(JSON.stringify(api.inspectKnowledgeCitationMarkers("Klaim didukung [S1] dan [S2].", 2)),
   { used: [1, 2], invalid: [], missing: false }
 );
 assert.deepEqual(
-  api.inspectKnowledgeCitationMarkers("Klaim merujuk [S4].", 2),
+  JSON.parse(JSON.stringify(api.inspectKnowledgeCitationMarkers("Klaim merujuk [S4].", 2)),
   { used: [4], invalid: [4], missing: false },
   "References outside the supplied evidence list must be flagged."
 );
 assert.deepEqual(
-  api.inspectKnowledgeCitationMarkers("Jawaban tanpa referensi.", 2),
+  JSON.parse(JSON.stringify(api.inspectKnowledgeCitationMarkers("Jawaban tanpa referensi.", 2)),
   { used: [], invalid: [], missing: true },
   "Answers without source markers must be flagged."
 );
