@@ -365,7 +365,7 @@ const invalidAudit = api.verifyKnowledgeAnswerSupport(
 assert.equal(invalidAudit.claims[0].status, "invalid");
 assert.deepEqual(Array.from(invalidAudit.claims[0].invalid), [4]);
 const multiClaimAudit = api.verifyKnowledgeAnswerSupport(
-  "Program pembelajaran meningkatkan capaian peserta didik [S1].\\\\nKegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
+  "Program pembelajaran meningkatkan capaian peserta didik [S1].\nKegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
   citationEvidence
 );
 assert.equal(multiClaimAudit.claimCount, 2, "Claim verification should inspect separate sentences independently.");
