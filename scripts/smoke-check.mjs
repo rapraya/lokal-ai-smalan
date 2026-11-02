@@ -23,6 +23,15 @@ assert.ok(html.includes('id="app"') || html.includes('id="workspace"') || html.i
 assert.ok(css.includes(".chat-layout") && css.includes(".chat-composer"),
   "Premium chat workspace styles are missing.");
 
+assert.ok(css.includes("font-size:max(12px,1em)"),
+  "Interface typography must keep a minimum 12px readable size.");
+assert.ok(css.includes(".main-area{width:calc(100% - 258px)") &&
+  css.includes(".module-page{width:100%;max-width:none") &&
+  css.includes(".chat-page{width:100%;max-width:none"),
+  "Desktop workspaces must use the available full content width.");
+assert.ok(css.includes(".main-area{width:100%;margin-left:0}"),
+  "Mobile workspace must expand to the viewport without desktop sidebar offset.");
+
 assert.ok(app.includes("function renderCodingWorkspace()") && app.includes("function bindCodingWorkspace()"),
   "AI Coding workspace rendering and event bindings are missing.");
 assert.ok(app.includes("async function submitCodingTask()"),
