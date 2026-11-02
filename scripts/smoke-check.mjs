@@ -31,7 +31,7 @@ assert.ok(app.includes('value="generate"') && app.includes('value="explain"') &&
   app.includes('value="debug"') && app.includes('value="review"') &&
   app.includes('value="refactor"') && app.includes('value="document"'),
   "AI Coding task modes are incomplete.");
-assert.ok(app.includes("messages: [codingSystemMessage, ...codingMessages.slice(1, -1).slice(-16)]"),
+assert.ok(app.includes("messages: [codingSystemMessage, ...(buildPersonalContextMessage() ? [buildPersonalContextMessage()] : []), ...codingMessages.slice(1, -1).slice(-16)]"),
   "AI Coding must retain its system instructions, bounded context, and exclude the empty assistant placeholder.");
 assert.ok(app.includes("navigator.clipboard.writeText(output.textContent)") &&
   app.includes("output.textContent = assistantMessage.content"),
