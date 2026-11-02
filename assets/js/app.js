@@ -367,9 +367,10 @@
   }
   function syncKnowledgeControls(){
     const q=document.getElementById("knowledgeQuestion"),ask=document.getElementById("knowledgeAsk"),clear=document.getElementById("knowledgeClear");
+    const taskMode=document.getElementById("knowledgeTaskMode");
     if(q)q.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating;
     if(ask)ask.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating||(taskMode?.value!=="summary"&&!q?.value.trim());
-    const taskMode=document.getElementById("knowledgeTaskMode");if(taskMode)taskMode.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating;
+    if(taskMode)taskMode.disabled=!knowledgePages.length||knowledgeBusy||chatGenerating;
     if(clear)clear.disabled=!knowledgeDocuments.length||knowledgeBusy;
     const semantic=document.getElementById("knowledgeSemanticEnabled");if(semantic)semantic.disabled=knowledgeBusy||!knowledgePages.length;
     const file=document.getElementById("knowledgeFile"),ocr=document.getElementById("knowledgeOcrEnabled");
@@ -1197,6 +1198,7 @@
     });
     taskMode.addEventListener("change",()=>{
       q.placeholder=taskMode.value==="summary"?"Fokus tambahan (opsional), misalnya: tujuan, kebijakan, dan rekomendasi…":taskMode.value==="compare"?"Tuliskan aspek yang ingin dibandingkan antar dokumen…":"Temukan informasi, kebijakan, atau hal yang ingin dibandingkan…";
+      syncKnowledgeControls();
     });
     form.addEventListener("submit",async e=>{
       e.preventDefault();
