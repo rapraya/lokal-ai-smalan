@@ -113,9 +113,9 @@ const multiPageTables = extraction.annotateKnowledgePdfTableContinuations([
   ] }
 ]);
 assert.equal(multiPageTables[1].repeatedTableHeader, true, "A matching header at the top of the next page should be recognized as repeated.");
-assert.deepEqual(multiPageTables[1].tableContinuation, {
-  type: "repeated-header", fromPage: 4, header: ["Nama", "Nilai"]
-});
+assert.equal(multiPageTables[1].tableContinuation.type, "repeated-header");
+assert.equal(multiPageTables[1].tableContinuation.fromPage, 4);
+assert.deepEqual(Array.from(multiPageTables[1].tableContinuation.header), ["Nama", "Nilai"]);
 const possibleContinuation = extraction.annotateKnowledgePdfTableContinuations([
   { page: 8, tableBlocks: [
     { startLine: 4, endLine: 9, lineCount: 10, rowCount: 6, columnCount: 2, columnStarts: [12, 155], headerCells: ["Nama", "Nilai"], headerKey: "nama|nilai" }
