@@ -9,6 +9,7 @@
   const menuToggle = document.getElementById("menuToggle");
   const sidebarPreferenceKey = "lokal-ai-sidebar-collapsed";
   const searchInput = document.getElementById("workspaceSearch");
+  const modelEngine = window.LokalAIModelEngine || null;
   const overviewMarkup = workspace.innerHTML;
   let currentPage = "home";
 
@@ -125,11 +126,11 @@
 
   const pages = {
     models: {
-      title: "Model Engine", label: "ON-DEVICE MODEL RUNTIME", icon: "cpu", color: "icon-blue",
-      description: "Pusat pemeriksaan kompatibilitas perangkat, pengelolaan runtime, model, unduhan, dan penyimpanan lokal.",
-      headline: "Pahami kemampuan perangkat sebelum menjalankan model.",
-      detail: "Pemeriksaan awal di halaman ini hanya membaca dukungan browser dan WebGPU. Itu belum menjamin model tertentu dapat berjalan; kapasitas memori, driver, ukuran model, dan konfigurasi runtime tetap menentukan.",
-      stages: [["Device diagnostics", "Status secure context, WebGPU adapter, browser, dan informasi perangkat yang tersedia."], ["Model catalog", "Daftar model dengan ukuran, tugas, lisensi, bahasa, dan kebutuhan resource."], ["Storage & lifecycle", "Progress unduhan, cache, penghapusan model, serta pengelolaan ruang."]]
+      title: "Model Engine", label: "UNIFIED MODEL ENGINE", icon: "cpu", color: "icon-blue",
+      description: "Pusat pengelolaan model lokal dan fondasi integrasi provider AI cloud.",
+      headline: "Satu mesin untuk berbagai model AI.",
+      detail: "Runtime lokal WebLLM sudah digunakan bersama oleh AI Chat, Coding, Text, Assistant, AI Knowledge, dan interpretasi Data Analyst. Provider cloud ditampilkan sebagai target integrasi; koneksi baru dapat diaktifkan setelah secure gateway dan kontrol akses tersedia.",
+      stages: [["Local runtime", "Model WebLLM di browser dengan pemeriksaan WebGPU dan status unduhan."], ["Provider registry", "Kontrak runtime bersama untuk model lokal dan provider eksternal."], ["Secure cloud gateway", "Integrasi API server-side, autentikasi, persetujuan data, batas biaya, dan pemantauan penggunaan."]]
     },
     settings: {
       title: "Pengaturan", label: "WORKSPACE PREFERENCES", icon: "settings", color: "icon-sky",
@@ -1564,6 +1565,7 @@
       return;
     }
     if (page === "knowledge") { workspace.innerHTML = renderKnowledgeWorkspace(); bindKnowledgeWorkspace(); return; }
+    if (page === "models") { workspace.innerHTML = renderModelEngineWorkspace(); bindModelEngineWorkspace(); return; }
     const steps = config.stages.map((stage, index) =>
       '<li><span class="roadmap-index">' + String(index + 1).padStart(2, "0") + '</span><div><b>' + stage[0] + '</b><small>' + stage[1] + '</small></div></li>'
     ).join("");
@@ -1975,6 +1977,7 @@
         initProgressCallback: (progress) => updateChatProgress(progress)
       });
       chatEngine = await Promise.race([engineInitialization, workerStartupFailure]);
+      if (modelEngine) modelEngine.attachRuntime("local-webllm", chatEngine, chatModelId);
       startupPending = false;
       const progress = document.getElementById("chatProgress");
       if (progress) progress.hidden = true;
@@ -1984,6 +1987,7 @@
       if (chatWorker) chatWorker.terminate();
       chatWorker = null;
       chatEngine = null;
+      if (modelEngine) modelEngine.clearRuntime();
       chatModelId = "";
       chatLoading = false;
       const progress = document.getElementById("chatProgress");
@@ -1998,12 +2002,14 @@
 
   async function unloadChatModel() {
     if (!chatEngine || chatGenerating) return;
+    const runtimeToUnload = chatEngine;
     try {
-      await chatEngine.unload();
+      await runtimeToUnload.unload();
     } catch (_) {}
     if (chatWorker) chatWorker.terminate();
     chatWorker = null;
     chatEngine = null;
+    if (modelEngine) modelEngine.clearRuntime(runtimeToUnload);
     chatModelId = "";
     syncChatControls();
   }
@@ -3392,6 +3398,50 @@
 
   function renderEngineMetrics() {
     return '<div class="engine-metrics"><div class="engine-metric"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-metric"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-metric"><span>AI runtime</span><strong>WebLLM · AI Chat</strong></div></div>';
+  }
+
+  function renderModelEngineWorkspace() {
+    const snapshot = modelEngine ? modelEngine.getSnapshot() : {
+      activeProviderId: null, activeModelId: null, hasActiveRuntime: false,
+      gateway: { configured: false, status: "not-configured" }, providers: []
+    };
+    const activeText = snapshot.hasActiveRuntime ? "Model lokal aktif" : "Belum ada model yang dimuat";
+    const activeModel = snapshot.activeModelId || "Pilih model dari AI Chat";
+    const providerCards = snapshot.providers.map((provider) => {
+      const isLocal = provider.category === "local";
+      const statusLabel = isLocal ? (provider.runtimeStatus === "ready" ? "Sedang digunakan" : "Tersedia") : "Gateway diperlukan";
+      const statusClass = isLocal ? "engine-status-local" : "engine-status-pending";
+      const providerIcon = isLocal ? "cpu" : provider.id === "openai" ? "spark" : provider.id === "anthropic" ? "message" : "globe";
+      const action = isLocal
+        ? '<button class="engine-provider-action" type="button" data-page="chat">Kelola model lokal ' + icon("arrow") + '</button>'
+        : '<span class="engine-provider-footnote">Belum menerima permintaan</span>';
+      return '<article class="engine-provider-card ' + (isLocal ? "engine-provider-featured" : "engine-provider-cloud") + '">' +
+        '<div class="engine-provider-top"><span class="engine-provider-icon">' + icon(providerIcon) + '</span><span class="engine-status-chip ' + statusClass + '">' + statusLabel + '</span></div>' +
+        '<div class="engine-provider-family">' + provider.family + '</div><h3>' + provider.name + '</h3><p>' + provider.description + '</p>' +
+        '<div class="engine-provider-privacy">' + icon("shield") + '<span>' + provider.privacy + '</span></div>' + action +
+      '</article>';
+    }).join("");
+    const localProvider = snapshot.providers.find((provider) => provider.id === "local-webllm");
+    const localModels = (localProvider && localProvider.models ? localProvider.models : []).map((model, index) =>
+      '<article class="engine-model-card"><div class="engine-model-rank">0' + (index + 1) + '</div><div class="engine-model-info"><b>' + model.name + '</b><small>Estimasi VRAM manifest: ±' + Math.round(model.memoryEstimateMB) + ' MB</small></div><span class="engine-model-type">Lokal</span></article>'
+    ).join("");
+    return '<div class="chat-page engine-page">' +
+      '<div class="module-back-row"><button class="module-back" data-page="home">' + icon("arrow") + ' Kembali ke overview</button><span class="chat-private-label">' + icon("lock") + ' Local-first · cloud opsional</span></div>' +
+      '<div class="chat-page-heading"><div><div class="eyebrow"><span class="eyebrow-pulse"></span> UNIFIED MODEL ENGINE</div><h1>Model Engine</h1><p>Kelola runtime lokal dan siapkan koneksi ke berbagai provider AI dari satu tempat.</p></div><span class="chat-build-status"><i></i> Provider registry aktif</span></div>' +
+      '<section class="engine-overview-card"><div class="engine-overview-copy"><span class="engine-overview-kicker">MODEL ROUTING</span><h2>Satu pintu untuk berbagai mesin AI.</h2><p>Lokal AI menggunakan model di perangkat sebagai pilihan utama. Provider cloud baru akan digunakan setelah gateway aman tersedia dan kamu menyetujui pengiriman data.</p><span class="engine-local-first-pill"><i></i> LOCAL-FIRST POLICY</span></div><div class="engine-overview-orbit" aria-hidden="true"><span class="engine-orbit orbit-one"></span><span class="engine-orbit orbit-two"></span><span class="engine-orbit-core">' + icon("cpu") + '</span><span class="engine-orbit-dot"></span></div></section>' +
+      '<section class="engine-current-runtime"><div class="engine-current-icon">' + icon("cpu") + '</div><div class="engine-current-copy"><span>RUNTIME AKTIF</span><strong>' + activeText + '</strong><small>' + activeModel + '</small></div><div class="engine-current-actions"><button type="button" class="button-outline" data-page="chat">Buka AI Chat ' + icon("arrow") + '</button></div></section>' +
+      '<div class="engine-health-grid"><div class="engine-health-card"><span>Browser GPU</span><strong id="engineGpu">Memeriksa…</strong></div><div class="engine-health-card"><span>Secure context</span><strong id="engineSecure">Memeriksa…</strong></div><div class="engine-health-card"><span>Provider cloud</span><strong>Belum tersambung</strong></div></div>' +
+      '<div class="engine-section-heading"><div><span class="section-kicker">PROVIDER REGISTRY</span><h2>Provider AI</h2><p>Daftar mesin yang tersedia dan target integrasi selanjutnya.</p></div><span class="engine-registry-count">1 lokal · 3 cloud</span></div>' +
+      '<div class="engine-provider-grid">' + providerCards + '</div>' +
+      '<div class="engine-lower-grid"><section class="engine-catalog-panel"><div class="engine-section-heading compact"><div><span class="section-kicker">LOCAL MODEL CATALOG</span><h2>Katalog model lokal</h2><p>Model yang saat ini terdaftar dalam runtime WebLLM.</p></div></div><div class="engine-model-list">' + localModels + '</div><div class="engine-catalog-note">Estimasi VRAM berasal dari manifest model dan bukan jaminan kebutuhan minimal atau kompatibilitas perangkat.</div><button type="button" class="engine-text-action" data-page="chat">Pilih dan muat model di AI Chat ' + icon("arrow") + '</button></section>' +
+      '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tidak disimpan di browser.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke file frontend atau local storage. Integrasi cloud membutuhkan gateway server-side dengan autentikasi, batas penggunaan, dan persetujuan pengguna.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small>Belum dikonfigurasi · provider cloud tetap nonaktif</small></div></div></aside></div>' +
+      '<div class="engine-footer-note">' + icon("info") + '<p><strong>Status integrasi:</strong> model lokal WebLLM dapat dimuat melalui AI Chat. Kartu GPT, Claude, dan Gemini merupakan target integrasi dan belum dapat menerima permintaan pada versi ini.</p></div>' +
+      '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>One engine · multiple providers · user in control.</span></footer>' +
+    '</div>';
+  }
+
+  function bindModelEngineWorkspace() {
+    checkDevice();
   }
 
   function renderSettingsPanel() {
