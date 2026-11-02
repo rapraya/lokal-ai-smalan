@@ -6,7 +6,7 @@ Lokal AI SMALAN is intended to feel like a premium AI product: one cohesive work
 
 The product is **local-first, not local-only**. A browser can run many useful models locally, but not every capability is equally practical on every device. Each module must show where processing happens, what model or provider is used, what it needs, and whether data leaves the device.
 
-## Current implementation — v0.16.0
+## Current implementation — v0.17.0
 
 The current branch contains:
 
@@ -123,6 +123,15 @@ Run functional tests, accessibility checks, responsive browser testing, privacy 
 - MDN WebGPU API and secure-context requirements: https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API
 
 
-## Personal AI and memory controls (v0.16.0)
+## Personal AI and memory controls (v0.17.0)
 
 Personal AI stores only user-entered preference values and manually added notes. Automatic memory extraction is not implemented. Data stays in page memory unless the user explicitly enables browser persistence. Persistence is stored under a versioned localStorage key with a consent flag; turning it off or clearing data removes that key. Browser storage is not encrypted and is not suitable for secrets or sensitive information. A separate disabled-by-default permission controls whether a bounded preference-and-note context is added to local WebLLM requests from Chat, Coding, Text, and Assistant. No cloud sync or transcript storage is added. The user can inspect and delete each note and clear all stored Personal AI data.
+
+
+## AI Knowledge workspace (v0.17.0)
+
+The initial Knowledge alpha accepts PDF, TXT, and Markdown documents in the browser. Files are limited to 12 MB; PDFs are limited to 80 pages; extracted text is bounded to 90,000 characters. PDF extraction loads PDF.js 4.10.38 and its worker from cdnjs on demand. This is a disclosed external static-library dependency, not a document upload: document bytes and extracted text remain in page memory.
+
+Retrieval is deterministic lexical matching over page/section text and selects up to five excerpts. Only selected excerpts and the question are sent to the already-loaded local WebLLM model. The system prompt treats source text as untrusted data, asks for source markers, and requires the model to state when evidence is insufficient. The UI displays the actual selected excerpts with page/section labels so users can verify the answer. This is not guaranteed semantic retrieval or formal citation validation.
+
+Documents are not persisted and can be cleared. No raw file, document text, or prompt is sent to a remote AI provider. PDF scans without embedded text are unsupported because OCR is not included. Embeddings, semantic search, multi-document collections, source ranking evaluation, and actual browser/WebGPU validation remain pending.
