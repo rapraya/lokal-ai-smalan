@@ -440,8 +440,8 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 .knowledge-document-row .assistant-task-remove{flex:0 0 auto}
 
 /* AI Knowledge OCR opt-in controls */
-.knowledge-ocr-option{display:flex;align-items:flex-start;gap:10px;margin:15px 0;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft,var(--panel))}
-.knowledge-ocr-option input{width:16px;height:16px;flex:0 0 auto;margin-top:2px;accent-color:var(--accent)}
-.knowledge-ocr-option span{display:grid;gap:5px}
-.knowledge-ocr-option strong{font-size:12px;color:var(--text)}
-.knowledge-ocr-option small{font-size:10px;line-height:1.55;color:var(--muted)}
+.knowledge-ocr-option,.knowledge-semantic-option{display:flex;align-items:flex-start;gap:10px;margin:15px 0;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft,var(--panel))}
+.knowledge-ocr-option input,.knowledge-semantic-option input{width:16px;height:16px;flex:0 0 auto;margin-top:2px;accent-color:var(--accent)}
+.knowledge-ocr-option span,.knowledge-semantic-option span{display:grid;gap:5px}
+.knowledge-ocr-option strong,.knowledge-semantic-option strong{font-size:12px;color:var(--text)}
+.knowledge-ocr-option small,.knowledge-semantic-option small{font-size:10px;line-height:1.55;color:var(--muted)}
