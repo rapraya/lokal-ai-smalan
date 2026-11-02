@@ -15,7 +15,7 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 - Model Engine provider registry with a normalized chat-completions runtime contract. The local WebLLM runtime remains the default for existing workspaces.
 - A Cloudflare Worker gateway implementation is present under `gateway/`. It validates Cloudflare Access JWTs and an email allowlist, keeps the OpenAI key in a server-side secret, applies bounded request/model/output controls, and adapts OpenAI Responses API output to the existing Chat Completions stream shape.
 - AI Chat has a gated OpenAI GPT provider choice, a secure-gateway readiness check, and explicit cloud-session consent. Personal AI context is excluded from GPT Chat requests; Coding, Text, Knowledge, Assistant, and Data Analyst continue to use the local runtime.
-- The gateway is not yet deployed. Cloudflare Access, DNS route, allowlisted identities, and OpenAI server secret are not configured; GPT is unavailable until those deployment steps are completed.
+- The gateway is not yet deployed. Cloudflare Access for `ai.smalan.sch.id/api/*` only, DNS/Worker route, allowlisted identities, and OpenAI server secret are not configured; GPT is unavailable until those deployment steps are completed.
 - Anthropic Claude and Google Gemini remain future provider targets; their adapters are not implemented.
 - The Model Engine dashboard reports the active local runtime, WebGPU/secure-context diagnostics, the current local model catalogue, and cloud gateway readiness.
 - The browser Model Engine checks readiness and sends opted-in GPT Chat requests only to the same-origin gateway. It never calls OpenAI directly or stores provider credentials. Private provider keys remain server-side; CORS alone is not authentication.
