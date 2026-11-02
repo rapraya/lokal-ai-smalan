@@ -375,7 +375,7 @@
     if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     if(pdf.numPages>80)throw new Error("PDF melebihi 80 halaman.");
-    const pages=[];let total=0,ocrCount=0,ocrWorker=null,ocrError="";
+    const pages=[];let total=0,ocrCount=0,ocrAttempted=0,ocrSkipped=false,ocrWorker=null,ocrError="";
     try{
       for(let n=1;n<=pdf.numPages&&total<90000;n++){
         const page=await pdf.getPage(n),content=await page.getTextContent();
@@ -435,11 +435,11 @@
         if(knowledgeDocuments.length>=5){failed.push("Batas lima dokumen tercapai.");break;}
         if(knowledgeDocuments.some(d=>d.name===f.name&&d.size===f.size)){failed.push(f.name+": sudah ada di koleksi.");continue;}
         status.textContent="Mengekstrak "+f.name+" di browser…";
-        try{const pages=await readKnowledgeFile(f,{ocrEnabled:ocrOption.checked,onProgress:(page,total,progress)=>{status.textContent="OCR halaman "+page+"/"+total+" · "+Math.round(progress*100)+"%";}});const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:pages.ocrCount||0,ocrNotice:pages.ocrNotice||"",pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});added++;}
+        try{const pages=await readKnowledgeFile(f,{ocrEnabled:ocrOption.checked,onProgress:(page,total,progress)=>{status.textContent="OCR halaman "+page+"/"+total+" · "+Math.round(progress*100)+"%";}});const id=++knowledgeSequence;knowledgeDocuments.push({id,name:f.name,size:f.size,ocrCount:pages.ocrCount||0,ocrSkipped:!!pages.ocrSkipped,ocrNotice:pages.ocrNotice||"",pages:Array.from(pages,p=>({...p,documentName:f.name,documentId:id}))});added++;}
         catch(e){failed.push(f.name+": "+e.message);}
       }
       knowledgePages=knowledgeDocuments.flatMap(doc=>doc.pages);renderKnowledgeDocumentList();
-      const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"");
+      const ocrDone=knowledgeDocuments.reduce((n,d)=>n+(d.ocrCount||0),0);const ocrWarnings=knowledgeDocuments.filter(d=>d.ocrNotice).map(d=>d.name+": "+d.ocrNotice);status.textContent=(added?added+" dokumen berhasil ditambahkan. ":"Tidak ada dokumen baru. ")+(ocrDone?ocrDone+" halaman diproses dengan OCR. ":"")+(failed.length?failed.join(" "):"Seluruh koleksi tetap berada di memori halaman.")+(knowledgeDocuments.some(d=>d.ocrSkipped)?" Sebagian halaman scan dilewati karena batas OCR 20 halaman per PDF.":"")+(ocrWarnings.length?" "+ocrWarnings.join(" "):"");
       file.value="";knowledgeBusy=false;syncKnowledgeControls();
     });
     clear.addEventListener("click",()=>{knowledgePages=[];knowledgeDocuments=[];file.value="";renderKnowledgeDocumentList();answer.textContent="Seluruh koleksi dokumen dihapus dari sesi.";status.textContent="Memori koleksi dibersihkan.";syncKnowledgeControls();});
