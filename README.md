@@ -6,18 +6,25 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.20.0 — Local Semantic Knowledge Search**
+- Adds opt-in semantic retrieval for AI Knowledge using the multilingual `Xenova/paraphrase-multilingual-MiniLM-L12-v2` ONNX model with 8-bit weights through Transformers.js 4.3.2.
+- The quantized ONNX weight file is approximately 118 MB; the runtime and model are downloaded only after the user enables semantic search. Downloads are served by jsDelivr and Hugging Face.
+- Embeddings are generated in a browser Web Worker and kept in page memory. Document text and search queries are not uploaded for embedding; the selected evidence excerpts continue to be passed to the already-loaded local WebLLM model for answers.
+- Combines semantic similarity with BM25 lexical relevance, retains the original file/page citations, limits embedding preparation to 600 text segments per active collection, and falls back to BM25 if semantic retrieval is disabled or unavailable.
+- Model/runtime download, browser memory use, and actual retrieval quality still require real-device validation; semantic search remains optional and off by default.
+
 **v0.19.0 — OCR & Knowledge Retrieval**
 - Adds explicit opt-in OCR for scanned PDF pages using Tesseract.js in the browser, with Indonesian and English language data.
 - OCR is bounded to 20 pages per PDF; PDF text extraction remains primary, and only pages without extractable text are sent through OCR.
 - Replaces simple term-count ranking with deterministic BM25 relevance scoring across the active multi-document collection.
 - OCR library and language data load from external CDNs only when the user enables OCR. Document content remains in page memory and is not uploaded to an AI service.
-- Embedding-based semantic retrieval is not included yet; browser OCR and real-device validation remain required.
+- Semantic retrieval is now available as an opt-in local browser feature; browser OCR, semantic model download, and real-device validation remain required.
 
 **v0.18.0 — Advanced Knowledge Workspace**
 - Adds an in-session collection of up to five PDF, TXT, or Markdown documents, per-file removal, and clear-all controls.
 - Searches all loaded document chunks with deterministic lexical ranking and preserves source filename plus page/section labels in every retrieved excerpt.
 - Local-model answers can compare evidence across files and display the exact selected excerpts with source markers.
-- Documents remain in page memory only; no persistence or upload. Semantic embeddings and scanned-PDF OCR remain future work.
+- Documents remain in page memory only; no persistence or upload. Scanned-PDF OCR and real-device validation remain future work.
 
 **v0.17.0 — AI Knowledge Workspace**
 - Adds PDF, TXT, and Markdown document import, browser-local extraction, lexical retrieval of up to five relevant excerpts, and local-model Q&A with visible page/section citations. PDF.js is loaded from cdnjs on demand; document contents are never uploaded or persisted. Scanned PDF OCR and semantic retrieval are not yet available.
