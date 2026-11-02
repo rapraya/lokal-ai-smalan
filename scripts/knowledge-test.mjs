@@ -60,3 +60,72 @@ const exhausted = extraction.limitKnowledgeExcerpt("remaining text", 0);
 assert.equal(exhausted.text, "");
 assert.equal(exhausted.truncated, true);
 console.log("AI Knowledge extraction tests passed: TXT/Markdown chunk boundaries, 90,000-character document cap, 12,000-character PDF page cap, remaining-budget enforcement, and truncation metadata.");
+
+
+const readerStart = app.indexOf("  async function readKnowledgeFile(");
+const readerEnd = app.indexOf("\\n  function findKnowledgeSources(", readerStart);
+assert.ok(readerStart >= 0 && readerEnd > readerStart, "Knowledge PDF reader function is missing.");
+const readerSource = app.slice(helperStart, readerEnd) + "\\n({ readKnowledgeFile })";
+const readerApi = vm.runInNewContext(readerSource, vm.createContext({ Uint8Array }));
+
+function makePdf(pageTexts, render = async () => {}, recognize = async () => ({ data: { text: "hasil OCR" } }), terminate = async () => {}) {
+  const pages = pageTexts.map((value) => ({
+    getTextContent: async () => ({ items: value ? [{ str: value }] : [] }),
+    getViewport: () => ({ width: 100, height: 120 }),
+    render: () => ({ promise: render() })
+  }));
+  const pdfjs = { getDocument: () => ({ promise: Promise.resolve({
+    numPages: pages.length,
+    getPage: async (number) => pages[number - 1]
+  }) }) };
+  let canvas;
+  let workerTerminated = false;
+  const dependencies = {
+    pdfjs,
+    loadOcr: async () => ({ createWorker: async () => ({
+      recognize,
+      terminate: async () => { workerTerminated = true; await terminate(); }
+    }) }),
+    createCanvas: () => {
+      canvas = {
+        width: 0,
+        height: 0,
+        getContext: () => ({})
+      };
+      return canvas;
+    }
+  };
+  return { dependencies, getCanvas: () => canvas, wasWorkerTerminated: () => workerTerminated };
+}
+
+const pdfFile = { name: "scan.pdf", size: 100, arrayBuffer: async () => new ArrayBuffer(8) };
+const nativePdf = makePdf(["Teks PDF asli"]);
+const nativePages = await readerApi.readKnowledgeFile(pdfFile, { dependencies: nativePdf.dependencies, ocrEnabled: false });
+assert.equal(nativePages[0].text, "Teks PDF asli");
+assert.equal(nativePages.ocrCount, 0);
+assert.equal(nativePages.ocrSkipped, false, "OCR-disabled imports must not be marked as skipped.");
+
+const scannedPdf = makePdf(["", "Teks PDF asli"]);
+const scannedPages = await readerApi.readKnowledgeFile(pdfFile, { dependencies: scannedPdf.dependencies, ocrEnabled: true });
+assert.equal(scannedPages.length, 2);
+assert.equal(scannedPages[0].text, "hasil OCR");
+assert.equal(scannedPages[0].ocr, true);
+assert.equal(scannedPages[1].ocr, false);
+assert.equal(scannedPages.ocrCount, 1);
+assert.equal(scannedPages.ocrSkipped, false);
+assert.equal(scannedPdf.getCanvas().width, 0, "OCR canvas width must be reset after recognition.");
+assert.equal(scannedPdf.getCanvas().height, 0, "OCR canvas height must be reset after recognition.");
+assert.equal(scannedPdf.wasWorkerTerminated(), true, "OCR worker must be terminated after processing.");
+
+const cleanupFailurePdf = makePdf([""], async () => {}, async () => ({ data: { text: "teks tetap tersedia" } }), async () => { throw new Error("cleanup gagal"); });
+const cleanupFailurePages = await readerApi.readKnowledgeFile(pdfFile, { dependencies: cleanupFailurePdf.dependencies, ocrEnabled: true });
+assert.equal(cleanupFailurePages[0].text, "teks tetap tersedia", "Worker cleanup failure must not discard extracted OCR text.");
+assert.match(cleanupFailurePages.ocrNotice, /Worker OCR gagal ditutup/);
+
+const ocrUnavailablePdf = makePdf([""]);
+const unavailableDependencies = { ...ocrUnavailablePdf.dependencies, loadOcr: async () => { throw new Error("OCR tidak tersedia"); } };
+await assert.rejects(
+  readerApi.readKnowledgeFile(pdfFile, { dependencies: unavailableDependencies, ocrEnabled: true }),
+  /OCR tidak berhasil: OCR tidak tersedia/
+);
+console.log("AI Knowledge PDF/OCR integration tests passed: native text, OCR extraction, metadata, canvas cleanup, worker termination, cleanup warnings, and OCR load errors.");
