@@ -7,7 +7,7 @@ const start = app.indexOf("  function findKnowledgeSources(");
 const sourceStart = app.indexOf("  function groupKnowledgeSourcesBySection(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
-const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts })";
+const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport, detectKnowledgeEvidenceConflicts, extractKnowledgeTableRows })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -434,6 +434,67 @@ const unitEvidenceDifferences = api.detectKnowledgeEvidenceConflicts([
 ]);
 assert.equal(unitEvidenceDifferences.counts.unitDifference, 1,
   "The same numeric value with different recognized units should be separated from value conflicts.");
+
+const tableRowConflicts = api.detectKnowledgeEvidenceConflicts([
+  {
+    sourceNumber: 1, documentName: "Daftar-A.pdf", page: 3,
+    text: "Nama\tKelas\tJumlah Siswa\nAndi\tXI IPA 1\t30\nBudi\tXI IPA 2\t28"
+  },
+  {
+    sourceNumber: 2, documentName: "Daftar-B.pdf", page: 5,
+    text: "Nama\tKelas\tJumlah Peserta Didik\nAndi\tXI IPA 1\t32\nBudi\tXI IPA 2\t27"
+  }
+]);
+assert.equal(tableRowConflicts.counts.potentialConflict, 2,
+  "Only matching subject and class rows with the same metric should be compared across tables.");
+assert.ok(tableRowConflicts.conflicts.every(item => item.evidenceType === "table"));
+assert.deepEqual(
+  Array.from(tableRowConflicts.conflicts, item => item.left.identity).sort(),
+  ["Andi · XI IPA 1", "Budi · XI IPA 2"],
+  "Table conflict results must retain the exact row identity."
+);
+assert.ok(tableRowConflicts.conflicts.every(item => item.left.rowIndex > 0 && item.right.rowIndex > 0),
+  "Table evidence must retain data row positions.");
+
+const differentSubjectRows = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "A.pdf", page: 1, text: "Nama\tKelas\tNilai\nAndi\tX-1\t80" },
+  { sourceNumber: 2, documentName: "B.pdf", page: 1, text: "Nama\tKelas\tNilai\nBudi\tX-1\t60" }
+]);
+assert.equal(differentSubjectRows.total, 0,
+  "Different named subjects must never be reported as conflicting table rows.");
+
+const differentClassRows = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "A.pdf", page: 1, text: "Nama\tKelas\tNilai\nAndi\tX-1\t80" },
+  { sourceNumber: 2, documentName: "B.pdf", page: 1, text: "Nama\tKelas\tNilai\nAndi\tX-2\t60" }
+]);
+assert.equal(differentClassRows.total, 0,
+  "The same subject in a different class must not be compared as the same table record.");
+
+const tablePeriodRows = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "A.pdf", page: 1, text: "Indikator\t2024\nPeserta didik aktif\t120" },
+  { sourceNumber: 2, documentName: "B.pdf", page: 1, text: "Indikator\t2025\nPeserta didik aktif\t95" }
+]);
+assert.equal(tablePeriodRows.counts.scopeDifference, 1,
+  "A table with the same row indicator but different year columns must be labeled as a scope difference.");
+assert.equal(tablePeriodRows.counts.potentialConflict, 0);
+
+const rowPeriodColumns = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "A.pdf", page: 1, text: "Kelas\tTahun\tJumlah Siswa\nXI IPA 1\t2024\t30" },
+  { sourceNumber: 2, documentName: "B.pdf", page: 1, text: "Kelas\tTahun\tJumlah Siswa\nXI IPA 1\t2025\t32" }
+]);
+assert.equal(rowPeriodColumns.counts.scopeDifference, 1,
+  "A year stored in a table row must be treated as a period dimension, not as a comparable metric value.");
+
+const tableExtractor = api.extractKnowledgeTableRows({
+  sourceNumber: 4, documentName: "Jejak.pdf", page: 7,
+  text: "Nama\tKelas\tJumlah Siswa\nSiti\tXII-1\t33"
+});
+assert.equal(tableExtractor.records.length, 1);
+assert.equal(tableExtractor.records[0].identityLabel, "Siti · XII-1");
+assert.equal(tableExtractor.records[0].columnHeader, "Jumlah Siswa");
+assert.equal(tableExtractor.records[0].rowIndex, 1);
+assert.equal(tableExtractor.records[0].unit, "orang");
+
 assert.ok(numberMismatchAudit.flaggedCount > 0 && numberMismatchAudit.detailCounts.numberNotFound > 0,
   "The audit summary should expose claim-level detail warning counts.");
 
