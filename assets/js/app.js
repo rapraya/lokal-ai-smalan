@@ -367,10 +367,20 @@
     if(!ocrLibraryPromise)ocrLibraryPromise=import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js").catch(error=>{ocrLibraryPromise=null;throw new Error("Tesseract.js gagal dimuat: "+error.message);});
     return ocrLibraryPromise;
   }
+  function chunkKnowledgeText(text,chunkSize=1800,maxChars=90000) {
+    const chunks=[];
+    for(let i=0;i<Math.min(text.length,maxChars);i+=chunkSize)chunks.push({page:Math.floor(i/chunkSize)+1,text:text.slice(i,i+chunkSize)});
+    chunks.textTruncated=text.length>maxChars;
+    return chunks;
+  }
+  function limitKnowledgeExcerpt(text,remaining,maxPageChars=12000) {
+    const excerpt=text.slice(0,Math.max(0,Math.min(maxPageChars,remaining)));
+    return {text:excerpt,truncated:excerpt.length<text.length};
+  }
   async function readKnowledgeFile(file, options={}) {
     if(file.size>12*1024*1024) throw new Error("Ukuran file melebihi 12 MB.");
     const ext=file.name.split(".").pop().toLowerCase();
-    if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");const chunks=[];for(let i=0;i<Math.min(t.length,90000);i+=1800)chunks.push({page:Math.floor(i/1800)+1,text:t.slice(i,i+1800)});chunks.textTruncated=t.length>90000;return chunks;}
+    if(ext==="txt"||ext==="md"){const t=await file.text();if(!t.trim())throw new Error("Dokumen kosong.");return chunkKnowledgeText(t);}
     if(ext!=="pdf")throw new Error("Gunakan PDF, TXT, atau Markdown.");
     if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
@@ -392,9 +402,9 @@
           }catch(error){ocrError=error.message;break;}
         }else if(!text&&options.ocrEnabled){ocrSkipped=true;}
         if(text){
-          const remaining=90000-total,limit=Math.min(12000,remaining),excerpt=text.slice(0,limit);
-          if(text.length>excerpt.length)textTruncated=true;
-          pages.push({page:n,text:excerpt,ocr:isOcr});total+=excerpt.length;
+          const excerpt=limitKnowledgeExcerpt(text,90000-total);
+          if(excerpt.truncated)textTruncated=true;
+          pages.push({page:n,text:excerpt.text,ocr:isOcr});total+=excerpt.text.length;
         }
       }
       pages.textTruncated=textTruncated||(total>=90000&&processedPages<pdf.numPages);
