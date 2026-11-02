@@ -4,8 +4,10 @@
   const workspace = document.getElementById("workspaceContent");
   const breadcrumb = document.getElementById("breadcrumbCurrent");
   const sidebar = document.getElementById("sidebar");
+  const appShell = document.querySelector(".app-shell");
   const overlay = document.getElementById("sidebarOverlay");
   const menuToggle = document.getElementById("menuToggle");
+  const sidebarPreferenceKey = "lokal-ai-sidebar-collapsed";
   const searchInput = document.getElementById("workspaceSearch");
   const overviewMarkup = workspace.innerHTML;
   let currentPage = "home";
@@ -138,9 +140,28 @@
     }
   };
 
+  function isDesktopLayout() {
+    return window.matchMedia("(min-width: 801px)").matches;
+  }
+
+  function syncSidebarToggle() {
+    if (!menuToggle) return;
+    const desktop = isDesktopLayout();
+    const collapsed = desktop && appShell && appShell.classList.contains("sidebar-collapsed");
+    const opened = !desktop && sidebar.classList.contains("open");
+    const expanded = desktop ? !collapsed : opened;
+    const label = desktop
+      ? (collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar")
+      : (opened ? "Tutup menu" : "Buka menu");
+    menuToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    menuToggle.setAttribute("aria-label", label);
+    menuToggle.title = label;
+  }
+
   function closeSidebar() {
     sidebar.classList.remove("open");
     overlay.classList.remove("show");
+    syncSidebarToggle();
   }
 
   function updateNavigation(page) {
@@ -3455,13 +3476,41 @@
     }
   });
 
+  let savedSidebarCollapsed = false;
+  try {
+    savedSidebarCollapsed = localStorage.getItem(sidebarPreferenceKey) === "1";
+  } catch (_) {}
+  if (appShell) appShell.classList.toggle("sidebar-collapsed", isDesktopLayout() && savedSidebarCollapsed);
+  syncSidebarToggle();
+
   if (menuToggle) {
+    menuToggle.setAttribute("aria-controls", "sidebar");
     menuToggle.addEventListener("click", () => {
-      sidebar.classList.toggle("open");
-      overlay.classList.toggle("show");
+      if (isDesktopLayout()) {
+        const collapsed = appShell && appShell.classList.toggle("sidebar-collapsed");
+        try { localStorage.setItem(sidebarPreferenceKey, collapsed ? "1" : "0"); } catch (_) {}
+      } else {
+        sidebar.classList.toggle("open");
+        overlay.classList.toggle("show");
+      }
+      syncSidebarToggle();
     });
   }
   overlay.addEventListener("click", closeSidebar);
+
+  window.addEventListener("resize", () => {
+    closeSidebar();
+    if (appShell) {
+      if (isDesktopLayout()) {
+        let shouldCollapse = false;
+        try { shouldCollapse = localStorage.getItem(sidebarPreferenceKey) === "1"; } catch (_) {}
+        appShell.classList.toggle("sidebar-collapsed", shouldCollapse);
+      } else {
+        appShell.classList.remove("sidebar-collapsed");
+      }
+    }
+    syncSidebarToggle();
+  });
 
   if (searchInput) {
     searchInput.addEventListener("input", () => {
