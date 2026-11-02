@@ -226,6 +226,29 @@ const structuredPdfPages = await readerApi.readKnowledgeFile(pdfFile, {
 });
 assert.match(structuredPdfPages[0].text, /\n/, "PDF.js line boundaries should be retained for heading detection.");
 assert.equal(extraction.applyKnowledgeSectionMetadata(structuredPdfPages)[0].section, "BAB I TUJUAN");
+const makePositionedTablePage = () => [
+  { str: "Nama", transform: [1, 0, 0, 10, 10, 100], width: 24, height: 10 },
+  { str: "Nilai", transform: [1, 0, 0, 10, 150, 100], width: 30, height: 10 },
+  { str: "Siswa A", transform: [1, 0, 0, 10, 10, 80], width: 50, height: 10 },
+  { str: "95", transform: [1, 0, 0, 10, 150, 80], width: 12, height: 10 }
+];
+const multiPagePdf = {
+  getDocument: () => ({ promise: Promise.resolve({
+    numPages: 2,
+    getPage: async () => ({
+      getTextContent: async () => ({ items: makePositionedTablePage() })
+    })
+  }) })
+};
+const importedTablePages = await readerApi.readKnowledgeFile(pdfFile, {
+  dependencies: { pdfjs: multiPagePdf }, ocrEnabled: false
+});
+assert.equal(importedTablePages.length, 2);
+assert.equal(importedTablePages[0].tableBlocks.length, 1, "PDF import should attach reconstructed table blocks to each source page.");
+assert.equal(importedTablePages[1].tableContinuation.type, "repeated-header",
+  "The real PDF import path should annotate a repeated header on the consecutive page.");
+assert.equal(importedTablePages[1].tableContinuation.fromPage, 1);
+
 
 
 const scannedPdf = makePdf(["", "Teks PDF asli"]);
