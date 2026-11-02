@@ -1,4 +1,5 @@
 const MODEL_ID = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
+const MODEL_REVISION = "2c4055b";
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2";
 
 let extractor = null;
@@ -11,6 +12,7 @@ async function loadExtractor(requestId) {
     loadingPromise = (async () => {
       const { pipeline } = await import(TRANSFORMERS_URL);
       return pipeline("feature-extraction", MODEL_ID, {
+        revision: MODEL_REVISION,
         dtype: "q8",
         progress_callback: (event) => {
           self.postMessage({
