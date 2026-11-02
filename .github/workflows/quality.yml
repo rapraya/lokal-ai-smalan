@@ -31,3 +31,5 @@ jobs:
         run: node scripts/data-analysis-test.mjs
       - name: Run AI Assistant planning tests
         run: node scripts/assistant-test.mjs
+      - name: Run Personal AI privacy and context tests
+        run: node scripts/personal-ai-test.mjs
