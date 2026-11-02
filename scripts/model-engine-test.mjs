@@ -114,7 +114,7 @@ const fakeGatewayClient = engine.createOpenAIClient({
     });
   }
 });
-assert.throws(
+await assert.rejects(
   () => fakeGatewayClient.chat.completions.create({ model: "unapproved-model", messages: [{ role: "user", content: "test" }] }),
   /allowlist/
 );
