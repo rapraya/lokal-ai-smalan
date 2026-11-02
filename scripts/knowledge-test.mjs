@@ -71,7 +71,7 @@ console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-d
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
 const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata, extractKnowledgePdfLayout, annotateKnowledgePdfTableContinuations })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt, shouldAttemptKnowledgeOcr, detectKnowledgeHeading, applyKnowledgeSectionMetadata, buildKnowledgeTableHeaderStructure, extractKnowledgePdfLayout, annotateKnowledgePdfTableContinuations })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
 
 assert.equal(extraction.shouldAttemptKnowledgeOcr(false, 0), false, "OCR must remain disabled unless explicitly enabled.");
@@ -104,6 +104,40 @@ assert.equal(positionedTable.tableBlocks.length, 1, "A contiguous aligned row se
 assert.equal(positionedTable.tableBlocks[0].columnCount, 2);
 assert.deepEqual(Array.from(positionedTable.tableBlocks[0].headerCells), ["Nama", "Nilai"]);
 assert.equal(positionedTable.tableBlocks[0].headerKey, "nama|nilai");
+
+const hierarchicalPositionedTable = extraction.extractKnowledgePdfLayout([
+  { str: "Identitas", transform: [1, 0, 0, 10, 10, 140], width: 60, height: 10 },
+  { str: "Capaian", transform: [1, 0, 0, 10, 200, 140], width: 55, height: 10 },
+  { str: "Nama", transform: [1, 0, 0, 10, 10, 120], width: 28, height: 10 },
+  { str: "Kelas", transform: [1, 0, 0, 10, 100, 120], width: 30, height: 10 },
+  { str: "Jumlah Siswa", transform: [1, 0, 0, 10, 200, 120], width: 80, height: 10 },
+  { str: "Andi", transform: [1, 0, 0, 10, 10, 100], width: 25, height: 10 },
+  { str: "XI IPA 1", transform: [1, 0, 0, 10, 100, 100], width: 55, height: 10 },
+  { str: "30", transform: [1, 0, 0, 10, 200, 100], width: 12, height: 10 },
+  { str: "Budi", transform: [1, 0, 0, 10, 10, 80], width: 25, height: 10 },
+  { str: "XI IPA 2", transform: [1, 0, 0, 10, 100, 80], width: 55, height: 10 },
+  { str: "28", transform: [1, 0, 0, 10, 200, 80], width: 12, height: 10 }
+]);
+assert.equal(hierarchicalPositionedTable.tableBlocks.length, 1,
+  "A lower-width merged heading row should attach to the detailed header row below it.");
+assert.equal(hierarchicalPositionedTable.tableBlocks[0].headerDepth, 2);
+assert.deepEqual(Array.from(hierarchicalPositionedTable.tableBlocks[0].columnHeaders), [
+  "Identitas Nama", "Identitas Kelas", "Capaian Jumlah Siswa"
+]);
+assert.equal(hierarchicalPositionedTable.tableBlocks[0].dataStartLine, 2);
+assert.equal(hierarchicalPositionedTable.tableRows, 4,
+  "The hierarchical header row should be included in the table block without losing data rows.");
+
+const normalizedHeaderStructure = extraction.buildKnowledgeTableHeaderStructure([
+  ["Identitas", "", "Capaian"],
+  ["Nama", "Kelas", "Jumlah Siswa"],
+  ["Andi", "XI IPA 1", "30"]
+], 3);
+assert.equal(normalizedHeaderStructure.headerDepth, 2);
+assert.deepEqual(Array.from(normalizedHeaderStructure.headers), [
+  "Identitas Nama", "Identitas Kelas", "Capaian Jumlah Siswa"
+]);
+
 const multiPageTables = extraction.annotateKnowledgePdfTableContinuations([
   { page: 4, tableBlocks: [
     { startLine: 3, endLine: 12, lineCount: 13, rowCount: 10, columnCount: 2, columnStarts: [10, 150], headerCells: ["Nama", "Nilai"], headerKey: "nama|nilai" }
@@ -494,6 +528,40 @@ assert.equal(tableExtractor.records[0].identityLabel, "Siti · XII-1");
 assert.equal(tableExtractor.records[0].columnHeader, "Jumlah Siswa");
 assert.equal(tableExtractor.records[0].rowIndex, 1);
 assert.equal(tableExtractor.records[0].unit, "orang");
+
+const hierarchicalTableConflicts = api.detectKnowledgeEvidenceConflicts([
+  {
+    sourceNumber: 1, documentName: "Rekap-Hierarki-A.pdf", page: 3,
+    text: "Identitas\t\tCapaian\nNama\tKelas\tJumlah Siswa\nAndi\tXI IPA 1\t30"
+  },
+  {
+    sourceNumber: 2, documentName: "Rekap-Hierarki-B.pdf", page: 4,
+    text: "Identitas\t\tCapaian\nNama\tKelas\tJumlah Siswa\nAndi\tXI IPA 1\t32"
+  }
+]);
+assert.equal(hierarchicalTableConflicts.counts.potentialConflict, 1,
+  "Hierarchical group headers should normalize to the same subject and metric columns across source files.");
+assert.equal(hierarchicalTableConflicts.conflicts[0].left.headerDepth, 2);
+assert.equal(hierarchicalTableConflicts.conflicts[0].left.columnHeader, "identitas capaian nama kelas jumlah siswa");
+assert.equal(hierarchicalTableConflicts.conflicts[0].left.identity, "Andi · XI IPA 1");
+
+const mergedIdentityTable = api.extractKnowledgeTableRows({
+  sourceNumber: 5, documentName: "Rekap-Gabungan.pdf", page: 8,
+  text: "Nama\tKelas\tJumlah Siswa\nSiti\tXII-1\t33\n\t\t34"
+});
+assert.equal(mergedIdentityTable.records.length, 2,
+  "A vertically merged identity cell should carry to subsequent non-empty data rows.");
+assert.equal(mergedIdentityTable.records[1].identityLabel, "Siti · XII-1");
+assert.equal(mergedIdentityTable.records[1].identityInherited, true,
+  "Inherited identity must be explicitly marked for human review.");
+assert.equal(mergedIdentityTable.records[1].rowIndex, 2);
+
+const unrecognizedTable = api.detectKnowledgeEvidenceConflicts([
+  { sourceNumber: 1, documentName: "A.pdf", text: "Kolom A\tKolom B\nAlpha\t120" },
+  { sourceNumber: 2, documentName: "B.pdf", text: "Kolom A\tKolom B\nAlpha\t95" }
+]);
+assert.equal(unrecognizedTable.total, 0,
+  "Unrecognized tabular layouts must not fall back to context-only prose conflict detection.");
 
 assert.ok(numberMismatchAudit.flaggedCount > 0 && numberMismatchAudit.detailCounts.numberNotFound > 0,
   "The audit summary should expose claim-level detail warning counts.");
