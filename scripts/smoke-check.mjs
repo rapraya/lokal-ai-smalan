@@ -44,7 +44,7 @@ assert.ok(css.includes("var(--layout-sidebar)") &&
 assert.ok(css.includes('body[data-theme="light"] .sidebar') &&
   css.includes('body[data-theme="colorful"] .sidebar'),
   "Redesigned navigation must be styled consistently in all three themes.");
-assert.ok(app.includes('"11</strong> kemampuan AI"'),
+assert.ok(app.includes('<strong>11</strong> kemampuan AI'),
   "Overview search must display the correct localized capability count.");
 
 assert.ok(html.includes('data-theme-choice="dark"') && html.includes('data-theme-choice="light"') &&
