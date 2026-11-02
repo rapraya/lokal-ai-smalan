@@ -74,16 +74,16 @@ const positionedTable = extraction.extractKnowledgePdfLayout([
 ]);
 assert.equal(positionedTable.layoutAware, true, "PDF text with coordinates should use layout-aware extraction.");
 assert.equal(positionedTable.tableRows, 3, "Repeated aligned columns should be detected as potential table rows.");
-assert.match(positionedTable.text, /Nama\\\\tNilai/);
-assert.match(positionedTable.text, /Siswa A\\\\t95/);
-assert.equal(positionedTable.text.split("\\\\n").length, 3, "PDF row boundaries should be preserved.");
+assert.ok(positionedTable.text.includes("Nama\tNilai"));
+assert.ok(positionedTable.text.includes("Siswa A\t95"));
+assert.equal(positionedTable.text.split("\n").length, 3, "PDF row boundaries should be preserved.");
 const plainLayout = extraction.extractKnowledgePdfLayout([
   { str: "Paragraf pertama", hasEOL: true },
   { str: "Paragraf kedua", hasEOL: true }
 ]);
 assert.equal(plainLayout.layoutAware, false, "Text without position metadata should retain the safe fallback path.");
 assert.equal(plainLayout.tableRows, 0, "Unpositioned text must not be labeled as a table.");
-assert.match(plainLayout.text, /Paragraf pertama\\\\nParagraf kedua/);
+assert.ok(plainLayout.text.includes("Paragraf pertama\nParagraf kedua"));
 
 
 
