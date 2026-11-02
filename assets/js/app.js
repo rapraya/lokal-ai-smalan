@@ -724,35 +724,93 @@
     });
     return claims;
   }
+  function extractKnowledgeDates(value){
+    const text=String(value||""),values=new Set(),spans=[];
+    const add=(match,year,month,day)=>{
+      const y=Number(year),m=Number(month),d=Number(day);
+      if(m<1||m>12||d<1||d>31)return;
+      values.add("date:"+String(y).padStart(4,"0")+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0"));
+      spans.push([match.index,match.index+match[0].length]);
+    };
+    for(const m of text.matchAll(/\b((?:19|20)\d{2})[-/.](0?[1-9]|1[0-2])[-/.](0?[1-9]|[12]\d|3[01])\b/gu))add(m,m[1],m[2],m[3]);
+    for(const m of text.matchAll(/\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.]((?:19|20)\d{2})\b/gu)){
+      if(!spans.some(([s,e])=>m.index<e&&m.index+m[0].length>s))add(m,m[3],m[2],m[1]);
+    }
+    const months={januari:1,jan:1,februari:2,feb:2,maret:3,mar:3,april:4,apr:4,mei:5,juni:6,jun:6,juli:7,jul:7,agustus:8,agu:8,ags:8,september:9,sep:9,oktober:10,okt:10,november:11,nov:11,desember:12,des:12,january:1,february:2,march:3,may:5,june:6,july:7,august:8,october:10,december:12};
+    const monthPattern=Object.keys(months).sort((x,y)=>y.length-x.length).join("|");
+    const monthRegex=new RegExp("\\b(0?[1-9]|[12]\\d|3[01])\\s+("+monthPattern+")\\s+((?:19|20)\\d{2})\\b","giu");
+    for(const m of text.matchAll(monthRegex)){
+      if(!spans.some(([s,e])=>m.index<e&&m.index+m[0].length>s))add(m,m[3],months[m[2].toLowerCase()],m[1]);
+    }
+    for(const m of text.matchAll(/\b((?:19|20)\d{2})\b/gu)){
+      if(!spans.some(([s,e])=>m.index<e&&m.index+m[0].length>s)){values.add("year:"+m[1]);spans.push([m.index,m.index+m[0].length]);}
+    }
+    return {values:Array.from(values),spans};
+  }
+  function normalizeKnowledgeNumber(value){
+    let raw=String(value||"").replace(/\s+/g,"").replace(/[−–]/g,"-");
+    if(!raw)return "";
+    const separators=raw.match(/[.,]/g)||[];
+    if(separators.length){
+      const dot=raw.lastIndexOf("."),comma=raw.lastIndexOf(",");
+      if(dot>=0&&comma>=0){const decimal=Math.max(dot,comma);raw=raw.slice(0,decimal).replace(/[.,]/g,"")+"."+raw.slice(decimal+1);}
+      else if(/^\-?\d{1,3}(?:[.,]\d{3})+$/.test(raw))raw=raw.replace(/[.,]/g,"");
+      else raw=raw.replace(",",".");
+    }
+    const number=Number(raw);
+    return Number.isFinite(number)?String(Number(number.toFixed(8))):"";
+  }
+  function extractKnowledgeNumbers(value,dateSpans=[]){
+    const text=String(value||""),pattern=/(Rp\.?\s*)?(-?(?:\d{1,3}(?:[.,]\d{3})+(?:[,.]\d+)?|\d+(?:[,.]\d+)?))(?:\s*(%|persen|peserta\s+didik|orang|siswa|kilometer|km|kilogram|kg|gram|g|ton|meter|m|cm|mm|hari|bulan|tahun|minggu|jam|menit|detik|kelas|dokumen|halaman|unit|kali|rupiah))?/giu;
+    const aliases={persen:"%",rupiah:"rp",kilometer:"km",kilogram:"kg",gram:"g",meter:"m",siswa:"orang","peserta didik":"orang"},out=[];
+    for(const m of text.matchAll(pattern)){
+      const start=m.index,end=start+m[0].length;
+      if(dateSpans.some(([s,e])=>start<e&&end>s))continue;
+      const number=normalizeKnowledgeNumber(m[2]);if(!number)continue;
+      const rawUnit=(m[3]||(m[1]?"rp":"")).toLowerCase().replace(/\s+/g," ").replace(/\.$/,"");
+      out.push({number,unit:aliases[rawUnit]||rawUnit,raw:m[0].trim()});
+    }
+    return out;
+  }
+  function extractKnowledgeContextMarkers(value){
+    const markers=["tidak boleh","tidak","bukan","belum","tanpa","dilarang","wajib","harus","boleh","dapat","kecuali","hanya","seluruh","semua","sebagian","khusus","minimal","maksimal","paling sedikit","paling banyak","tahun ajaran","semester","periode","per tanggal","berlaku","mulai","sampai","kelas","jenjang","kabupaten","provinsi","nasional"];
+    const pattern=new RegExp("\\b("+markers.sort((x,y)=>y.length-x.length).join("|")+")\\b","giu");
+    return Array.from(new Set(Array.from(String(value||"").matchAll(pattern),m=>m[1].toLocaleLowerCase("id-ID")))).sort();
+  }
+  function inspectKnowledgeClaimDetails(claimText,evidenceText){
+    const cd=extractKnowledgeDates(claimText),ed=extractKnowledgeDates(evidenceText);
+    const cn=extractKnowledgeNumbers(claimText,cd.spans),en=extractKnowledgeNumbers(evidenceText,ed.spans);
+    const cc=extractKnowledgeContextMarkers(claimText),ec=extractKnowledgeContextMarkers(evidenceText),flags=[];
+    const missing=cn.filter(x=>!en.some(y=>x.number===y.number&&x.unit===y.unit));
+    const unit=missing.filter(x=>en.some(y=>x.number===y.number&&x.unit!==y.unit));
+    const absent=missing.filter(x=>!unit.includes(x));
+    if(absent.length)flags.push({code:"numberNotFound",label:"Angka/nilai tidak ditemukan",detail:Array.from(new Set(absent.map(x=>x.raw))).slice(0,4).join(", ")});
+    if(unit.length)flags.push({code:"unitMismatch",label:"Satuan perlu diperiksa",detail:Array.from(new Set(unit.map(x=>x.raw))).slice(0,4).join(", ")});
+    const dates=cd.values.filter(x=>!ed.values.includes(x));
+    if(dates.length)flags.push({code:"dateNotFound",label:"Tanggal/periode tidak ditemukan",detail:dates.slice(0,4).join(", ")});
+    const context=Array.from(new Set([...cc.filter(x=>!ec.includes(x)),...ec.filter(x=>!cc.includes(x))]));
+    if(context.length)flags.push({code:"contextReview",label:"Penanda konteks/pengecualian berbeda",detail:context.slice(0,6).join(", ")});
+    return {numbers:cn,dates:cd.values,contextMarkers:cc,evidenceNumbers:en,evidenceDates:ed.values,evidenceContextMarkers:ec,flags};
+  }
   function verifyKnowledgeAnswerSupport(response,sources){
-    const sourceList=Array.isArray(sources)?sources:[];
-    const markerAudit=inspectKnowledgeCitationMarkers(response,sourceList.length);
+    const sourceList=Array.isArray(sources)?sources:[],markerAudit=inspectKnowledgeCitationMarkers(response,sourceList.length);
     const claims=splitKnowledgeAnswerClaims(response).map(claim=>{
-      const markers=Array.from(claim.text.matchAll(/\[S(\d+)\]/gi),match=>Number(match[1]));
-      const cited=Array.from(new Set(markers));
-      const invalid=cited.filter(index=>!Number.isInteger(index)||index<1||index>sourceList.length);
-      const valid=cited.filter(index=>Number.isInteger(index)&&index>=1&&index<=sourceList.length);
-      const evidenceTerms=new Set();
-      valid.forEach(index=>{
-        const source=sourceList[index-1]||{};
-        const sourceText=String(source.text||"")+" "+String(source.section||"");
-        (sourceText.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{3,}/gu)||[]).forEach(term=>evidenceTerms.add(term));
-      });
-      const matchedTerms=claim.terms.filter(term=>evidenceTerms.has(term));
-      const ratio=claim.terms.length?matchedTerms.length/claim.terms.length:0;
+      const markers=Array.from(claim.text.matchAll(/\[S(\d+)\]/gi),m=>Number(m[1])),cited=Array.from(new Set(markers));
+      const invalid=cited.filter(i=>!Number.isInteger(i)||i<1||i>sourceList.length),valid=cited.filter(i=>Number.isInteger(i)&&i>=1&&i<=sourceList.length);
+      const evidenceTerms=new Set();let evidenceText="";
+      valid.forEach(i=>{const source=sourceList[i-1]||{},text=String(source.text||"")+" "+String(source.section||"");evidenceText+=" "+text;(text.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]{3,}/gu)||[]).forEach(term=>evidenceTerms.add(term));});
+      const matchedTerms=claim.terms.filter(term=>evidenceTerms.has(term)),ratio=claim.terms.length?matchedTerms.length/claim.terms.length:0;
       let status="uncited";
-      if(invalid.length)status="invalid";
-      else if(!valid.length)status="uncited";
-      else if(claim.terms.length<3)status="limited";
-      else if(matchedTerms.length>=2&&ratio>=0.45)status="supported";
-      else if(matchedTerms.length>=1&&ratio>=0.2)status="partial";
-      else status="weak";
-      return {...claim,cited,valid,invalid,matchedTerms,ratio,status};
+      if(invalid.length)status="invalid";else if(!valid.length)status="uncited";else if(claim.terms.length<3)status="limited";
+      else if(matchedTerms.length>=2&&ratio>=0.45)status="supported";else if(matchedTerms.length>=1&&ratio>=0.2)status="partial";else status="weak";
+      const details=valid.length?inspectKnowledgeClaimDetails(claim.text,evidenceText):{numbers:[],dates:[],contextMarkers:[],evidenceNumbers:[],evidenceDates:[],evidenceContextMarkers:[],flags:[]};
+      return {...claim,cited,valid,invalid,matchedTerms,ratio,status,details};
     });
-    const counts={supported:0,partial:0,weak:0,uncited:0,invalid:0,limited:0};
-    claims.forEach(claim=>{counts[claim.status]=(counts[claim.status]||0)+1;});
+    const counts={supported:0,partial:0,weak:0,uncited:0,invalid:0,limited:0},detailCounts={numberNotFound:0,unitMismatch:0,dateNotFound:0,contextReview:0};
+    let flaggedCount=0;
+    claims.forEach(claim=>{counts[claim.status]=(counts[claim.status]||0)+1;if(claim.details.flags.length)flaggedCount++;claim.details.flags.forEach(flag=>{detailCounts[flag.code]=(detailCounts[flag.code]||0)+1;});});
     const status=!claims.length?"unverifiable":counts.invalid?"invalid":counts.uncited?"uncited":counts.weak?"weak":counts.partial||counts.limited?"partial":"supported";
-    return {status,markerAudit,claims,counts,claimCount:claims.length};
+    return {status,markerAudit,claims,counts,detailCounts,flaggedCount,claimCount:claims.length};
   }
   function ensureKnowledgeEmbeddingWorker(){
     if(knowledgeEmbeddingWorker)return knowledgeEmbeddingWorker;
@@ -924,16 +982,16 @@
           unverifiable:"Belum ada kalimat yang cukup untuk diperiksa secara otomatis."
         };
         auditSummary.textContent=supportAudit.claimCount
-          ?(auditLabels[supportAudit.status]||"Pemeriksaan selesai.")+" Klaim dianalisis: "+supportAudit.claimCount+". Didukung secara tekstual: "+supportAudit.counts.supported+"; parsial: "+supportAudit.counts.partial+"; lemah: "+supportAudit.counts.weak+"; tanpa sitasi: "+supportAudit.counts.uncited+"; sitasi tidak valid: "+supportAudit.counts.invalid+"; terlalu singkat: "+supportAudit.counts.limited+"."
+          ?(auditLabels[supportAudit.status]||"Pemeriksaan selesai.")+" Klaim dianalisis: "+supportAudit.claimCount+". Didukung secara tekstual: "+supportAudit.counts.supported+"; parsial: "+supportAudit.counts.partial+"; lemah: "+supportAudit.counts.weak+"; tanpa sitasi: "+supportAudit.counts.uncited+"; sitasi tidak valid: "+supportAudit.counts.invalid+"; terlalu singkat: "+supportAudit.counts.limited+". Klaim dengan peringatan angka/tanggal/satuan/konteks: "+supportAudit.flaggedCount+"."
           :"Belum ada kalimat yang cukup panjang untuk diperiksa. Periksa penanda sumber dan jawaban secara manual.";
         const auditCaveat=document.createElement("p");auditCaveat.className="knowledge-verification-note";
-        auditCaveat.textContent="Pemeriksaan ini membandingkan istilah dalam kalimat dengan kutipan yang benar-benar dikirim ke model. Kecocokan kata bukan bukti bahwa makna, konteks, angka, atau hubungan sebab-akibat sudah benar.";
+        auditCaveat.textContent="Pemeriksaan istilah, angka, tanggal, satuan, serta penanda konteks hanya membantu menemukan hal yang perlu ditinjau. Kecocokan kata atau nilai bukan bukti bahwa makna, konteks, hubungan sebab-akibat, atau kebenaran klaim sudah terjamin.";
         auditPanel.append(auditTitle,auditSummary,auditCaveat);
-        supportAudit.claims.filter(claim=>claim.status!=="supported").slice(0,6).forEach(claim=>{
+        supportAudit.claims.filter(claim=>claim.status!=="supported"||claim.details.flags.length).slice(0,6).forEach(claim=>{
           const item=document.createElement("div");item.className="knowledge-verification-item";
           const claimText=document.createElement("p");claimText.textContent="Perlu diperiksa: "+claim.text.slice(0,260);
           const details=document.createElement("small");
-          details.textContent="Status: "+(auditLabels[claim.status]||claim.status)+" · Sumber: "+(claim.cited.length?claim.cited.map(index=>"S"+index).join(", "):"tidak ada")+(claim.terms.length?" · Kecocokan istilah: "+claim.matchedTerms.length+"/"+claim.terms.length+" ("+Math.round(claim.ratio*100)+"%)":"");
+          details.textContent="Status: "+(auditLabels[claim.status]||claim.status)+" · Sumber: "+(claim.cited.length?claim.cited.map(index=>"S"+index).join(", "):"tidak ada")+(claim.terms.length?" · Kecocokan istilah: "+claim.matchedTerms.length+"/"+claim.terms.length+" ("+Math.round(claim.ratio*100)+"%)":"")+(claim.details.flags.length?" · Peringatan: "+claim.details.flags.map(flag=>flag.label+(flag.detail?" ("+flag.detail+")":"")).join("; "):"");
           item.append(claimText,details);auditPanel.appendChild(item);
         });
         answer.appendChild(auditPanel);
