@@ -2156,9 +2156,95 @@
     const input = document.getElementById("chatInput");
     const modelSelect = document.getElementById("chatModelSelect");
     const modelHint = document.getElementById("chatModelHint");
+    const providerSelect = document.getElementById("chatProviderSelect");
+    const localControls = document.getElementById("chatLocalModelControls");
+    const cloudControls = document.getElementById("chatCloudModelControls");
+    const cloudModelSelect = document.getElementById("chatCloudModelSelect");
+    const cloudConsent = document.getElementById("chatCloudConsent");
+    const privacyLabel = document.getElementById("chatPrivacyLabel");
+    const processingNote = document.getElementById("chatProcessingNote");
+    const buildStatus = document.getElementById("chatBuildStatusLabel");
+    const sessionIndicator = document.getElementById("chatSessionIndicator");
     const loadButton = document.getElementById("chatLoadButton");
     const unloadButton = document.getElementById("chatUnloadButton");
     const clearButton = document.getElementById("chatClearButton");
+
+    const syncProviderPresentation = () => {
+      const cloudSelected = providerSelect && providerSelect.value === "openai";
+      if (localControls) localControls.hidden = Boolean(cloudSelected);
+      if (cloudControls) cloudControls.hidden = !cloudSelected;
+      if (privacyLabel) {
+        privacyLabel.innerHTML = icon("lock") + (cloudSelected
+          ? " GPT diproses melalui secure gateway"
+          : " Percakapan diproses di perangkat");
+      }
+      if (processingNote) {
+        processingNote.textContent = cloudSelected
+          ? "Saat GPT diaktifkan, pesan dan konteks percakapan pada halaman AI Chat dikirim ke OpenAI melalui gateway. Persetujuan dapat dicabut kapan saja dengan melepas sesi GPT. Jangan masukkan data sensitif atau dokumen rahasia."
+          : "Prompt dan jawaban diproses oleh model lokal setelah model termuat. Unduhan runtime dan model tetap membutuhkan koneksi internet.";
+      }
+      if (buildStatus) buildStatus.innerHTML = "<i></i> " + (cloudSelected ? "Cloud gateway · GPT" : "Local runtime");
+      if (sessionIndicator) sessionIndicator.innerHTML = "<i></i> " + (cloudSelected ? "SECURE CLOUD SESSION" : "LOCAL SESSION");
+      if (input) input.placeholder = cloudSelected
+        ? "Setujui pemrosesan cloud dan hubungkan GPT untuk mulai bertanya…"
+        : "Muat model lokal untuk mulai bertanya…";
+      if (loadButton && !chatLoading && !(chatCloudEngine || chatEngine)) {
+        loadButton.textContent = cloudSelected ? "Hubungkan GPT" : "Muat model lokal";
+      }
+      syncChatControls();
+    };
+
+    const refreshGatewayModels = async () => {
+      const option = providerSelect?.querySelector('option[value="openai"]');
+      if (option) {
+        option.disabled = true;
+        option.textContent = "OpenAI GPT · memeriksa gateway…";
+      }
+      if (cloudModelSelect) {
+        cloudModelSelect.replaceChildren();
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Memeriksa katalog model…";
+        cloudModelSelect.append(placeholder);
+      }
+      if (!modelEngine || typeof modelEngine.checkGateway !== "function") return;
+      const gateway = await modelEngine.checkGateway();
+      const models = gateway.status === "ready" && Array.isArray(gateway.allowedModels)
+        ? gateway.allowedModels
+        : [];
+      if (option) {
+        option.disabled = models.length === 0;
+        option.textContent = models.length
+          ? "OpenAI GPT · gateway siap"
+          : "OpenAI GPT · " + (gateway.status === "session-required"
+            ? "login diperlukan"
+            : gateway.status === "access-denied"
+              ? "akses ditolak"
+              : "gateway belum tersedia");
+      }
+      if (cloudModelSelect) {
+        cloudModelSelect.replaceChildren();
+        if (!models.length) {
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = gateway.message || "Gateway belum siap.";
+          cloudModelSelect.append(placeholder);
+        } else {
+          models.forEach((modelId) => {
+            const optionNode = document.createElement("option");
+            optionNode.value = modelId;
+            optionNode.textContent = modelId;
+            cloudModelSelect.append(optionNode);
+          });
+        }
+      }
+      if (providerSelect && providerSelect.value === "openai" && !models.length) {
+        providerSelect.value = "local";
+        syncProviderPresentation();
+        setChatStatus(gateway.message || "Gateway GPT belum siap.", "error");
+      }
+    };
+
     if (saveToggle) {
       try { saveToggle.checked = localStorage.getItem(chatSavePreferenceKey) === "1"; } catch (_) {}
       saveToggle.addEventListener("change", () => {
@@ -2180,7 +2266,11 @@
         modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kompatibilitas tetap bergantung pada perangkat.";
       });
     }
-    if (loadButton) loadButton.addEventListener("click", loadChatModel);
+    if (providerSelect) {
+      providerSelect.addEventListener("change", syncProviderPresentation);
+    }
+    if (cloudConsent) cloudConsent.addEventListener("change", syncChatControls);
+    if (loadButton) loadButton.addEventListener("click", loadSelectedChatProvider);
     if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
     if (clearButton) clearButton.addEventListener("click", () => {
       chatMessages = [chatSystemMessage];
@@ -2189,7 +2279,13 @@
     });
     if (composer) composer.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!input || !input.value.trim() || !chatEngine) return;
+      const activeChatEngine = chatCloudEngine || chatEngine;
+      if (!input || !input.value.trim() || !activeChatEngine) return;
+      if (chatCloudEngine && (!cloudConsent || !cloudConsent.checked)) {
+        setChatStatus("Persetujuan pemrosesan cloud harus aktif untuk mengirim pesan ke GPT.", "error");
+        syncChatControls();
+        return;
+      }
       const prompt = input.value.trim();
       input.value = "";
       input.style.height = "auto";
@@ -2205,10 +2301,12 @@
       input.style.height = "auto";
       input.style.height = Math.min(input.scrollHeight, 150) + "px";
     });
+
+    syncProviderPresentation();
+    refreshGatewayModels();
     paintChatMessages();
     syncChatControls();
   }
-
 
   function renderTextWorkspace() {
     return '<div class="chat-page text-page">' +
