@@ -216,3 +216,12 @@ assert.ok(app.includes("supportAudit.flaggedCount") && app.includes("claim.detai
 assert.ok(app.includes("Kecocokan kata atau nilai bukan bukti"),
   "The verifier must disclose that numeric and lexical matches do not establish semantic correctness.");
 console.log("AI Knowledge numerical, date, unit, and contextual verification guard checks passed.");
+
+
+assert.ok(app.includes("function detectKnowledgeEvidenceConflicts(") && app.includes("function extractKnowledgeConflictContext("),
+  "AI Knowledge must compare relevant numeric evidence across selected sources.");
+assert.ok(app.includes('"potential-conflict"') && app.includes('"scope-difference"') && app.includes('"unit-difference"'),
+  "AI Knowledge must distinguish possible conflicts, period/scope differences, and unit differences.");
+assert.ok(app.includes("Konsistensi bukti antar-sumber") && app.includes("conflict.left.sourceNumber") && app.includes("conflict.right.sourceNumber"),
+  "Cross-source review must show both source identities and evidence excerpts.");
+console.log("AI Knowledge cross-source conflict detection guard checks passed.");
