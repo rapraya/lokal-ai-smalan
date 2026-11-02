@@ -127,9 +127,15 @@ assert.ok(gatewayWorker.includes("https://api.openai.com/v1/responses") &&
   gatewayWorker.includes("makeStreamingResponse"),
   "The OpenAI adapter must enforce bounded Responses API requests, avoid response storage, and support streaming.");
 assert.ok(gatewayReadme.includes("Cloudflare Access") &&
-  gatewayReadme.includes("same hostname") &&
+  gatewayReadme.includes("ai.smalan.sch.id/api/*") &&
+  gatewayReadme.includes("Do not protect the whole hostname") &&
+  gatewayReadme.includes("Buka login Cloudflare Access") &&
   gatewayReadme.includes("not deployed"),
-  "Gateway deployment documentation must cover Access authentication, same-origin routing, and deployment status.");
+  "Gateway deployment documentation must scope Access to API paths, preserve the public app, and explain the sign-in flow.");
+assert.ok(app.includes('id="engineGatewayLogin"') &&
+  app.includes('login.hidden = gateway.status !== "session-required"') &&
+  modelEngineCore.includes('redirect: "manual"'),
+  "Model Engine must expose a login link when its health check detects a Cloudflare Access redirect.");
 assert.ok(gatewayConfig.includes("CHAT_LIMITER") && gatewayConfig.includes("OPENAI_ALLOWED_MODELS"),
   "The Cloudflare Worker configuration must expose rate limiting and an explicit model allowlist.");
 
