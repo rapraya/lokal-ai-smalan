@@ -184,3 +184,10 @@ console.log("AI Knowledge model revision pinning and on-demand memory lifecycle 
 assert.ok(app.includes("inspectKnowledgeCitationMarkers(response,selected.length)"), "AI Knowledge must validate citation references against the selected evidence list.");
 assert.ok(app.includes("jawaban tidak menyertakan penanda sumber [S#]") && app.includes("menyebut sumber yang tidak tersedia"), "AI Knowledge must warn about missing or unknown citation markers.");
 console.log("AI Knowledge citation integrity guard checks passed.");
+
+assert.ok(app.includes('id="knowledgeTaskMode"') && app.includes('value="summary"') && app.includes('value="compare"'), "AI Knowledge must expose question, summary, and comparison modes.");
+assert.ok(app.includes("selectKnowledgeSummarySources(knowledgePages,3,15)"), "Per-document summaries must use bounded representative source sections.");
+assert.ok(app.includes("selectKnowledgeSourcesPerDocument(knowledgePages,candidates,2,10)"), "Document comparison must balance evidence across source files.");
+assert.ok(app.includes("listKnowledgeDocumentCoverage(knowledgeDocuments,selected)") && app.includes("Dokumen yang tidak memiliki kutipan terpilih"), "Cross-document analysis must disclose files without selected evidence.");
+assert.ok(app.includes("const candidateLimit=mode===") && app.includes("findKnowledgeSourcesHybrid(knowledgePages,prompt,queryResult.vectors[0],knowledgeSemanticVectors,knowledgeSemanticPageIndices,candidateLimit)"), "Comparison mode must request an expanded hybrid retrieval pool.");
+console.log("AI Knowledge summary and cross-document comparison mode guard checks passed.");
