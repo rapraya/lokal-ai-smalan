@@ -147,3 +147,7 @@ assert.ok(app.includes("let knowledgePages = [], knowledgeDocuments = []"), "AI 
 assert.ok(app.includes("multiple accept=") && app.includes("knowledgeDocuments.length>=5"), "AI Knowledge must support a bounded multi-file import.");
 assert.ok(app.includes("function renderKnowledgeDocumentList()") && app.includes("Hapus seluruh koleksi"), "Document management and deletion controls are missing.");
 assert.ok(app.includes("KUTIPAN LINTAS DOKUMEN") && app.includes("item.documentName"), "Cross-document answers must retain source file identity.");
+
+assert.ok(app.includes("knowledgeOcrEnabled") && app.includes("options.ocrEnabled"), "Scanned PDF OCR must require an explicit user opt-in.");
+assert.ok(app.includes("createWorker(\"ind+eng\"") && app.includes("ocrCount<20"), "OCR must use bounded Indonesian/English processing.");
+assert.ok(app.includes("BM25") || app.includes("documentFrequency"), "Knowledge retrieval must use term relevance scoring.");
