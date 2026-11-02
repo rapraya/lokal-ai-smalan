@@ -688,7 +688,7 @@
         if(mode==="summary"){
           selected=selectKnowledgeSummarySources(knowledgePages,3,15);
         }else{
-          const candidateLimit=mode==="compare"?Math.min(knowledgePages.length,40):5;
+          const candidateLimit=mode==="compare"?knowledgePages.length:5;
           let candidates=[];
           if(knowledgeSemanticEnabled&&knowledgeSemanticVectors.length){
             try{
