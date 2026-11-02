@@ -145,7 +145,7 @@ const structuredPdf = {
 const structuredPdfPages = await readerApi.readKnowledgeFile(pdfFile, {
   dependencies: { pdfjs: structuredPdf }, ocrEnabled: false
 });
-assert.match(structuredPdfPages[0].text, /\\n/, "PDF.js line boundaries should be retained for heading detection.");
+assert.match(structuredPdfPages[0].text, /\n/, "PDF.js line boundaries should be retained for heading detection.");
 assert.equal(extraction.applyKnowledgeSectionMetadata(structuredPdfPages)[0].section, "BAB I TUJUAN");
 
 
