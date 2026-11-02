@@ -810,19 +810,35 @@
     const header=normalizeKnowledgeTableHeader(value);
     if(!header)return {role:"unknown",key:""};
     const year=header.match(/\b(?:19|20)\d{2}\b/);
-    if(year)return {role:"period",key:"year:"+year[0],year:year[0]};
+    if(year)return {role:"period",key:header,periodToken:"year:"+year[0],year:year[0]};
+    const semester=header.match(/\bsemester\s+(ganjil|genap|[12])\b/);
+    if(semester)return {role:"period",key:header,periodToken:"semester:"+semester[1]};
+    const month=header.match(/\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/);
+    if(month)return {role:"period",key:header,periodToken:"month:"+month[1]};
+    const metricMatch=header.match(/\b(jumlah|nilai|total|berat|volume|persentase|presentase|capaian|skor|saldo|nominal|frekuensi|kuantitas|hasil|target|realisasi|anggaran|biaya|harga|luas|panjang|tinggi|rata rata|rerata|absensi|kehadiran)\b/);
+    if(metricMatch){
+      const unitMatch=header.match(/\b(peserta didik|kilogram|kilometer|gram|meter|siswa|orang|kg|km|cm|mm|liter|ml|persen|rupiah|ton|g|m)\b/);
+      const aliases={kilogram:"kg",gram:"g",kilometer:"km",meter:"m",persen:"%",rupiah:"rp",siswa:"orang","peserta didik":"orang"};
+      const rawUnit=unitMatch?unitMatch[1]:"";
+      const metric=header.replace(/\b(peserta didik|kilogram|kilometer|gram|meter|siswa|orang|kg|km|cm|mm|liter|ml|persen|rupiah|ton|g|m)\b/g," ").replace(/\s+/g," ").trim();
+      return {role:"metric",key:metric||header,unit:aliases[rawUnit]||rawUnit};
+    }
     if(/\b(tahun ajaran|tahun|semester|periode|tanggal|bulan|triwulan|kuartal)\b/.test(header))return {role:"period",key:header};
     if(/\b(nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(header)){
       return {role:"identity",key:header};
     }
-    if(/\b(jumlah|nilai|total|berat|volume|persentase|presentase|capaian|skor|saldo|nominal|frekuensi|kuantitas|hasil|target|realisasi|anggaran|rupiah|biaya|harga|luas|panjang|tinggi|rata rata|rerata|absensi|kehadiran)\b/.test(header)){
-      const unitMatch=header.match(/\b(kg|kilogram|gram|km|kilometer|meter|cm|mm|liter|ml|persen|rupiah|orang|siswa|peserta didik)\b/);
-      const aliases={kilogram:"kg",gram:"g",kilometer:"km",meter:"m",persen:"%",rupiah:"rp",siswa:"orang","peserta didik":"orang"};
-      const rawUnit=unitMatch?unitMatch[1]:"";
-      const metric=header.replace(/\b(kg|kilogram|gram|km|kilometer|meter|cm|mm|liter|ml|persen|rupiah|orang|siswa|peserta didik)\b/g," ").replace(/\s+/g," ").trim();
-      return {role:"metric",key:metric||header,unit:aliases[rawUnit]||rawUnit};
-    }
     return {role:"unknown",key:header};
+  }
+  function extractKnowledgePeriodTokens(value){
+    const text=String(value||"").trim();
+    if(!text)return [];
+    const dates=extractKnowledgeDates(text);
+    const tokens=dates.values.slice();
+    const semester=text.toLocaleLowerCase("id-ID").match(/\bsemester\s+(ganjil|genap|[12])\b/);
+    if(semester)tokens.push("semester:"+semester[1]);
+    const month=text.toLocaleLowerCase("id-ID").match(/\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/);
+    if(month)tokens.push("month:"+month[1]);
+    return Array.from(new Set(tokens));
   }
   function extractKnowledgeTableRows(source,sourceIndex=0){
     const lines=String(source?.text||"").split(/\r?\n/);
@@ -835,7 +851,9 @@
       const identityColumns=columns.map((column,index)=>column.role==="identity"?index:-1).filter(index=>index>=0);
       const metricColumns=columns.map((column,index)=>column.role==="metric"?index:-1).filter(index=>index>=0);
       const periodColumns=columns.map((column,index)=>column.role==="period"?index:-1).filter(index=>index>=0);
-      const hasPeriodValueColumns=periodColumns.length>0&&identityColumns.length>0;
+      const periodValueColumns=periodColumns.filter(index=>Boolean(columns[index].periodToken));
+      const rowPeriodColumns=periodColumns.filter(index=>!periodValueColumns.includes(index));
+      const hasPeriodValueColumns=periodValueColumns.length>0&&identityColumns.length>0;
       if(!identityColumns.length||(!metricColumns.length&&!hasPeriodValueColumns))continue;
       let endIndex=headerIndex+1;
       while(endIndex<lines.length){
@@ -848,23 +866,13 @@
       recognizedTables.push({tableId,headerIndex:headerIndex+1,endIndex,headers});
       for(let rowIndex=headerIndex+1;rowIndex<endIndex;rowIndex++){
         const cells=lines[rowIndex].split("\t").map(value=>value.trim());
-        const identityParts=identityColumns.map(index=>({
-          header:columns[index].key,
-          value:cells[index]||""
-        })).filter(item=>item.value);
+        const identityParts=identityColumns.map(index=>({header:columns[index].key,value:cells[index]||""})).filter(item=>item.value);
         if(!identityParts.length)continue;
         const identityKey=identityParts.map(item=>item.header+":"+normalizeKnowledgeTableHeader(item.value)).join("|");
         const identityLabel=identityParts.map(item=>item.value).join(" · ");
-        const periodParts=periodColumns.map(index=>{
-          const header=columns[index];
-          const value=header.year||cells[index]||"";
-          const dates=extractKnowledgeDates(value);
-          const years=Array.from(getKnowledgeScopeYears(dates.values));
-          if(header.year&&!years.includes(header.year))years.push(header.year);
-          return {header:header.key,value:String(value).trim(),years};
-        }).filter(item=>item.value);
-        const rowPeriods=periodParts.flatMap(item=>item.years);
-        const makeRecord=(columnIndex,metricKey,metricUnit,valueCell,periodValue,periodYear)=>{
+        const rowPeriodTokens=rowPeriodColumns.flatMap(index=>extractKnowledgePeriodTokens(cells[index]||""));
+        const rowPeriodValues=rowPeriodColumns.map(index=>cells[index]||"").filter(Boolean);
+        const makeRecord=(columnIndex,metricKey,metricUnit,valueCell,periodTokens,periodValue)=>{
           const dateInfo=extractKnowledgeDates(valueCell);
           const values=extractKnowledgeNumbers(valueCell,dateInfo.spans);
           values.forEach(value=>{
@@ -875,25 +883,22 @@
               section:String(source?.section||""),tableId,rowIndex:rowIndex-headerIndex,
               columnIndex:columnIndex+1,columnHeader:headers[columnIndex],
               rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,
-              metricKey,periodValue:periodValue||"",periodYears:Array.from(new Set(periodYear?[periodYear]:rowPeriods)),
-              value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),
-              rawValue:value.raw
+              metricKey,periodValue:periodValue||rowPeriodValues.join(" · "),
+              periodYears:Array.from(new Set(periodTokens)),
+              value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),rawValue:value.raw
             });
           });
         };
         metricColumns.forEach(columnIndex=>{
-          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",cells[columnIndex]||"","");
+          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",cells[columnIndex]||"",rowPeriodTokens,rowPeriodValues.join(" · "));
         });
         if(hasPeriodValueColumns){
           const rowMetric=identityParts.map(item=>item.value).join(" ");
-          periodColumns.forEach(columnIndex=>{
-            const header=columns[columnIndex];
-            const valueCell=cells[columnIndex]||"";
-            const dates=extractKnowledgeDates(header.year||valueCell);
-            const years=Array.from(getKnowledgeScopeYears(dates.values));
-            const periodYear=header.year||(years.length===1?years[0]:"");
+          periodValueColumns.forEach(columnIndex=>{
+            const header=columns[columnIndex],valueCell=cells[columnIndex]||"";
+            const periodTokens=header.periodToken?[header.periodToken]:extractKnowledgePeriodTokens(header.key||valueCell);
             makeRecord(columnIndex,"value:"+normalizeKnowledgeTableHeader(rowMetric),"",valueCell,
-              header.year||valueCell,periodYear);
+              periodTokens,header.periodToken||header.key);
           });
         }
       }
@@ -904,33 +909,25 @@
   function detectKnowledgeEvidenceConflicts(sources){
     const sourceList=Array.isArray(sources)?sources:[];
     const items=sourceList.map((source,index)=>{
-      const text=String(source?.text||"");
-      const dates=extractKnowledgeDates(text);
-      const tableData=extractKnowledgeTableRows(source,index);
+      const text=String(source?.text||""),dates=extractKnowledgeDates(text),tableData=extractKnowledgeTableRows(source,index);
       return {
         sourceNumber:Number(source?.sourceNumber)||index+1,
         documentName:String(source?.documentName||"Dokumen"),
-        page:source?.page??"",
-        section:String(source?.section||""),
-        text,
+        page:source?.page??"",section:String(source?.section||""),text,
         numbers:tableData.tables.length?[]:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
-        dates:dates.values,
-        scopeYears:getKnowledgeScopeYears(dates.values),
+        dates:dates.values,scopeYears:getKnowledgeScopeYears(dates.values),
         context:extractKnowledgeConflictContext(text+" "+String(source?.section||"")),
-        tableRecords:tableData.records,
-        tables:tableData.tables
+        tableRecords:tableData.records,tables:tableData.tables
       };
     });
     const conflicts=[];
     const appendConflict=conflict=>{
-      const key=conflict.key;
-      if(conflicts.some(item=>item.key===key))return;
+      if(conflicts.some(item=>item.key===conflict.key))return;
       conflicts.push(conflict);
     };
     for(let left=0;left<items.length;left++){
       for(let right=left+1;right<items.length;right++){
-        const a=items[left],b=items[right];
-        const shared=Array.from(a.context).filter(term=>b.context.has(term));
+        const a=items[left],b=items[right],shared=Array.from(a.context).filter(term=>b.context.has(term));
         if(shared.length<2)continue;
         const comparisons=[];
         a.numbers.forEach(first=>{
@@ -940,9 +937,7 @@
           });
         });
         comparisons.forEach(comparison=>{
-          const periodsOverlap=a.scopeYears.size&&b.scopeYears.size
-            ?Array.from(a.scopeYears).some(year=>b.scopeYears.has(year))
-            :false;
+          const periodsOverlap=a.scopeYears.size&&b.scopeYears.size?Array.from(a.scopeYears).some(year=>b.scopeYears.has(year)):false;
           const separatePeriods=a.scopeYears.size>0&&b.scopeYears.size>0&&!periodsOverlap;
           const type=comparison.type==="unit-difference"?"unit-difference":separatePeriods?"scope-difference":"potential-conflict";
           const key=["prose",a.sourceNumber,b.sourceNumber,comparison.left.number,comparison.left.unit,comparison.right.number,comparison.right.unit,type].join("|");
@@ -959,27 +954,24 @@
     for(let left=0;left<tableRecords.length;left++){
       for(let right=left+1;right<tableRecords.length;right++){
         const a=tableRecords[left],b=tableRecords[right];
-        if(a.sourceIndex===b.sourceIndex)continue;
-        if(a.identityKey!==b.identityKey||a.metricKey!==b.metricKey)continue;
-        const hasDifferentPeriods=a.periodYears.length&&b.periodYears.length&&
-          !a.periodYears.some(year=>b.periodYears.includes(year));
+        if(a.sourceIndex===b.sourceIndex||a.identityKey!==b.identityKey||a.metricKey!==b.metricKey)continue;
+        const periodsOverlap=a.periodYears.length&&b.periodYears.length?a.periodYears.some(year=>b.periodYears.includes(year)):false;
+        const separatePeriods=a.periodYears.length>0&&b.periodYears.length>0&&!periodsOverlap;
         const periodUnclear=(a.periodYears.length===0)!==(b.periodYears.length===0);
         let type="";
         if(a.unit!==b.unit)type="unit-difference";
-        else if(hasDifferentPeriods||periodUnclear)type="scope-difference";
+        else if(separatePeriods||periodUnclear)type="scope-difference";
         else if(a.value!==b.value)type="potential-conflict";
         if(!type)continue;
         const key=["table",a.sourceNumber,b.sourceNumber,a.identityKey,a.metricKey,a.periodYears.join(","),a.value,a.unit,b.periodYears.join(","),b.value,b.unit,type].join("|");
         const makeEvidence=record=>({
           sourceNumber:record.sourceNumber,documentName:record.documentName,page:record.page,section:record.section,
-          value:record.rawValue+" ["+record.unit+"]",text:record.rawRow,
-          rowIndex:record.rowIndex,columnIndex:record.columnIndex,columnHeader:record.columnHeader,
-          identity:record.identityLabel,metric:record.metricKey,period:record.periodValue
+          value:record.rawValue,text:record.rawRow,rowIndex:record.rowIndex,columnIndex:record.columnIndex,
+          columnHeader:record.columnHeader,identity:record.identityLabel,metric:record.metricKey,period:record.periodValue
         });
         appendConflict({
           key,type,left:makeEvidence(a),right:makeEvidence(b),
-          sharedContext:a.identityParts.map(item=>item.value).slice(0,5),
-          evidenceType:"table"
+          sharedContext:a.identityParts.map(item=>item.value).slice(0,5),evidenceType:"table"
         });
       }
     }
