@@ -498,8 +498,8 @@
       if(segment)segments.push(segment);
       if(end>=text.length)break;
       const overlapStart=Math.max(start+1,end-overlap);
-      const nextWordBoundary=text.indexOf(" ",overlapStart);
-      const nextStart=nextWordBoundary>=0&&nextWordBoundary<end?nextWordBoundary+1:overlapStart;
+      const previousWordBoundary=text.lastIndexOf(" ",overlapStart);
+      const nextStart=previousWordBoundary>=start?previousWordBoundary+1:overlapStart;
       start=nextStart>start?nextStart:end;
     }
     return segments;
