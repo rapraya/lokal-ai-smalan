@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node test/worker.test.mjs"
+    "test": "node test/worker.test.mjs && node test/deploy-readiness.test.mjs",
+    "check:deploy": "node scripts/deploy-readiness-check.mjs",
+    "deploy": "npm run check:deploy && npx wrangler deploy"
   }
 }
