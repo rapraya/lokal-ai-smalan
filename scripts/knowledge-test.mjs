@@ -153,14 +153,16 @@ for (const word of originalWords) {
 assert.ok(sentenceChunks.length > 1 && sentenceChunks[1].length > 0, "Overlapping chunks must remain non-empty.");
 
 const segmented = api.buildKnowledgeEmbeddingSegments([
-  { text: "abcdefghij" },
-  { text: "klmnop" }
-], 4, 2);
-assert.deepEqual(Array.from(segmented.texts), ["abcd", "efgh"]);
+  { text: longParagraph },
+  { text: "Catatan tambahan untuk halaman berikutnya." }
+], 120, 2, 20);
+assert.equal(segmented.texts.length, 2);
 assert.deepEqual(Array.from(segmented.pageIndices), [0, 0]);
+assert.ok(segmented.texts.every(chunk => chunk.length <= 120), "Embedding segments must respect the minimum supported character window.");
 assert.equal(segmented.truncated, true, "Embedding segments must be bounded.");
-const completeSegments = api.buildKnowledgeEmbeddingSegments([{ text: "abcdefghij" }], 4, 3);
-assert.deepEqual(Array.from(completeSegments.texts), ["abcd", "efgh", "ij"]);
+const completeSegments = api.buildKnowledgeEmbeddingSegments([{ text: longParagraph }], 120, 100, 20);
+assert.ok(completeSegments.texts.length > 2);
+assert.ok(completeSegments.texts.every(chunk => chunk.length <= 120));
 assert.equal(completeSegments.truncated, false);
 
 const semanticPages = [
