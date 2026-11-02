@@ -7,7 +7,7 @@ const start = app.indexOf("  function findKnowledgeSources(");
 const sourceStart = app.indexOf("  function groupKnowledgeSourcesBySection(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
-const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
+const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -34,6 +34,32 @@ const groupedSections = api.groupKnowledgeSourcesBySection([
 assert.equal(groupedSections.length, 2, "Equivalent headings should be grouped across documents.");
 assert.deepEqual(Array.from(groupedSections[0].items, item => item.sourceNumber), [1, 2], "Grouping must preserve original citation numbering.");
 assert.equal(groupedSections[1].heading, "Ruang Lingkup");
+const synthesisPages = [
+  { documentId: 1, documentName: "A.pdf", page: 1, text: "A1" },
+  { documentId: 1, documentName: "A.pdf", page: 2, text: "A2" },
+  { documentId: 1, documentName: "A.pdf", page: 3, text: "A3" },
+  { documentId: 2, documentName: "B.pdf", page: 1, text: "B1" },
+  { documentId: 2, documentName: "B.pdf", page: 2, text: "B2" },
+  { documentId: 3, documentName: "C.pdf", page: 1, text: "C1" }
+];
+const synthesisCandidates = [
+  { index: 0, score: 0.99 }, { index: 1, score: 0.98 }, { index: 2, score: 0.97 },
+  { index: 3, score: 0.90 }, { index: 4, score: 0.89 }, { index: 5, score: 0.85 }
+];
+const synthesisSelection = api.selectKnowledgeSynthesisSources(synthesisPages, synthesisCandidates, 2, 5);
+assert.deepEqual(Array.from(synthesisSelection, item => item.index), [0, 1, 3, 4, 5],
+  "Multi-document synthesis should limit each document's dominance while retaining ranked evidence.");
+assert.equal(new Set(synthesisSelection.map(item => item.documentName)).size, 3,
+  "Relevant evidence from all represented documents should remain eligible.");
+const singleDocumentSelection = api.selectKnowledgeSynthesisSources(
+  synthesisPages.slice(0, 3),
+  [{ index: 0, score: 0.9 }, { index: 1, score: 0.8 }, { index: 2, score: 0.7 }],
+  2,
+  5
+);
+assert.equal(singleDocumentSelection.length, 3,
+  "Single-document answers should not lose relevant excerpts to an unnecessary diversity cap.");
+
 
 assert.ok(ranked.length <= 5, "Retrieval must be bounded to five source chunks.");
 assert.deepEqual(Array.from(api.findKnowledgeSources(pages, "astronomi galaksi")), []);
