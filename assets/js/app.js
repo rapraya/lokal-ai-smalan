@@ -3637,8 +3637,8 @@
       '<div class="engine-section-heading"><div><span class="section-kicker">PROVIDER REGISTRY</span><h2>Provider AI</h2><p>Daftar mesin yang tersedia dan target integrasi selanjutnya.</p></div><span class="engine-registry-count">1 lokal · 3 cloud</span></div>' +
       '<div class="engine-provider-grid">' + providerCards + '</div>' +
       '<div class="engine-lower-grid"><section class="engine-catalog-panel"><div class="engine-section-heading compact"><div><span class="section-kicker">LOCAL MODEL CATALOG</span><h2>Katalog model lokal</h2><p>Model yang saat ini terdaftar dalam runtime WebLLM.</p></div></div><div class="engine-model-list">' + localModels + '</div><div class="engine-catalog-note">Estimasi VRAM berasal dari manifest model dan bukan jaminan kebutuhan minimal atau kompatibilitas perangkat.</div><button type="button" class="engine-text-action" data-page="chat">Pilih dan muat model di AI Chat ' + icon("arrow") + '</button></section>' +
-      '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tetap di server.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke frontend atau local storage. Gateway memeriksa identitas Cloudflare Access, allowlist akun, dan batas permintaan sebelum meneruskan tugas.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small id="engineGatewayStatus">Belum diperiksa · provider cloud belum aktif</small></div></div><button class="engine-gateway-check" id="engineGatewayCheck" type="button">Periksa koneksi gateway</button></aside></div>' +
-      '<div class="engine-footer-note">' + icon("shield") + '<p><strong>Status integrasi:</strong> model lokal WebLLM dapat dimuat melalui AI Chat. Kartu GPT, Claude, dan Gemini merupakan target integrasi dan belum dapat menerima permintaan pada versi ini.</p></div>' +
+      '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tetap di server.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke frontend atau local storage. Gateway memeriksa identitas Cloudflare Access, allowlist akun, dan batas permintaan sebelum meneruskan tugas.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small id="engineGatewayStatus">Belum diperiksa · provider cloud belum aktif</small></div></div><button class="engine-gateway-check" id="engineGatewayCheck" type="button">Periksa koneksi gateway</button><a class="engine-gateway-login" id="engineGatewayLogin" href="/api/health" target="_blank" rel="noopener" hidden>Buka login Cloudflare Access</a></aside></div>' +
+      '<div class="engine-footer-note">' + icon("shield") + '<p><strong>Status integrasi:</strong> model lokal WebLLM tetap tersedia. Adapter GPT sudah disiapkan, tetapi baru dapat digunakan setelah gateway Cloudflare dan persetujuan sesi aktif. Claude dan Gemini masih menunggu adapter masing-masing.</p></div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>One engine · multiple providers · user in control.</span></footer>' +
     '</div>';
   }
@@ -3646,6 +3646,7 @@
   function bindModelEngineWorkspace() {
     checkDevice();
     const button = document.getElementById("engineGatewayCheck");
+    const login = document.getElementById("engineGatewayLogin");
     const health = document.getElementById("engineGatewayHealth");
     const status = document.getElementById("engineGatewayStatus");
     const openAiBadge = document.querySelector('[data-engine-provider="openai"]');
@@ -3676,6 +3677,7 @@
       const label = stateLabels[gateway.status] || "Belum siap";
       if (health) health.textContent = label;
       if (status) status.textContent = gateway.message || label;
+      if (login) login.hidden = gateway.status !== "session-required";
       if (openAiBadge) {
         const ready = gateway.status === "ready";
         openAiBadge.textContent = ready ? "Gateway siap" : "Gateway diperlukan";
