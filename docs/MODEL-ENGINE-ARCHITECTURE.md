@@ -16,7 +16,7 @@ The intended product is local-first, not local-only. Provider selection must nev
 - `gateway/src/worker.js` is a Cloudflare Worker that validates `Cf-Access-Jwt-Assertion` signature, issuer, audience, expiry, and allowed email; it uses the server-side `OPENAI_API_KEY` secret and a per-user Cloudflare rate-limit binding.
 - The OpenAI adapter calls the Responses API with `store: false`, bounded input/output, a model allowlist, and streaming. It normalizes output into the Chat Completions stream contract used by the current AI Chat workspace.
 - GPT Chat requires explicit consent for the Chat session. Personal AI context is not automatically appended. Other workspaces remain on the local runtime and must not silently fall back to cloud.
-- The gateway code and automated mock tests are present but **not deployed**. Access application/policy, DNS route, allowed email list, and Worker secret are still deployment prerequisites.
+- The gateway code and automated mock tests are present but **not deployed**. A path-scoped Access application for `/api/*`, its deny-by-default policy, DNS/Worker route, allowed email list, and Worker secret are still deployment prerequisites.
 - Claude and Gemini remain registered targets without provider adapters.
 
 The release contains a tested gateway implementation and gated GPT UI, but no real cloud request can succeed until the Worker is deployed and configured.
@@ -85,7 +85,7 @@ A static public app with a shared gateway secret in its JavaScript is not an acc
 - Add automated registry and lifecycle checks.
 
 ### Phase 2 — Configure and deploy the secure gateway
-- The Cloudflare Worker implementation is selected. Confirm the `smalan.sch.id` zone and Access policy, add the same-origin `/api/*` route, set the Access team domain/AUD/allowlisted email list, configure the rate-limit namespace, and set `OPENAI_API_KEY` as a Worker secret. Complete the deployment and authenticated `/api/health` check before enabling cloud Chat.
+- The Cloudflare Worker implementation is selected. Confirm the `smalan.sch.id` zone and add an Access self-hosted application for `ai.smalan.sch.id/api/*` only, leaving the static app pages public. Attach a deny-by-default Allow policy for approved SMALAN identities. Add the same-origin `/api/*` Worker route, set the Access team domain/AUD/allowlisted email list, configure the rate-limit namespace, and set `OPENAI_API_KEY` as a Worker secret. Complete the deployment and authenticated `/api/health` check before enabling cloud Chat.
 - Define how SMALAN users authenticate and how usage is attributed.
 - Set provider/model allowlists, quotas, timeouts, and cost limits.
 - Review hosting constraints and the privacy implications before enabling provider calls.
