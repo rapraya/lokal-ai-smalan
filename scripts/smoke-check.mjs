@@ -11,7 +11,7 @@ const [html, css, app, worker, readme] = await Promise.all([
 
 const requiredModules = [
   "chat", "coding", "image", "audio", "video",
-  "text", "data", "assistant", "personal", "navigation",
+  "text", "data", "assistant", "personal", "knowledge", "navigation",
 ];
 
 for (const module of requiredModules) {
@@ -137,3 +137,8 @@ console.log(`Validated ${requiredModules.length} capability modules, shared WebL
 assert.ok(app.includes("function renderPersonalWorkspace()") && app.includes("function bindPersonalWorkspace()"), "Personal AI workspace is missing.");
 assert.ok(app.includes("personalStorageEnabled = false") && app.includes("personalContextEnabled = false"), "Personal AI permissions must default to disabled.");
 assert.ok(app.includes("buildPersonalContextMessage()") && app.includes("localStorage.removeItem(personalStorageKey)"), "Personal AI context and deletion controls are missing.");
+
+assert.ok(app.includes("function renderKnowledgeWorkspace()") && app.includes("function bindKnowledgeWorkspace()"), "AI Knowledge workspace is missing.");
+assert.ok(app.includes("async function readKnowledgeFile(file)") && app.includes("findKnowledgeSources(pages,query)"), "Local document extraction and source retrieval are missing.");
+assert.ok(app.includes('page === "knowledge"') && app.includes('application/pdf'), "AI Knowledge navigation or PDF support is missing.");
+assert.ok(app.includes("knowledgePages = []") && app.includes("knowledgePages=[]"), "Knowledge documents must remain session-only and clearable.");
