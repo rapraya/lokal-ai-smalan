@@ -63,9 +63,9 @@ console.log("AI Knowledge extraction tests passed: TXT/Markdown chunk boundaries
 
 
 const readerStart = app.indexOf("  async function readKnowledgeFile(");
-const readerEnd = app.indexOf("\\n  function findKnowledgeSources(", readerStart);
+const readerEnd = app.indexOf("\n  function findKnowledgeSources(", readerStart);
 assert.ok(readerStart >= 0 && readerEnd > readerStart, "Knowledge PDF reader function is missing.");
-const readerSource = app.slice(helperStart, readerEnd) + "\\n({ readKnowledgeFile })";
+const readerSource = app.slice(helperStart, readerEnd) + "\n({ readKnowledgeFile })";
 const readerApi = vm.runInNewContext(readerSource, vm.createContext({ Uint8Array }));
 
 function makePdf(pageTexts, render = async () => {}, recognize = async () => ({ data: { text: "hasil OCR" } }), terminate = async () => {}) {
