@@ -803,23 +803,130 @@
       return match?match[1]:"";
     }).filter(Boolean));
   }
+  function normalizeKnowledgeTableHeader(value){
+    return String(value||"").toLocaleLowerCase("id-ID").replace(/[()[\].,:]/g," ").replace(/[^\p{L}\p{N}%]+/gu," ").replace(/\s+/g," ").trim();
+  }
+  function classifyKnowledgeTableHeader(value){
+    const header=normalizeKnowledgeTableHeader(value);
+    if(!header)return {role:"unknown",key:""};
+    const year=header.match(/\b(?:19|20)\d{2}\b/);
+    if(year)return {role:"period",key:"year:"+year[0],year:year[0]};
+    if(/\b(tahun ajaran|tahun|semester|periode|tanggal|bulan|triwulan|kuartal)\b/.test(header))return {role:"period",key:header};
+    if(/\b(nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(header)){
+      return {role:"identity",key:header};
+    }
+    if(/\b(jumlah|nilai|total|berat|volume|persentase|presentase|capaian|skor|saldo|nominal|frekuensi|kuantitas|hasil|target|realisasi|anggaran|rupiah|biaya|harga|luas|panjang|tinggi|rata rata|rerata|absensi|kehadiran)\b/.test(header)){
+      const unitMatch=header.match(/\b(kg|kilogram|gram|km|kilometer|meter|cm|mm|liter|ml|persen|rupiah|orang|siswa|peserta didik)\b/);
+      const aliases={kilogram:"kg",gram:"g",kilometer:"km",meter:"m",persen:"%",rupiah:"rp",siswa:"orang","peserta didik":"orang"};
+      const rawUnit=unitMatch?unitMatch[1]:"";
+      const metric=header.replace(/\b(kg|kilogram|gram|km|kilometer|meter|cm|mm|liter|ml|persen|rupiah|orang|siswa|peserta didik)\b/g," ").replace(/\s+/g," ").trim();
+      return {role:"metric",key:metric||header,unit:aliases[rawUnit]||rawUnit};
+    }
+    return {role:"unknown",key:header};
+  }
+  function extractKnowledgeTableRows(source,sourceIndex=0){
+    const lines=String(source?.text||"").split(/\r?\n/);
+    const records=[],recognizedTables=[];
+    for(let headerIndex=0;headerIndex<lines.length;headerIndex++){
+      if(!lines[headerIndex].includes("\t"))continue;
+      const headers=lines[headerIndex].split("\t").map(value=>value.trim());
+      if(headers.length<2)continue;
+      const columns=headers.map(classifyKnowledgeTableHeader);
+      const identityColumns=columns.map((column,index)=>column.role==="identity"?index:-1).filter(index=>index>=0);
+      const metricColumns=columns.map((column,index)=>column.role==="metric"?index:-1).filter(index=>index>=0);
+      const periodColumns=columns.map((column,index)=>column.role==="period"?index:-1).filter(index=>index>=0);
+      const hasPeriodValueColumns=periodColumns.length>0&&identityColumns.length>0;
+      if(!identityColumns.length||(!metricColumns.length&&!hasPeriodValueColumns))continue;
+      let endIndex=headerIndex+1;
+      while(endIndex<lines.length){
+        const row=lines[endIndex].split("\t").map(value=>value.trim());
+        if(row.length!==headers.length||!lines[endIndex].includes("\t"))break;
+        endIndex++;
+      }
+      if(endIndex===headerIndex+1)continue;
+      const tableId=recognizedTables.length+1;
+      recognizedTables.push({tableId,headerIndex:headerIndex+1,endIndex,headers});
+      for(let rowIndex=headerIndex+1;rowIndex<endIndex;rowIndex++){
+        const cells=lines[rowIndex].split("\t").map(value=>value.trim());
+        const identityParts=identityColumns.map(index=>({
+          header:columns[index].key,
+          value:cells[index]||""
+        })).filter(item=>item.value);
+        if(!identityParts.length)continue;
+        const identityKey=identityParts.map(item=>item.header+":"+normalizeKnowledgeTableHeader(item.value)).join("|");
+        const identityLabel=identityParts.map(item=>item.value).join(" · ");
+        const periodParts=periodColumns.map(index=>{
+          const header=columns[index];
+          const value=header.year||cells[index]||"";
+          const dates=extractKnowledgeDates(value);
+          const years=Array.from(getKnowledgeScopeYears(dates.values));
+          if(header.year&&!years.includes(header.year))years.push(header.year);
+          return {header:header.key,value:String(value).trim(),years};
+        }).filter(item=>item.value);
+        const rowPeriods=periodParts.flatMap(item=>item.years);
+        const makeRecord=(columnIndex,metricKey,metricUnit,valueCell,periodValue,periodYear)=>{
+          const dateInfo=extractKnowledgeDates(valueCell);
+          const values=extractKnowledgeNumbers(valueCell,dateInfo.spans);
+          values.forEach(value=>{
+            const unit=value.unit||metricUnit||("table:"+metricKey);
+            records.push({
+              sourceIndex,sourceNumber:Number(source?.sourceNumber)||sourceIndex+1,
+              documentName:String(source?.documentName||"Dokumen"),page:source?.page??"",
+              section:String(source?.section||""),tableId,rowIndex:rowIndex-headerIndex,
+              columnIndex:columnIndex+1,columnHeader:headers[columnIndex],
+              rawRow:cells.join(" | "),identityKey,identityLabel,identityParts,
+              metricKey,periodValue:periodValue||"",periodYears:Array.from(new Set(periodYear?[periodYear]:rowPeriods)),
+              value:value.number,unit,explicitUnit:Boolean(value.unit||metricUnit),
+              rawValue:value.raw
+            });
+          });
+        };
+        metricColumns.forEach(columnIndex=>{
+          makeRecord(columnIndex,columns[columnIndex].key,columns[columnIndex].unit||"",cells[columnIndex]||"","");
+        });
+        if(hasPeriodValueColumns){
+          const rowMetric=identityParts.map(item=>item.value).join(" ");
+          periodColumns.forEach(columnIndex=>{
+            const header=columns[columnIndex];
+            const valueCell=cells[columnIndex]||"";
+            const dates=extractKnowledgeDates(header.year||valueCell);
+            const years=Array.from(getKnowledgeScopeYears(dates.values));
+            const periodYear=header.year||(years.length===1?years[0]:"");
+            makeRecord(columnIndex,"value:"+normalizeKnowledgeTableHeader(rowMetric),"",valueCell,
+              header.year||valueCell,periodYear);
+          });
+        }
+      }
+      headerIndex=endIndex-1;
+    }
+    return {records,tables:recognizedTables};
+  }
   function detectKnowledgeEvidenceConflicts(sources){
-    const items=(Array.isArray(sources)?sources:[]).map((source,index)=>{
+    const sourceList=Array.isArray(sources)?sources:[];
+    const items=sourceList.map((source,index)=>{
       const text=String(source?.text||"");
       const dates=extractKnowledgeDates(text);
+      const tableData=extractKnowledgeTableRows(source,index);
       return {
         sourceNumber:Number(source?.sourceNumber)||index+1,
         documentName:String(source?.documentName||"Dokumen"),
         page:source?.page??"",
         section:String(source?.section||""),
         text,
-        numbers:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
+        numbers:tableData.tables.length?[]:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
         dates:dates.values,
         scopeYears:getKnowledgeScopeYears(dates.values),
-        context:extractKnowledgeConflictContext(text+" "+String(source?.section||""))
+        context:extractKnowledgeConflictContext(text+" "+String(source?.section||"")),
+        tableRecords:tableData.records,
+        tables:tableData.tables
       };
     });
     const conflicts=[];
+    const appendConflict=conflict=>{
+      const key=conflict.key;
+      if(conflicts.some(item=>item.key===key))return;
+      conflicts.push(conflict);
+    };
     for(let left=0;left<items.length;left++){
       for(let right=left+1;right<items.length;right++){
         const a=items[left],b=items[right];
@@ -828,11 +935,8 @@
         const comparisons=[];
         a.numbers.forEach(first=>{
           b.numbers.forEach(second=>{
-            if(first.number===second.number&&first.unit!==second.unit){
-              comparisons.push({type:"unit-difference",left:first,right:second});
-            }else if(first.unit===second.unit&&first.number!==second.number){
-              comparisons.push({type:"value-difference",left:first,right:second});
-            }
+            if(first.number===second.number&&first.unit!==second.unit)comparisons.push({type:"unit-difference",left:first,right:second});
+            else if(first.unit===second.unit&&first.number!==second.number)comparisons.push({type:"value-difference",left:first,right:second});
           });
         });
         comparisons.forEach(comparison=>{
@@ -840,24 +944,50 @@
             ?Array.from(a.scopeYears).some(year=>b.scopeYears.has(year))
             :false;
           const separatePeriods=a.scopeYears.size>0&&b.scopeYears.size>0&&!periodsOverlap;
-          const type=comparison.type==="unit-difference"
-            ?"unit-difference"
-            :separatePeriods?"scope-difference":"potential-conflict";
-          const key=[a.sourceNumber,b.sourceNumber,comparison.left.number,comparison.left.unit,comparison.right.number,comparison.right.unit,type].join("|");
-          if(conflicts.some(item=>item.key===key))return;
-          conflicts.push({
+          const type=comparison.type==="unit-difference"?"unit-difference":separatePeriods?"scope-difference":"potential-conflict";
+          const key=["prose",a.sourceNumber,b.sourceNumber,comparison.left.number,comparison.left.unit,comparison.right.number,comparison.right.unit,type].join("|");
+          appendConflict({
             key,type,
             left:{sourceNumber:a.sourceNumber,documentName:a.documentName,page:a.page,section:a.section,value:comparison.left.raw,text:a.text.replace(/\s+/g," ").trim().slice(0,240)},
             right:{sourceNumber:b.sourceNumber,documentName:b.documentName,page:b.page,section:b.section,value:comparison.right.raw,text:b.text.replace(/\s+/g," ").trim().slice(0,240)},
-            sharedContext:shared.slice(0,5)
+            sharedContext:shared.slice(0,5),evidenceType:"prose"
           });
+        });
+      }
+    }
+    const tableRecords=items.flatMap(item=>item.tableRecords);
+    for(let left=0;left<tableRecords.length;left++){
+      for(let right=left+1;right<tableRecords.length;right++){
+        const a=tableRecords[left],b=tableRecords[right];
+        if(a.sourceIndex===b.sourceIndex)continue;
+        if(a.identityKey!==b.identityKey||a.metricKey!==b.metricKey)continue;
+        const hasDifferentPeriods=a.periodYears.length&&b.periodYears.length&&
+          !a.periodYears.some(year=>b.periodYears.includes(year));
+        const periodUnclear=(a.periodYears.length===0)!==(b.periodYears.length===0);
+        let type="";
+        if(a.unit!==b.unit)type="unit-difference";
+        else if(hasDifferentPeriods||periodUnclear)type="scope-difference";
+        else if(a.value!==b.value)type="potential-conflict";
+        if(!type)continue;
+        const key=["table",a.sourceNumber,b.sourceNumber,a.identityKey,a.metricKey,a.periodYears.join(","),a.value,a.unit,b.periodYears.join(","),b.value,b.unit,type].join("|");
+        const makeEvidence=record=>({
+          sourceNumber:record.sourceNumber,documentName:record.documentName,page:record.page,section:record.section,
+          value:record.rawValue+" ["+record.unit+"]",text:record.rawRow,
+          rowIndex:record.rowIndex,columnIndex:record.columnIndex,columnHeader:record.columnHeader,
+          identity:record.identityLabel,metric:record.metricKey,period:record.periodValue
+        });
+        appendConflict({
+          key,type,left:makeEvidence(a),right:makeEvidence(b),
+          sharedContext:a.identityParts.map(item=>item.value).slice(0,5),
+          evidenceType:"table"
         });
       }
     }
     const counts={
       potentialConflict:conflicts.filter(item=>item.type==="potential-conflict").length,
       scopeDifference:conflicts.filter(item=>item.type==="scope-difference").length,
-      unitDifference:conflicts.filter(item=>item.type==="unit-difference").length
+      unitDifference:conflicts.filter(item=>item.type==="unit-difference").length,
+      tableComparisons:conflicts.filter(item=>item.evidenceType==="table").length
     };
     return {conflicts:conflicts.slice(0,8),counts,total:conflicts.length};
   }
