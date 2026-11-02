@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const source = await readFile("assets/js/model-engine-core.js", "utf8");
-const context = { window: { fetch: globalThis.fetch } };
+const context = { TextDecoder, TextEncoder, Response, window: { fetch: globalThis.fetch } };
 vm.runInNewContext(source, context);
 
 const engine = context.window.LokalAIModelEngine;
