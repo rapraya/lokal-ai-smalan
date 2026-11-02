@@ -31,6 +31,8 @@
   };
   let textMessages = [textSystemMessage];
   let chatEngine = null;
+  let chatCloudEngine = null;
+  let chatCloudModelId = "";
   let chatWorker = null;
   let chatModelId = "";
   let chatLoading = false;
@@ -1835,7 +1837,7 @@
       status.lastElementChild.textContent = message;
     }
     const conversationModel = document.getElementById("chatConversationModel");
-    if (conversationModel) conversationModel.textContent = chatEngine ? chatModelId : "Belum ada model aktif";
+    if (conversationModel) conversationModel.textContent = chatCloudEngine ? ("OpenAI · " + chatCloudModelId + " · secure gateway") : chatEngine ? chatModelId : "Belum ada model aktif";
     const codingBadge = document.getElementById("codingModelBadge");
     if (codingBadge) codingBadge.textContent = chatEngine ? chatModelId : "Model belum aktif";
   }
