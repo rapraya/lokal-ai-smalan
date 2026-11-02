@@ -112,3 +112,14 @@ Isi setelah pengujian nyata dilakukan.
 7. Uji tabel dengan header berulang, beberapa kolom, halaman lanjutan, angka desimal, sel kosong, serta teks paragraf biasa yang memiliki indentasi lebar untuk melihat potensi salah deteksi.
 
 **Batasan:** pemisah TAB dan jumlah baris adalah perkiraan dari posisi teks yang diekstrak PDF.js. Header, satuan, sel gabungan, garis tabel, dan makna setiap kolom tidak dipahami secara penuh oleh parser. Model hanya menerima kutipan yang terpilih dan dibatasi panjangnya; tabel panjang dapat terpotong. Hasil harus diverifikasi terhadap PDF asli.
+
+## 11. Sintesis seimbang lintas dokumen
+
+1. Muat sedikitnya tiga dokumen uji yang membahas satu tema dari sudut pandang atau periode berbeda.
+2. Ajukan pertanyaan yang memiliki bukti relevan di lebih dari satu dokumen. Periksa bahwa hasil dapat mengambil maksimal dua kutipan per dokumen dan maksimal lima kutipan keseluruhan pada mode tanya-jawab.
+3. Pastikan satu dokumen tidak mendominasi semua bukti ketika dokumen lain juga memiliki kutipan relevan.
+4. Ulangi dengan pertanyaan yang hanya terjawab oleh satu dokumen. Sistem tidak boleh memaksakan kutipan dari dokumen lain yang tidak relevan dan tetap boleh memakai hingga lima kutipan dari satu file.
+5. Uji ketentuan yang tampak bertentangan tetapi berasal dari tanggal, periode berlaku, kelompok sasaran, atau ruang lingkup berbeda. Jawaban harus membedakan perbedaan konteks dari pertentangan sesungguhnya.
+6. Periksa setiap klaim faktual dengan penanda [S#], nama dokumen, halaman/bagian, dan kutipan sumber. Jangan menerima kesimpulan yang tidak didukung kutipan terpilih.
+
+**Batasan:** batas bukti per dokumen adalah strategi pemilihan kutipan, bukan penilaian bahwa setiap dokumen memiliki otoritas yang sama. Kualitas sintesis dan interpretasi perbedaan tetap perlu diperiksa manusia terhadap dokumen asli.
