@@ -20,7 +20,7 @@ The intended deployment is:
 
 - Static Lokal AI application: `https://ai.smalan.sch.id`
 - Gateway path on the same hostname: `https://ai.smalan.sch.id/api/*`
-- Cloudflare Access protects the application hostname and authenticates users.
+- Cloudflare Access protects only the API application path `ai.smalan.sch.id/api/*`. The public static Lokal AI pages remain accessible without forcing every visitor to sign in.
 - A Cloudflare Worker route handles only `ai.smalan.sch.id/api/*`.
 - The Worker validates the `Cf-Access-Jwt-Assertion` header at the origin before any protected endpoint is served.
 
@@ -28,8 +28,8 @@ Using the same hostname avoids a separate browser CORS trust boundary. The Cloud
 
 ## Cloudflare Access prerequisites
 
-1. Add `ai.smalan.sch.id` as a Cloudflare Access self-hosted application.
-2. Create a deny-by-default policy that allows only the intended SMALAN user identities. Do not use a broad public `Everyone` policy for an API that spends paid provider credits.
+1. In Zero Trust > Access controls > Applications, create a **Self-hosted** application and add the public hostname `ai.smalan.sch.id` with the path `/api/*`. Do not protect the whole hostname unless the product is intentionally changed to require login for every app page.
+2. Attach a deny-by-default Allow policy that lists only the intended SMALAN user identities. Do not use a broad public `Everyone` policy for an API that spends paid provider credits. Cloudflare Access applications deny users by default unless an Allow policy matches.
 3. Configure an identity provider such as Google or another supported IdP.
 4. Record the Access team domain and this application's Audience (AUD) tag.
 5. The gateway independently verifies the JWT signature against the team's Access signing-key endpoint, checks issuer/audience/time claims, and checks the email against `ALLOWED_EMAILS`. A header by itself is never trusted.
@@ -37,6 +37,9 @@ Using the same hostname avoids a separate browser CORS trust boundary. The Cloud
 Cloudflare Access documentation:
 - [Publish a self-hosted application](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/)
 - [Validate Access JWTs](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
+
+
+Cloudflare Access supports protecting only selected URL paths. Keep the `/api/*` path as the protected application boundary so the static workspace itself remains public. See [Cloudflare application paths](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/).
 
 ## Configuration
 
@@ -69,7 +72,7 @@ Wrangler prompts for the secret value. The key is stored by Cloudflare as an enc
 npx wrangler deploy
 ```
 
-7. While signed in through Cloudflare Access, open `https://ai.smalan.sch.id/api/health`. It should return authenticated gateway status and the configured model allowlist. If the Access assertion or configuration is absent, the gateway must reject the request.
+7. After Access is configured, open `https://ai.smalan.sch.id/api/health` in a browser tab. On the first visit, Cloudflare Access should prompt for sign-in and then return authenticated gateway status and the configured model allowlist. The Lokal AI Model Engine also shows a **Buka login Cloudflare Access** link when it detects an Access redirect; after signing in, return to the app and select **Periksa ulang koneksi**. If the Access assertion or configuration is absent, the gateway must reject the request.
 
 ## OpenAI model and usage controls
 
