@@ -128,7 +128,11 @@ Run functional tests, accessibility checks, responsive browser testing, privacy 
 Personal AI stores only user-entered preference values and manually added notes. Automatic memory extraction is not implemented. Data stays in page memory unless the user explicitly enables browser persistence. Persistence is stored under a versioned localStorage key with a consent flag; turning it off or clearing data removes that key. Browser storage is not encrypted and is not suitable for secrets or sensitive information. A separate disabled-by-default permission controls whether a bounded preference-and-note context is added to local WebLLM requests from Chat, Coding, Text, and Assistant. No cloud sync or transcript storage is added. The user can inspect and delete each note and clear all stored Personal AI data.
 
 
-## AI Knowledge workspace (v0.17.0)
+## AI Knowledge workspace (v0.18.0)
+
+The workspace now supports an in-memory collection of up to five PDF, TXT, and Markdown documents. Each file is processed independently under the existing per-file size and page limits. Users can remove one document or clear the collection. Cross-document lexical retrieval ranks relevant chunks across the complete loaded collection and preserves document filename plus page/section identity in source markers and displayed excerpts. Only the selected excerpts are passed to the already-loaded local WebLLM model. No document data is persisted or uploaded. Semantic embeddings, OCR for scanned PDFs, and browser/device validation remain future work.
+
+## Previous AI Knowledge alpha (v0.17.0)
 
 The initial Knowledge alpha accepts PDF, TXT, and Markdown documents in the browser. Files are limited to 12 MB; PDFs are limited to 80 pages; extracted text is bounded to 90,000 characters. PDF extraction loads PDF.js 4.10.38 and its worker from cdnjs on demand. This is a disclosed external static-library dependency, not a document upload: document bytes and extracted text remain in page memory.
 
