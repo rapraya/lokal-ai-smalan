@@ -6,7 +6,7 @@ const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function findKnowledgeSources(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && end > start, "Knowledge source retrieval function is missing.");
-const source = app.slice(start, end) + "\n({ findKnowledgeSources })";
+const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -129,3 +129,45 @@ await assert.rejects(
   /OCR tidak berhasil: OCR tidak tersedia/
 );
 console.log("AI Knowledge PDF/OCR integration tests passed: native text, OCR extraction, metadata, canvas cleanup, worker termination, cleanup warnings, and OCR load errors.");
+
+
+assert.equal(api.cosineSimilarity([1, 0], [1, 0]), 1, "Identical normalized embeddings should have cosine similarity 1.");
+assert.equal(api.cosineSimilarity([1, 0], [0, 1]), 0, "Orthogonal embeddings should have cosine similarity 0.");
+assert.equal(api.cosineSimilarity([0, 0], [1, 0]), -1, "Zero vectors must not produce a false similarity.");
+
+const segmented = api.buildKnowledgeEmbeddingSegments([
+  { text: "abcdefghij" },
+  { text: "klmnop" }
+], 4, 2);
+assert.deepEqual(Array.from(segmented.texts), ["abcd", "efgh"]);
+assert.deepEqual(Array.from(segmented.pageIndices), [0, 0]);
+assert.equal(segmented.truncated, true, "Embedding segments must be bounded.");
+const completeSegments = api.buildKnowledgeEmbeddingSegments([{ text: "abcdefghij" }], 4, 3);
+assert.deepEqual(Array.from(completeSegments.texts), ["abcd", "efgh", "ij"]);
+assert.equal(completeSegments.truncated, false);
+
+const semanticPages = [
+  { page: 8, documentName: "Beasiswa.pdf", text: "Prosedur pengajuan bantuan pendidikan bagi peserta didik." },
+  { page: 2, documentName: "Agenda.pdf", text: "Jadwal latihan olahraga dan kegiatan ekstrakurikuler." }
+];
+const semanticRanked = api.findKnowledgeSourcesHybrid(
+  semanticPages,
+  "dukungan finansial untuk belajar",
+  [1, 0],
+  [[0.98, 0.02], [0.05, 0.99]],
+  [0, 1]
+);
+assert.equal(semanticRanked[0].documentName, "Beasiswa.pdf", "Semantic ranking should find related wording without exact keyword overlap.");
+assert.equal(semanticRanked[0].page, 8, "Semantic results must retain the original source page.");
+assert.ok(semanticRanked[0].semanticScore > semanticRanked[1].semanticScore);
+
+const hybridFallback = api.findKnowledgeSourcesHybrid(
+  pages,
+  "strategi pembelajaran peserta didik",
+  [1, 0],
+  [],
+  []
+);
+assert.equal(hybridFallback[0].page, 3, "Hybrid retrieval must preserve BM25 relevance when no page embeddings exist.");
+assert.ok(hybridFallback.length > 0);
+console.log("AI Knowledge semantic retrieval tests passed: cosine similarity, bounded page segments, semantic synonym ranking, source identity, and BM25 fallback.");
