@@ -44,8 +44,8 @@ async function embedTexts(requestId, texts) {
     const batch = texts.slice(offset, offset + batchSize);
     const output = await model(batch, { pooling: "mean", normalize: true });
     const values = output.tolist();
-    if (!Array.isArray(values) || values.length !== batch.length || values.some((vector) => !Array.isArray(vector))) {
-      throw new Error("Model embedding menghasilkan dimensi yang tidak sesuai.");
+    if (!Array.isArray(values) || values.length !== batch.length || values.some((vector) => !Array.isArray(vector) || vector.length !== 384 || vector.some((value) => !Number.isFinite(Number(value))))) {
+      throw new Error("Model embedding menghasilkan vektor 384 dimensi yang tidak valid.");
     }
     vectors.push(...values.map((vector) => vector.map(Number)));
     self.postMessage({
