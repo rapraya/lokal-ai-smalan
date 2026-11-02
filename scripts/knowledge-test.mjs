@@ -375,6 +375,35 @@ const shortAudit = api.verifyKnowledgeAnswerSupport("Kesimpulan utama [S1].", ci
 assert.equal(shortAudit.claims[0].status, "limited",
   "Very short claims should be labeled unassessed rather than assumed supported.");
 
+const normalizedValueAudit = api.verifyKnowledgeAnswerSupport(
+  "Jumlah bantuan mencapai Rp 1.500.000 pada 1 September 2026 [S1].",
+  [{ text: "Jumlah bantuan adalah Rp 1500000 pada 01/09/2026." }]
+);
+assert.equal(normalizedValueAudit.claims[0].details.flags.length, 0,
+  "Equivalent Indonesian thousands separators, currency values, and date formats should normalize without a warning.");
+const numberMismatchAudit = api.verifyKnowledgeAnswerSupport(
+  "Capaian mencapai 25 persen pada tahun 2026 [S1].",
+  [{ text: "Capaian tercatat 20 persen pada tahun 2025." }]
+);
+assert.ok(numberMismatchAudit.claims[0].details.flags.some(flag => flag.code === "numberNotFound"),
+  "A numeric value absent from the cited excerpt should be flagged.");
+assert.ok(numberMismatchAudit.claims[0].details.flags.some(flag => flag.code === "dateNotFound"),
+  "An explicit year absent from the cited excerpt should be flagged.");
+const unitMismatchAudit = api.verifyKnowledgeAnswerSupport(
+  "Berat sampel mencapai 10 kg [S1].",
+  [{ text: "Berat sampel tercatat 10 gram." }]
+);
+assert.ok(unitMismatchAudit.claims[0].details.flags.some(flag => flag.code === "unitMismatch"),
+  "The same numeric value with a different unit should require review.");
+const contextMismatchAudit = api.verifyKnowledgeAnswerSupport(
+  "Peserta didik tidak wajib mengikuti kegiatan tersebut [S1].",
+  [{ text: "Peserta didik wajib mengikuti kegiatan tersebut, kecuali pada kondisi tertentu." }]
+);
+assert.ok(contextMismatchAudit.claims[0].details.flags.some(flag => flag.code === "contextReview"),
+  "Differences in negation, obligation, and exception markers should require contextual review.");
+assert.ok(numberMismatchAudit.flaggedCount > 0 && numberMismatchAudit.detailCounts.numberNotFound > 0,
+  "The audit summary should expose claim-level detail warning counts.");
+
 
 const summaryPages = [
   ...[1, 2, 3, 4, 5].map(page => ({ documentId: 10, documentName: "Panduan.pdf", page, text: "Isi halaman panduan " + page })),
