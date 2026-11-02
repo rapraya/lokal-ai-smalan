@@ -375,7 +375,7 @@
     if(!pdfJsPromise)pdfJsPromise=import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs").then(p=>{p.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";return p;}).catch(e=>{pdfJsPromise=null;throw new Error("PDF.js gagal dimuat: "+e.message);});
     const lib=await pdfJsPromise,pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     if(pdf.numPages>80)throw new Error("PDF melebihi 80 halaman.");
-    const pages=[];let total=0,processedPages=0,ocrCount=0,ocrAttempted=0,ocrSkipped=false,ocrWorker=null,ocrError="";
+    const pages=[];let total=0,processedPages=0,textTruncated=false,ocrCount=0,ocrAttempted=0,ocrSkipped=false,ocrWorker=null,ocrError="";
     try{
       for(let n=1;n<=pdf.numPages&&total<90000;n++){
         const page=await pdf.getPage(n),content=await page.getTextContent();processedPages=n;
@@ -391,9 +391,9 @@
             if(text){isOcr=true;ocrCount++;}
           }catch(error){ocrError=error.message;break;}
         }else if(!text&&options.ocrEnabled){ocrSkipped=true;}
-        if(text){pages.push({page:n,text:text.slice(0,12000),ocr:isOcr});total+=text.length;}
+        if(text){if(text.length>12000)textTruncated=true;pages.push({page:n,text:text.slice(0,12000),ocr:isOcr});total+=text.length;}
       }
-      pages.textTruncated=total>=90000&&processedPages<pdf.numPages;
+      pages.textTruncated=textTruncated||(total>=90000&&processedPages<pdf.numPages);
     }finally{if(ocrWorker)await ocrWorker.terminate();}
     if(!pages.length){
       if(options.ocrEnabled&&ocrError)throw new Error("OCR tidak berhasil: "+ocrError);
