@@ -202,3 +202,17 @@ assert.ok(app.includes('className="knowledge-verification"'), "Knowledge answers
 
 
 console.log("AI Knowledge summary and cross-document comparison mode guard checks passed.");
+
+
+assert.ok(app.includes("function extractKnowledgeDates(") && app.includes("function extractKnowledgeNumbers("),
+  "AI Knowledge must inspect explicit dates and numeric values in cited claims.");
+assert.ok(app.includes("function inspectKnowledgeClaimDetails(") && app.includes("function extractKnowledgeContextMarkers("),
+  "AI Knowledge must inspect unit and context/exception markers.");
+assert.ok(app.includes('code:"numberNotFound"') && app.includes('code:"unitMismatch"') &&
+  app.includes('code:"dateNotFound"') && app.includes('code:"contextReview"'),
+  "AI Knowledge must classify numeric, unit, date, and context review warnings.");
+assert.ok(app.includes("supportAudit.flaggedCount") && app.includes("claim.details.flags.map"),
+  "The claim-level panel must surface detailed verification warnings.");
+assert.ok(app.includes("Kecocokan kata atau nilai bukan bukti"),
+  "The verifier must disclose that numeric and lexical matches do not establish semantic correctness.");
+console.log("AI Knowledge numerical, date, unit, and contextual verification guard checks passed.");
