@@ -6,7 +6,7 @@ const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function findKnowledgeSources(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && end > start, "Knowledge source retrieval function is missing.");
-const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid })";
+const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -134,6 +134,23 @@ console.log("AI Knowledge PDF/OCR integration tests passed: native text, OCR ext
 assert.equal(api.cosineSimilarity([1, 0], [1, 0]), 1, "Identical normalized embeddings should have cosine similarity 1.");
 assert.equal(api.cosineSimilarity([1, 0], [0, 1]), 0, "Orthogonal embeddings should have cosine similarity 0.");
 assert.equal(api.cosineSimilarity([0, 0], [1, 0]), -1, "Zero vectors must not produce a false similarity.");
+
+const longParagraph = Array.from({ length: 30 }, (_, index) =>
+  "Kalimat " + (index + 1) + " membahas kebijakan pembelajaran, pendampingan peserta didik, dan evaluasi kegiatan."
+).join(" ");
+const sentenceChunks = api.splitKnowledgeEmbeddingText(longParagraph, 220, 40);
+assert.ok(sentenceChunks.length > 1, "Long page text must be split into several embedding segments.");
+assert.ok(sentenceChunks.every(chunk => chunk.length <= 220), "Semantic segments must respect the configured character limit.");
+assert.ok(sentenceChunks[0].endsWith("."), "Semantic segments should prefer complete sentence boundaries.");
+const originalWords = longParagraph.split(" ");
+const segmentedWords = sentenceChunks.join(" ").split(" ");
+let segmentWordIndex = 0;
+for (const word of originalWords) {
+  const found = segmentedWords.indexOf(word, segmentWordIndex);
+  assert.ok(found >= segmentWordIndex, "Chunk overlap must not drop original words.");
+  segmentWordIndex = found + 1;
+}
+assert.ok(sentenceChunks.length > 1 && sentenceChunks[1].length > 0, "Overlapping chunks must remain non-empty.");
 
 const segmented = api.buildKnowledgeEmbeddingSegments([
   { text: "abcdefghij" },
