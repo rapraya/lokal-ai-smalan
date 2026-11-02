@@ -237,3 +237,15 @@ assert.ok(app.includes("rowIndex:record.rowIndex") && app.includes("columnHeader
 assert.ok(app.includes("periodUnclear") && app.includes("periodTokens"),
   "Table comparisons must distinguish explicit time-scope information.");
 console.log("AI Knowledge subject-aware and table-aware evidence verification guard checks passed.");
+
+
+assert.ok(app.includes("function buildKnowledgeTableHeaderStructure(") &&
+  app.includes("function extractKnowledgeTableRows("),
+  "AI Knowledge must detect hierarchical table headers before comparing row values.");
+assert.ok(app.includes("headerDepth") && app.includes("headerRows") && app.includes("dataStartIndex"),
+  "Table evidence must preserve header depth and data row boundaries.");
+assert.ok(app.includes("identityInherited") && app.includes("Identitas diwariskan dari sel kosong/tergabung"),
+  "Merged identity-cell inference must be disclosed for manual review.");
+assert.ok(app.includes('text.includes("\\t")?[]:extractKnowledgeNumbers'),
+  "Unrecognized tabular text must not fall back to generic prose number comparisons.");
+console.log("AI Knowledge hierarchical header, merged cell, and uncertainty guard checks passed.");
