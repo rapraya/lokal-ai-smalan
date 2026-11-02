@@ -424,7 +424,7 @@ body[data-theme="light"] .data-interpretation-result:not(:empty){background:#f8f
 .knowledge-dropzone input{max-width:100%;font-size:11px}
 .knowledge-document{min-height:42px;padding:12px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere;margin-bottom:12px}
 .knowledge-question-form{display:grid;gap:12px}
-.knowledge-question-form textarea{width:100%;resize:vertical;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);color:var(--text);padding:12px;font:inherit}
+.knowledge-task-mode{width:100%;min-height:42px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);color:var(--text);padding:10px 12px;font:inherit}\n.knowledge-question-form textarea{width:100%;resize:vertical;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);color:var(--text);padding:12px;font:inherit}
 .knowledge-answer{display:grid;gap:12px;margin-top:20px;line-height:1.65;overflow-wrap:anywhere}
 .knowledge-citation{padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
 .knowledge-citation b{font-size:11px;color:var(--blue)}.knowledge-citation p{font-size:11px;color:var(--muted);margin:7px 0 0}
