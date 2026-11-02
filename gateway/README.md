@@ -44,35 +44,49 @@ Cloudflare Access supports protecting only selected URL paths. Keep the `/api/*`
 ## Configuration
 
 1. Install Node.js 22 or newer and Wrangler 4.36.0 or newer.
-2. From the repository root, enter `gateway`.
-3. Review `wrangler.jsonc` and replace the Access team domain, AUD value, and allowed email list. These are configuration values, not provider secrets.
-4. Set the real provider key as a Worker secret. Do not paste it into source files:
+2. From the repository root, enter `gateway`, then authenticate Wrangler:
 
 ```powershell
 npx wrangler login
-npx wrangler secret put OPENAI_API_KEY
 ```
 
-Wrangler prompts for the secret value. The key is stored by Cloudflare as an encrypted Worker secret; it is not written to the Git repository.
+3. In `wrangler.jsonc`, replace only these placeholders with real configuration values:
+   - `ACCESS_TEAM_DOMAIN`: your Cloudflare Access team domain, for example `your-team.cloudflareaccess.com`.
+   - `ACCESS_AUD`: the Application Audience (AUD) tag copied from the Access application.
+   - `ALLOWED_EMAILS`: exact approved user email addresses, separated by commas.
 
-5. Configure the Worker route after the zone and Access application are ready. Add the following to `wrangler.jsonc`:
+   Keep `APP_ORIGIN`, the API-only route, `workers_dev: false`, the model allowlist, and rate-limit settings unless a reviewed change is intended.
 
-```jsonc
-"routes": [
-  {
-    "pattern": "ai.smalan.sch.id/api/*",
-    "zone_name": "smalan.sch.id"
-  }
-]
-```
+4. In Cloudflare Zero Trust, create a Self-hosted Access application for **only** `ai.smalan.sch.id/api/*`. Add a deny-by-default Allow policy for the same exact email identities. Do not protect the whole hostname; the public Lokal AI app pages should remain available without a login.
 
-6. Deploy only after reviewing the Access policy, origin, allowed identities, and secret:
+5. Set the provider credential as a Worker secret. Never paste it into `wrangler.jsonc`, JavaScript, or Git:
 
 ```powershell
-npx wrangler deploy
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret list
 ```
 
-7. After Access is configured, open `https://ai.smalan.sch.id/api/health` in a browser tab. On the first visit, Cloudflare Access should prompt for sign-in and then return authenticated gateway status and the configured model allowlist. The Lokal AI Model Engine also shows a **Buka login Cloudflare Access** link when it detects an Access redirect; after signing in, return to the app and select **Periksa ulang koneksi**. If the Access assertion or configuration is absent, the gateway must reject the request.
+   Wrangler prompts for the secret value. The list command should show the secret name without revealing its value.
+
+6. Confirm the `smalan.sch.id` zone is active in this Cloudflare account and that `ai.smalan.sch.id` DNS is proxied through Cloudflare. The route `ai.smalan.sch.id/api/*` is already present in `wrangler.jsonc`; `workers_dev` is disabled so there is no alternate public preview endpoint.
+
+7. Run the pre-deployment gate:
+
+```powershell
+npm run check:deploy
+```
+
+   This command validates the static config only. It does not log in to Cloudflare, verify Access policies, inspect the remote secret, or deploy anything. Resolve every reported error before continuing.
+
+8. Deploy the Worker and API route only after the Access application, policy, zone, DNS proxy, and secret are ready:
+
+```powershell
+npm run deploy
+```
+
+9. Open `https://ai.smalan.sch.id/api/health` in a browser tab. On first visit, Cloudflare Access should prompt for sign-in and then return authenticated gateway status and the allowed-model list. In Lokal AI, the Model Engine also shows a **Buka login Cloudflare Access** link after detecting an Access redirect; after signing in, return to the app and select **Periksa ulang koneksi**. If identity or configuration is missing, the Worker must reject the request.
+
+The Worker route intercepts only `/api/*`; it does not replace the static site root or modify unrelated application paths.
 
 ## OpenAI model and usage controls
 
@@ -96,14 +110,11 @@ The gateway caps output at 2,048 tokens and applies a Cloudflare per-user rate l
 From the repository root:
 
 ```powershell
-node gateway/test/worker.test.mjs
-```
-
-Or from the gateway directory:
-
-```powershell
+cd gateway
 npm test
 ```
+
+This runs both the mocked Access/OpenAI Worker tests and the deployment-readiness validator tests.
 
 The tests use generated temporary signing keys and a mocked OpenAI endpoint. They do not require a real Cloudflare account or OpenAI API key and do not make external API calls.
 
