@@ -42,6 +42,21 @@ assert.ok(css.includes("var(--layout-sidebar)") &&
   css.includes(".workspace-status-dot{") &&
   css.includes(".profile-label{"),
   "Professional sidebar and topbar layout rules are missing.");
+
+assert.ok(html.includes('id="menuToggle"') && html.includes('aria-controls="sidebar"'),
+  "The workspace menu button must be connected accessibly to the sidebar.");
+assert.ok(app.includes('sidebarPreferenceKey = "lokal-ai-sidebar-collapsed"') &&
+  app.includes('localStorage.setItem(sidebarPreferenceKey, collapsed ? "1" : "0")') &&
+  app.includes('localStorage.getItem(sidebarPreferenceKey) === "1"'),
+  "Desktop sidebar collapse preference must persist and restore in the browser.");
+assert.ok(app.includes('window.matchMedia("(min-width: 801px)")') &&
+  app.includes('appShell.classList.toggle("sidebar-collapsed"'),
+  "The hamburger must collapse and restore the sidebar on desktop while preserving responsive mobile behavior.");
+assert.ok(css.includes("@media(min-width:801px)") &&
+  css.includes(".app-shell.sidebar-collapsed .sidebar") &&
+  css.includes(".app-shell.sidebar-collapsed .main-area"),
+  "Desktop sidebar collapse must hide navigation and expand the workspace.");
+
 assert.ok(css.includes('body[data-theme="light"] .sidebar') &&
   css.includes('body[data-theme="colorful"] .sidebar'),
   "Redesigned navigation must be styled consistently in all three themes.");
