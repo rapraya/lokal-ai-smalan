@@ -1,0 +1,3 @@
+# Copy to .dev.vars and fill only for local gateway development.
+# Never commit .dev.vars or a real provider key.
+OPENAI_API_KEY=replace_with_server_side_development_key
