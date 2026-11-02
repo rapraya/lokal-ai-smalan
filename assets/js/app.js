@@ -2402,7 +2402,7 @@
     const empty = document.getElementById("searchEmpty");
     if (empty) empty.hidden = visible > 0;
     const count = document.querySelector(".module-counter");
-    if (count) count.innerHTML = query ? "<strong>" + visible + "</strong> hasil pencarian" : "<strong>10</strong> AI capabilities";
+    if (count) count.innerHTML = query ? "<strong>" + visible + "</strong> hasil pencarian" : "<strong>11</strong> AI capabilities";
   }
 
   function renderPage(page, updateHash = true) {
