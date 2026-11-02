@@ -125,6 +125,10 @@ assert.deepEqual(Array.from(hierarchicalPositionedTable.tableBlocks[0].columnHea
   "Identitas Nama", "Identitas Kelas", "Capaian Jumlah Siswa"
 ]);
 assert.equal(hierarchicalPositionedTable.tableBlocks[0].dataStartLine, 2);
+assert.deepEqual(Array.from(hierarchicalPositionedTable.tableBlocks[0].columnHeaders), [
+  "Identitas Nama", "Identitas Kelas", "Capaian Jumlah Siswa"
+]);
+assert.equal(hierarchicalPositionedTable.tableBlocks[0].dataStartLine, 2);
 assert.equal(hierarchicalPositionedTable.tableRows, 4,
   "The hierarchical header row should be included in the table block without losing data rows.");
 
@@ -542,7 +546,7 @@ const hierarchicalTableConflicts = api.detectKnowledgeEvidenceConflicts([
 assert.equal(hierarchicalTableConflicts.counts.potentialConflict, 1,
   "Hierarchical group headers should normalize to the same subject and metric columns across source files.");
 assert.equal(hierarchicalTableConflicts.conflicts[0].left.headerDepth, 2);
-assert.equal(hierarchicalTableConflicts.conflicts[0].left.columnHeader, "identitas capaian nama kelas jumlah siswa");
+assert.equal(hierarchicalTableConflicts.conflicts[0].left.columnHeader, "Capaian Jumlah Siswa");
 assert.equal(hierarchicalTableConflicts.conflicts[0].left.identity, "Andi · XI IPA 1");
 
 const mergedIdentityTable = api.extractKnowledgeTableRows({
