@@ -6,7 +6,7 @@ const app = await readFile("assets/js/app.js", "utf8");
 const start = app.indexOf("  function findKnowledgeSources(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && end > start, "Knowledge source retrieval function is missing.");
-const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, inspectKnowledgeCitationMarkers })";
+const source = app.slice(start, end) + "\n({ findKnowledgeSources, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -179,6 +179,50 @@ assert.deepEqual(
   { used: [], invalid: [], missing: true },
   "Answers without source markers must be flagged."
 );
+
+const summaryPages = [
+  ...[1, 2, 3, 4, 5].map(page => ({ documentId: 10, documentName: "Panduan.pdf", page, text: "Isi halaman panduan " + page })),
+  ...[1, 2].map(page => ({ documentId: 11, documentName: "Kebijakan.md", page, text: "Isi bagian kebijakan " + page }))
+];
+const summarySelection = api.selectKnowledgeSummarySources(summaryPages, 3, 15);
+assert.deepEqual(Array.from(summarySelection, page => [page.documentName, page.page]), [
+  ["Panduan.pdf", 1], ["Panduan.pdf", 3], ["Panduan.pdf", 5],
+  ["Kebijakan.md", 1], ["Kebijakan.md", 2]
+], "Document summaries should sample early, middle, and late pages while keeping short documents complete.");
+assert.ok(summarySelection.every(page => Number.isInteger(page.index)), "Summary sources must preserve original page indices.");
+
+const comparisonPages = [
+  { documentId: 20, documentName: "A.pdf", page: 1, text: "A1" },
+  { documentId: 20, documentName: "A.pdf", page: 2, text: "A2" },
+  { documentId: 20, documentName: "A.pdf", page: 3, text: "A3" },
+  { documentId: 21, documentName: "B.pdf", page: 1, text: "B1" },
+  { documentId: 21, documentName: "B.pdf", page: 2, text: "B2" },
+  { documentId: 21, documentName: "B.pdf", page: 3, text: "B3" },
+  { documentId: 22, documentName: "C.pdf", page: 1, text: "C1" }
+];
+const comparisonCandidates = [
+  { index: 1, score: 0.9 }, { index: 0, score: 0.8 }, { index: 2, score: 0.7 },
+  { index: 4, score: 0.6 }, { index: 3, score: 0.5 }, { index: 5, score: 0.4 },
+  { index: 6, score: 0.1 }
+];
+const comparisonSelection = api.selectKnowledgeSourcesPerDocument(comparisonPages, comparisonCandidates, 2, 10);
+assert.deepEqual(Array.from(comparisonSelection, page => page.documentName), ["A.pdf", "A.pdf", "B.pdf", "B.pdf"]);
+assert.deepEqual(Array.from(comparisonSelection, page => page.page), [2, 1, 2, 1]);
+assert.ok(comparisonSelection.every(page => Number.isInteger(page.index)), "Comparison excerpts must retain original indices.");
+const comparisonCoverage = api.listKnowledgeDocumentCoverage([
+  { id: 20, name: "A.pdf" }, { id: 21, name: "B.pdf" }, { id: 22, name: "C.pdf" }
+], comparisonSelection);
+assert.deepEqual(Array.from(comparisonCoverage.included, doc => doc.name), ["A.pdf", "B.pdf"]);
+assert.deepEqual(Array.from(comparisonCoverage.missing, doc => doc.name), ["C.pdf"], "Documents without selected evidence must be reported.");
+
+const sevenDocuments = Array.from({ length: 7 }, (_, index) => ({
+  page: 1, documentName: "Dokumen-" + (index + 1) + ".txt", documentId: index + 1,
+  text: "Pembelajaran dan evaluasi program sekolah."
+}));
+assert.equal(api.findKnowledgeSources(sevenDocuments, "pembelajaran", 10).length, 7, "Extended lexical retrieval should expose candidates across more than five documents.");
+assert.equal(api.findKnowledgeSourcesHybrid(sevenDocuments, "pembelajaran", [1, 0], [], [], 10).length, 7,
+  "Hybrid retrieval must pass its extended candidate limit to BM25 for comparison mode.");
+console.log("AI Knowledge document-level RAG tests passed: representative summaries, per-file comparison quotas, source coverage warnings, and expanded candidate retrieval.");
 
 const semanticPages = [
   { page: 8, documentName: "Beasiswa.pdf", text: "Prosedur pengajuan bantuan pendidikan bagi peserta didik." },
