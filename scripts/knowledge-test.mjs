@@ -28,9 +28,9 @@ assert.ok(new Set(across.map(item => item.documentName)).size >= 3, "Cross-docum
 console.log("AI Knowledge tests passed: BM25 relevance, source identity, cross-document retrieval, bounded excerpts, and no-match handling.");
 
 const helperStart = app.indexOf("  function chunkKnowledgeText(");
-const helperEnd = app.indexOf("\\n  async function readKnowledgeFile(", helperStart);
+const helperEnd = app.indexOf("\n  async function readKnowledgeFile(", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "Knowledge extraction helpers are missing.");
-const extractionSource = app.slice(helperStart, helperEnd) + "\\n({ chunkKnowledgeText, limitKnowledgeExcerpt })";
+const extractionSource = app.slice(helperStart, helperEnd) + "\n({ chunkKnowledgeText, limitKnowledgeExcerpt })";
 const extraction = vm.runInNewContext(extractionSource, vm.createContext({}));
 
 const exactChunks = extraction.chunkKnowledgeText("x".repeat(90000));
