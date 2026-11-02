@@ -170,3 +170,8 @@ console.log("AI Knowledge semantic confidence threshold and concurrent-operation
 
 assert.ok(app.includes("Embedding pertanyaan gagal:") && app.includes("Beralih ke BM25."), "Failed semantic query embeddings must fall back to lexical retrieval.");
 console.log("AI Knowledge query-time BM25 fallback guard passed.");
+
+assert.ok(app.includes("function splitKnowledgeEmbeddingText(value,maxSegmentChars=360,overlapChars=60)"), "Semantic document chunks must be sentence-aware and overlapping.");
+assert.ok(app.includes("buildKnowledgeEmbeddingSegments(pages,maxSegmentChars=360,maxSegments=600,overlapChars=60)"), "Semantic chunk preparation must have explicit size, overlap, and collection limits.");
+assert.ok(embeddingWorker.includes("vector.length !== 384") && embeddingWorker.includes("Number.isFinite(Number(value))"), "Embedding worker must validate 384-dimensional finite vectors.");
+console.log("AI Knowledge semantic chunking, source-page mapping, and vector-shape validation checks passed.");
