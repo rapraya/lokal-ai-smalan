@@ -124,7 +124,7 @@ assert.ok(app.includes("function exportDataInterpretationReport(") && app.includ
 assert.ok(app.includes("dataInterpretationMessages.length = 0"), "Session history clearing is missing.");
 assert.ok(app.includes("function buildAssistantMessages(") && app.includes("function renderAssistantWorkspace()") && app.includes("function bindAssistantWorkspace()"), "AI Assistant workspace implementation is missing.");
 assert.ok(app.includes("assistantTaskForm") && app.includes("assistantTaskList") && app.includes("assistantPlanButton") && app.includes("assistantClearHistory"), "AI Assistant task and planning controls are missing.");
-assert.ok(app.includes("assistantMessages.length > 12") && app.includes("history").includes ? true : true, "Assistant history should be bounded.");
+assert.ok(app.includes("if (assistantMessages.length > 12) assistantMessages.splice(0, assistantMessages.length - 12);"), "Assistant conversation history must be bounded.");
 assert.ok(app.includes("Jangan menjalankan atau menandai tugas selesai") && app.includes("Tidak ada tindakan otomatis"), "AI Assistant must not execute or complete tasks automatically.");
 assert.ok(app.includes("function buildDataInterpretationMessages(") && app.includes("max_tokens: 512") && app.includes("history.slice(-8)"), "Local interpretation must use bounded, isolated follow-up messages.");
 assert.ok(app.includes("tidak ada baris mentah atau nilai individual yang disertakan"), "Interpretation context must disclose aggregate-only data.");
