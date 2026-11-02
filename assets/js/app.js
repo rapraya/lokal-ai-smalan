@@ -3616,7 +3616,7 @@
       const action = isLocal
         ? '<button class="engine-provider-action" type="button" data-page="chat">Kelola model lokal ' + icon("arrow") + '</button>'
         : provider.id === "openai" && openAiReady
-          ? '<span class="engine-provider-footnote">Gateway terautentikasi · pemilihan GPT menyusul</span>'
+          ? '<span class="engine-provider-footnote">Gateway siap · pilih GPT di AI Chat</span>'
           : '<span class="engine-provider-footnote">Belum menerima permintaan</span>';
       return '<article class="engine-provider-card ' + (isLocal ? "engine-provider-featured" : "engine-provider-cloud") + '">' +
         '<div class="engine-provider-top"><span class="engine-provider-icon">' + icon(providerIcon) + '</span><span class="engine-status-chip ' + statusClass + '" data-engine-provider="' + provider.id + '">' + statusLabel + '</span></div>' +
@@ -3685,7 +3685,7 @@
         openAiBadge.classList.toggle("engine-status-pending", !ready);
       }
       if (openAiFootnote && gateway.status === "ready") {
-        openAiFootnote.textContent = "Gateway terautentikasi · pemilihan GPT menyusul";
+        openAiFootnote.textContent = "Gateway siap · pilih GPT di AI Chat";
       }
       if (button) {
         button.disabled = false;
