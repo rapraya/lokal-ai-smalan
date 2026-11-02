@@ -518,7 +518,7 @@
     return {texts,pageIndices,truncated};
   }
   function findKnowledgeSourcesHybrid(pages,query,queryVector,vectors,pageIndices,limit=5){
-    const lexical=findKnowledgeSources(pages,query),maxLexical=Math.max(1,...lexical.map(item=>item.score));
+    const lexical=findKnowledgeSources(pages,query,limit),maxLexical=Math.max(1,...lexical.map(item=>item.score));
     const lexicalScores=new Map(lexical.map(item=>[item.index,item.score/maxLexical]));
     const semanticScores=new Map();
     vectors.forEach((vector,index)=>{
