@@ -3409,9 +3409,9 @@
     const activeModel = snapshot.activeModelId || "Pilih model dari AI Chat";
     const providerCards = snapshot.providers.map((provider) => {
       const isLocal = provider.category === "local";
-      const statusLabel = isLocal ? (provider.runtimeStatus === "ready" ? "Sedang digunakan" : "Tersedia") : "Gateway diperlukan";
+      const statusLabel = isLocal ? (provider.runtimeStatus === "ready" ? "Sedang digunakan" : "Didukung · perlu GPU") : "Gateway diperlukan";
       const statusClass = isLocal ? "engine-status-local" : "engine-status-pending";
-      const providerIcon = isLocal ? "cpu" : provider.id === "openai" ? "spark" : provider.id === "anthropic" ? "message" : "globe";
+      const providerIcon = isLocal ? "cpu" : provider.id === "openai" ? "spark" : provider.id === "anthropic" ? "message" : "compass";
       const action = isLocal
         ? '<button class="engine-provider-action" type="button" data-page="chat">Kelola model lokal ' + icon("arrow") + '</button>'
         : '<span class="engine-provider-footnote">Belum menerima permintaan</span>';
@@ -3435,7 +3435,7 @@
       '<div class="engine-provider-grid">' + providerCards + '</div>' +
       '<div class="engine-lower-grid"><section class="engine-catalog-panel"><div class="engine-section-heading compact"><div><span class="section-kicker">LOCAL MODEL CATALOG</span><h2>Katalog model lokal</h2><p>Model yang saat ini terdaftar dalam runtime WebLLM.</p></div></div><div class="engine-model-list">' + localModels + '</div><div class="engine-catalog-note">Estimasi VRAM berasal dari manifest model dan bukan jaminan kebutuhan minimal atau kompatibilitas perangkat.</div><button type="button" class="engine-text-action" data-page="chat">Pilih dan muat model di AI Chat ' + icon("arrow") + '</button></section>' +
       '<aside class="engine-security-panel"><div class="engine-security-icon">' + icon("shield") + '</div><span class="section-kicker">SECURITY BY DESIGN</span><h3>Kredensial tidak disimpan di browser.</h3><p>API key OpenAI, Anthropic, maupun Google tidak boleh dimasukkan ke file frontend atau local storage. Integrasi cloud membutuhkan gateway server-side dengan autentikasi, batas penggunaan, dan persetujuan pengguna.</p><div class="engine-security-state"><span></span><div><b>Secure gateway</b><small>Belum dikonfigurasi · provider cloud tetap nonaktif</small></div></div></aside></div>' +
-      '<div class="engine-footer-note">' + icon("info") + '<p><strong>Status integrasi:</strong> model lokal WebLLM dapat dimuat melalui AI Chat. Kartu GPT, Claude, dan Gemini merupakan target integrasi dan belum dapat menerima permintaan pada versi ini.</p></div>' +
+      '<div class="engine-footer-note">' + icon("shield") + '<p><strong>Status integrasi:</strong> model lokal WebLLM dapat dimuat melalui AI Chat. Kartu GPT, Claude, dan Gemini merupakan target integrasi dan belum dapat menerima permintaan pada versi ini.</p></div>' +
       '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>One engine · multiple providers · user in control.</span></footer>' +
     '</div>';
   }
