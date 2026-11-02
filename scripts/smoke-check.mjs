@@ -163,3 +163,7 @@ const embeddingWorker = await readFile("assets/js/knowledge-embedding-worker.js"
 assert.ok(embeddingWorker.includes("Xenova/paraphrase-multilingual-MiniLM-L12-v2") && embeddingWorker.includes('dtype: "q8"'), "Semantic worker must use the selected multilingual quantized embedding model.");
 assert.ok(embeddingWorker.includes("batchSize = 8") && embeddingWorker.includes("message.texts"), "Semantic embeddings must be batched locally.");
 console.log("AI Knowledge semantic opt-in, local processing disclosure, multilingual model selection, and bounded embedding worker checks passed.");
+
+assert.ok(app.includes("similarity>=0.35"), "Semantic-only retrieval must reject low-confidence similarity scores.");
+assert.ok(app.includes('file.disabled=knowledgeBusy') && app.includes('button.disabled=knowledgeBusy'), "Knowledge import and document controls must be locked while processing.");
+console.log("AI Knowledge semantic confidence threshold and concurrent-operation safeguards passed.");
