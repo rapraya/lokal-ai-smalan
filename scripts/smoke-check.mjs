@@ -167,3 +167,6 @@ console.log("AI Knowledge semantic opt-in, local processing disclosure, multilin
 assert.ok(app.includes("similarity>=0.35"), "Semantic-only retrieval must reject low-confidence similarity scores.");
 assert.ok(app.includes('file.disabled=knowledgeBusy') && app.includes('button.disabled=knowledgeBusy'), "Knowledge import and document controls must be locked while processing.");
 console.log("AI Knowledge semantic confidence threshold and concurrent-operation safeguards passed.");
+
+assert.ok(app.includes("Embedding pertanyaan gagal:") && app.includes("Beralih ke BM25."), "Failed semantic query embeddings must fall back to lexical retrieval.");
+console.log("AI Knowledge query-time BM25 fallback guard passed.");
