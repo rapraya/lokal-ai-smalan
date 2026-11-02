@@ -197,7 +197,7 @@ assert.ok(app.includes('type:"possible"') && app.includes("Kemungkinan lanjutan 
 assert.ok(app.includes("Header tabel yang secara eksplisit ditandai berulang") && app.includes("Label kemungkinan lanjutan tabel bukan kepastian"), "Grounded synthesis must distinguish repeated headers from uncertain table continuation.");
 assert.ok(app.includes("function verifyKnowledgeAnswerSupport(response,sources)") && app.includes("function splitKnowledgeAnswerClaims(response)"), "AI Knowledge must audit citations at the individual claim level.");
 assert.ok(app.includes('status="supported"') && app.includes('status="partial"') && app.includes('status="weak"') && app.includes('status="uncited"') && app.includes('status="invalid"'), "Citation verification must distinguish evidence overlap, partial support, weak support, missing citations, and invalid references.");
-assert.ok(app.includes("Pemeriksaan ini membandingkan istilah dalam kalimat dengan kutipan yang benar-benar dikirim ke model") && app.includes("Kecocokan kata bukan bukti"), "Citation verification must disclose its lexical heuristic and semantic limitations.");
+assert.ok(app.includes("Pemeriksaan istilah, angka, tanggal, satuan, serta penanda konteks") && app.includes("Kecocokan kata atau nilai bukan bukti"), "Citation verification must disclose its lexical heuristic and semantic limitations.");
 assert.ok(app.includes('className="knowledge-verification"'), "Knowledge answers must display claim-level verification feedback.");
 
 
