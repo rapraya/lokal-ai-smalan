@@ -320,6 +320,34 @@ function makeStreamingResponse(upstream, model, controller, onFinish) {
   });
 }
 
+async function readBodyLimited(request, maximumBytes) {
+  if (!request.body) return { ok: true, text: "" };
+  const reader = request.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const item = await reader.read();
+      if (item.done) break;
+      total += item.value.byteLength;
+      if (total > maximumBytes) {
+        await reader.cancel("Request body exceeds gateway limit.");
+        return { ok: false };
+      }
+      chunks.push(item.value);
+    }
+  } finally {
+    try { reader.releaseLock(); } catch (_) {}
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, text: decoder.decode(merged) };
+}
+
 async function handleChatCompletion(request, env, identity, fetchImpl) {
   if (!env.OPENAI_API_KEY) return json({ error: { message: "Provider OpenAI belum dikonfigurasi di server." } }, 503);
   if (!env.CHAT_LIMITER || typeof env.CHAT_LIMITER.limit !== "function") {
@@ -328,12 +356,12 @@ async function handleChatCompletion(request, env, identity, fetchImpl) {
 
   const declaredLength = Number(request.headers.get("content-length") || 0);
   if (declaredLength > MAX_BODY_BYTES) return json({ error: { message: "Permintaan terlalu besar." } }, 413);
-  const raw = await request.arrayBuffer();
-  if (raw.byteLength > MAX_BODY_BYTES) return json({ error: { message: "Permintaan terlalu besar." } }, 413);
+  const raw = await readBodyLimited(request, MAX_BODY_BYTES);
+  if (!raw.ok) return json({ error: { message: "Permintaan terlalu besar." } }, 413);
 
   let payload;
   try {
-    payload = JSON.parse(decoder.decode(raw));
+    payload = JSON.parse(raw.text);
   } catch (_) {
     return json({ error: { message: "JSON permintaan tidak valid." } }, 400);
   }
