@@ -813,3 +813,58 @@ body[data-theme="light"] .knowledge-unverified>p{color:#765d42}
 body[data-theme="light"] .knowledge-unverified-draft{background:#fbfcff;border-color:#e3eaf4}
 body[data-theme="light"] .knowledge-unverified-draft summary{color:#344963}
 body[data-theme="light"] .knowledge-unverified-draft pre{color:#61758e}
+
+/* v0.35.2 — AI Knowledge form layout and opt-in clarity */
+.knowledge-question-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:stretch;
+  gap:11px;
+  width:100%;
+  min-width:0;
+  margin-top:5px;
+}
+.knowledge-question-form .chat-field-label{
+  display:block;
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:600;
+}
+.knowledge-question-form .knowledge-task-mode,
+.knowledge-question-form textarea{
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  margin:0;
+}
+.knowledge-question-form textarea{
+  min-height:118px;
+  line-height:1.65;
+  resize:vertical;
+}
+.knowledge-question-form #knowledgeAsk{
+  justify-self:start;
+  min-width:142px;
+  min-height:42px;
+  padding:0 16px;
+  border-radius:9px;
+}
+#knowledgeLoadSamples{
+  width:fit-content;
+  max-width:100%;
+  min-height:40px;
+  height:auto;
+  padding:8px 13px;
+  white-space:normal;
+  line-height:1.35;
+}
+.knowledge-semantic-option input:disabled{
+  cursor:not-allowed;
+  opacity:.58;
+}
+@media(max-width:600px){
+  .knowledge-question-form #knowledgeAsk{width:100%}
+  #knowledgeLoadSamples{width:100%}
+}
