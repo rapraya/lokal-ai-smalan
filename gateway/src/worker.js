@@ -60,7 +60,10 @@ async function verifyAccessAssertion(request, env, fetchImpl) {
   const audience = String(env.ACCESS_AUD || "").trim();
   const allowedEmails = csv(env.ALLOWED_EMAILS).map((email) => email.toLowerCase());
 
-  if (!assertion || !teamDomain || !audience || allowedEmails.length === 0) {
+  if (!assertion) {
+    return { ok: false, status: 401, message: "Autentikasi Cloudflare Access diperlukan." };
+  }
+  if (!teamDomain || !audience || allowedEmails.length === 0) {
     return { ok: false, status: 503, message: "Autentikasi gateway belum dikonfigurasi." };
   }
 
