@@ -392,34 +392,45 @@
   function buildKnowledgeTableHeaderStructure(rows,columnCount){
     const count=Math.max(0,Math.floor(Number(columnCount)||0));
     if(!count)return {headers:[],columns:[],headerRows:[],headerDepth:0,ambiguous:true};
+    const classify=value=>{
+      const text=String(value||"").toLocaleLowerCase("id-ID").replace(/[()[\].,:]/g," ").replace(/[^\p{L}\p{N}%]+/gu," ").replace(/\s+/g," ").trim();
+      if(!text)return {role:"unknown",key:""};
+      const year=text.match(/\b(?:19|20)\d{2}\b/);
+      if(year)return {role:"period",key:text,periodToken:"year:"+year[0],year:year[0]};
+      const semester=text.match(/\bsemester\s+(ganjil|genap|[12])\b/);
+      if(semester)return {role:"period",key:text,periodToken:"semester:"+semester[1]};
+      const month=text.match(/\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/);
+      if(month)return {role:"period",key:text,periodToken:"month:"+month[1]};
+      if(/\b(jumlah|nilai|total|berat|volume|persentase|presentase|capaian|skor|saldo|nominal|frekuensi|kuantitas|hasil|target|realisasi|anggaran|biaya|harga|luas|panjang|tinggi|rata rata|rerata|absensi|kehadiran)\b/.test(text)){
+        const unit=text.match(/\b(peserta didik|kilogram|kilometer|gram|meter|siswa|orang|kg|km|cm|mm|liter|ml|persen|rupiah|ton|g|m)\b/);
+        const aliases={kilogram:"kg",gram:"g",kilometer:"km",meter:"m",persen:"%",rupiah:"rp",siswa:"orang","peserta didik":"orang"};
+        return {role:"metric",key:text,unit:unit?(aliases[unit[1]]||unit[1]):""};
+      }
+      if(/\b(tahun ajaran|tahun|semester|periode|tanggal|bulan|triwulan|kuartal)\b/.test(text))return {role:"period",key:text};
+      if(/\b(identitas|data peserta didik|data siswa|nama|siswa|peserta didik|murid|kelas|rombel|kelompok|kategori|jenis|indikator|program|komponen|uraian|kegiatan|mata pelajaran|mapel|jabatan|wilayah|kabupaten|provinsi|jenjang|status|unit kerja|sekolah)\b/.test(text))return {role:"identity",key:text};
+      return {role:"unknown",key:text};
+    };
     const carry=Array(count).fill("");
     const parts=Array.from({length:count},()=>[]);
     const accepted=[];
-    const maxDepth=Math.min(3,Array.isArray(rows)?rows.length:0);
-    for(let index=0;index<maxDepth;index++){
+    for(let index=0;index<Math.min(3,Array.isArray(rows)?rows.length:0);index++){
       const cells=Array.isArray(rows[index])?rows[index].map(value=>String(value||"").trim()):[];
       if(cells.length!==count)break;
-      const recognized=cells.filter(value=>value&&classifyKnowledgeTableHeader(value).role!=="unknown").length;
+      const recognized=cells.filter(value=>value&&classify(value).role!=="unknown").length;
       if(!recognized)break;
       for(let column=0;column<count;column++){
         if(cells[column])carry[column]=cells[column];
-        if(carry[column]&&!parts[column].some(value=>normalizeKnowledgeTableHeader(value)===normalizeKnowledgeTableHeader(carry[column]))){
-          parts[column].push(carry[column]);
-        }
+        if(carry[column]&&!parts[column].some(value=>value.toLocaleLowerCase("id-ID")===carry[column].toLocaleLowerCase("id-ID")))parts[column].push(carry[column]);
       }
       accepted.push(cells);
     }
     const headers=parts.map(values=>values.join(" ").trim());
-    const columns=headers.map(classifyKnowledgeTableHeader);
+    const columns=headers.map(classify);
     const identityColumns=columns.map((column,index)=>column.role==="identity"?index:-1).filter(index=>index>=0);
     const metricColumns=columns.map((column,index)=>column.role==="metric"?index:-1).filter(index=>index>=0);
     const periodColumns=columns.map((column,index)=>column.role==="period"?index:-1).filter(index=>index>=0);
     const valid=identityColumns.length>0&&(metricColumns.length>0||periodColumns.some(index=>Boolean(columns[index].periodToken)));
-    return {
-      headers,columns,headerRows:accepted,headerDepth:accepted.length,
-      identityColumns,metricColumns,periodColumns,
-      ambiguous:!valid
-    };
+    return {headers,columns,headerRows:accepted,headerDepth:accepted.length,identityColumns,metricColumns,periodColumns,ambiguous:!valid};
   }
   function extractKnowledgePdfLayout(items){
     const source=Array.isArray(items)?items:[];
@@ -464,15 +475,31 @@
       if(run.length>=2){
         const headerCells=run[0].cells.slice();
         const headerKey=headerCells.map(value=>value.toLocaleLowerCase("id-ID").replace(/[^\p{L}\p{N}]+/gu," ").trim()).join("|");
-        const headerStructure=buildKnowledgeTableHeaderStructure(run.slice(0,3).map(line=>line.cells),run[0].cells.length);
+        const prefixRows=[];
+        for(let priorIndex=run[0].index-1;priorIndex>=Math.max(0,run[0].index-3);priorIndex--){
+          const prior=structuredLines[priorIndex],cells=prior?.cells||[];
+          if(cells.length<2||cells.length>=run[0].cells.length)break;
+          const recognized=cells.filter(value=>classifyKnowledgeTableHeader(value).role!=="unknown").length;
+          if(!recognized)break;
+          const mapped=Array(run[0].cells.length).fill("");
+          cells.forEach((value,index)=>{
+            const first=Math.floor(index*mapped.length/cells.length);
+            const last=Math.floor((index+1)*mapped.length/cells.length);
+            for(let column=first;column<Math.max(first+1,last);column++)mapped[column]=value;
+          });
+          prefixRows.unshift({index:priorIndex,cells:mapped});
+        }
+        const candidateRows=prefixRows.concat(run.slice(0,3).map(line=>({index:line.index,cells:line.cells})));
+        const headerStructure=buildKnowledgeTableHeaderStructure(candidateRows.map(line=>line.cells),run[0].cells.length);
         const headerDepth=headerStructure.ambiguous?1:Math.max(1,headerStructure.headerDepth);
         const columnHeaders=headerStructure.ambiguous?headerCells.slice():headerStructure.headers;
         const normalizedHeaderKey=columnHeaders.map(value=>normalizeKnowledgeTableHeader(value)).join("|");
+        const headerLines=candidateRows.slice(0,headerDepth);
         tableBlocks.push({
-          startLine:run[0].index,endLine:run[run.length-1].index,lineCount:structuredLines.length,
-          rowCount:run.length,columnCount:run[0].cells.length,columnStarts:run[0].columnStarts.slice(),
-          headerCells,columnHeaders,headerRows:headerStructure.headerRows.slice(0,headerDepth),
-          headerDepth,dataStartLine:run[Math.min(headerDepth,run.length-1)]?.index??run[run.length-1].index,
+          startLine:headerLines[0]?.index??run[0].index,endLine:run[run.length-1].index,lineCount:structuredLines.length,
+          rowCount:run.length+prefixRows.length,columnCount:run[0].cells.length,columnStarts:run[0].columnStarts.slice(),
+          headerCells,columnHeaders,headerRows:headerLines.map(line=>line.cells.slice()),
+          headerDepth,dataStartLine:headerLines[headerDepth]?.index??run[0].index,
           headerKey:normalizedHeaderKey||headerKey,
           headerAmbiguous:headerStructure.ambiguous
         });
@@ -984,7 +1011,7 @@
         sourceNumber:Number(source?.sourceNumber)||index+1,
         documentName:String(source?.documentName||"Dokumen"),
         page:source?.page??"",section:String(source?.section||""),text,
-        numbers:tableData.tables.length?[]:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
+        numbers:tableData.tables.length||text.includes("\t")?[]:extractKnowledgeNumbers(text,dates.spans).filter(item=>item.unit),
         dates:dates.values,scopeYears:getKnowledgeScopeYears(dates.values),
         context:extractKnowledgeConflictContext(text+" "+String(source?.section||"")),
         tableRecords:tableData.records,tables:tableData.tables
