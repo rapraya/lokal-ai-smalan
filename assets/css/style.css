@@ -1710,3 +1710,13 @@ body[data-theme="colorful"] .chat-cloud-consent{background:#fff6ed;border-color:
   .chat-cloud-model-controls{padding:10px}
   .chat-cloud-consent{padding:9px}
 }
+
+.engine-gateway-login{
+  display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;
+  min-height:38px;margin-top:8px;padding:0 4px;color:var(--blue-strong);
+  font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px;
+}
+.engine-gateway-login:hover{opacity:.78}
+.engine-gateway-login[hidden]{display:none}
+body[data-theme="colorful"] .engine-gateway-login{color:#7057c9}
+body[data-theme="light"] .engine-gateway-login{color:#3569ad}
