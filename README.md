@@ -6,6 +6,13 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.23.0 — Layout-aware PDF Tables**
+- Uses PDF.js text coordinates to reconstruct approximate reading lines and preserve wider horizontal gaps as TAB-separated columns.
+- Detects repeated multi-column row patterns as potential table rows and retains a row-count hint on each PDF page. The UI and evidence prompt disclose this as an indication, not guaranteed table reconstruction.
+- Preserves OCR line breaks when available; OCR-derived content is not falsely labeled as a coordinate-reconstructed table.
+- Local synthesis instructions tell the model to respect visible column/value relationships, avoid inventing headers or units, and disclose incomplete table excerpts.
+- Automated tests cover coordinate-based column extraction, repeated row detection, row boundaries, unpositioned-text fallback, and source metadata. Real-world PDFs with merged cells, borders, multi-column layouts, and scanned tables still require browser/device validation.
+
 **v0.22.0 — Section-aware Advanced RAG**
 - Preserves line breaks exposed by PDF.js instead of flattening every native-text page into one paragraph, improving heading recognition without changing the page citation identity.
 - Detects Markdown, numbered, and short uppercase section headings; section labels carry forward to following pages/chunks until another heading is found. Heading detection is heuristic, not a full layout parser.
