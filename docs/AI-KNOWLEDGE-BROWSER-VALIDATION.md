@@ -149,3 +149,16 @@ Isi setelah pengujian nyata dilakukan.
 9. Buka kutipan di bawah jawaban dan verifikasi ulang nama dokumen, halaman/bagian, angka, satuan, tanggal, pengecualian, serta konteks kalimat.
 
 **Batasan penting:** pemeriksaan otomatis membandingkan istilah pada kalimat dengan teks kutipan yang benar-benar diberikan ke model. Pemeriksaan ini tidak memahami negasi, sinonim, implikasi, hubungan sebab-akibat, konteks hukum, atau kontradiksi semantik secara andal. Skor kecocokan tinggi bukan bukti entailment dan tidak menggantikan pemeriksaan manusia terhadap dokumen asli.
+
+
+## 14. Angka, tanggal, satuan, dan konteks klaim
+
+1. Gunakan dokumen uji tanpa data pribadi yang menyebut nilai, persentase, jumlah, satuan, tanggal, dan periode secara eksplisit.
+2. Buat klaim dengan nilai yang sama tetapi format Indonesia berbeda, misalnya "Rp 1.500.000" dibanding "Rp 1500000" atau tanggal "1 September 2026" dibanding "01/09/2026". Periksa bahwa format setara tidak otomatis ditandai sebagai perbedaan.
+3. Buat klaim dengan angka yang tidak muncul pada kutipan. Panel harus menampilkan peringatan **Angka/nilai tidak ditemukan**, tanpa menyimpulkan bahwa klaim pasti salah.
+4. Gunakan angka sama dengan satuan berbeda, misalnya "10 kg" dan "10 gram". Panel harus memberi peringatan **Satuan perlu diperiksa**.
+5. Gunakan tanggal/periode yang tidak tercantum pada kutipan. Panel harus menampilkan **Tanggal/periode tidak ditemukan**. Tahun yang terlihat pada dokumen lain tetapi tidak berada dalam kutipan terpilih tidak boleh dianggap sebagai bukti.
+6. Bandingkan kalimat yang berbeda pada penanda **tidak/bukan/belum**, **wajib/harus/boleh**, **kecuali/hanya/seluruh**, serta **semester/tahun ajaran/kelas/wilayah**. Perbedaan penanda harus meminta pemeriksaan konteks, bukan menyatakan kontradiksi secara otomatis.
+7. Buka kutipan sumber dan cocokkan angka, tanda desimal, mata uang, satuan, tanggal, periode, subjek, pengecualian, dan ruang lingkup dengan dokumen asli.
+
+**Batasan:** normalisasi angka menggunakan aturan format umum dan dapat ambigu pada dokumen dengan locale campuran. Daftar satuan serta penanda konteks tidak lengkap. Perbandingan tanggal bergantung pada format yang dikenali. Nilai yang sama dapat muncul dalam konteks berbeda, sedangkan sinonim dan parafrasa dapat luput. Semua peringatan harus diperlakukan sebagai petunjuk pemeriksaan, bukan penentu kebenaran atau kontradiksi.
