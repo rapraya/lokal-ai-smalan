@@ -18,7 +18,7 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 - The gateway is not yet deployed. Cloudflare Access, DNS route, allowlisted identities, and OpenAI server secret are not configured; GPT is unavailable until those deployment steps are completed.
 - Anthropic Claude and Google Gemini remain future provider targets; their adapters are not implemented.
 - The Model Engine dashboard reports the active local runtime, WebGPU/secure-context diagnostics, the current local model catalogue, and cloud gateway readiness.
-- The provider registry does not send network requests or store credentials. Private provider keys must remain server-side; CORS alone is not authentication.
+- The browser Model Engine checks readiness and sends opted-in GPT Chat requests only to the same-origin gateway. It never calls OpenAI directly or stores provider credentials. Private provider keys remain server-side; CORS alone is not authentication.
 - Shared WebLLM 0.2.87 language-model runtime through a Web Worker for AI Chat, AI Coding, Text & Language, AI Assistant, and optional Data Analyst interpretation.
 - Llama 3.2 1B/3B model choices, download progress, streaming responses, secure-context/WebGPU adapter checks, and browser caching.
 - WebGPU adapter detection is not a guarantee that a selected model fits the device. Real browser/GPU validation, cancellation, lifecycle recovery, and robust resource handling remain required.
