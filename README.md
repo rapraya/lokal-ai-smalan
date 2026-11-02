@@ -24,6 +24,14 @@ The architecture is **local-first, not local-only**: supported models should run
 - Grounded synthesis guidance asks the local model to distinguish corroborating evidence, contextual differences, and possible conflicts while checking date and scope. It continues to require source markers for factual claims.
 - Automated tests cover coordinate-based column extraction, repeated row detection, row boundaries, unpositioned-text fallback, and source metadata. Real-world PDFs with merged cells, borders, multi-column layouts, and scanned tables still require browser/device validation.
 
+**v0.27.0 — Cross-source Evidence Conflict Detection**
+- Adds a deterministic cross-source review of cited excerpts to surface different numeric values attached to sufficiently similar text context and matching recognized units.
+- Distinguishes potential value conflicts from explicit year/period differences and same-number/different-unit cases. Both source identities, page/section labels, values, and short evidence excerpts are shown together for manual review.
+- Requires at least two shared context terms before comparing values and ignores unqualified numbers to reduce noise from page numbers and unrelated figures. The detector is bounded to selected excerpts and a small number of review items.
+- A potential conflict is not a finding that either source is wrong. Different populations, definitions, document versions, dates, or measurement methods may explain the difference; the detector does not establish semantic equivalence or resolve which source is authoritative.
+- Automated tests cover similar-context value differences, explicit year differences, unrelated subjects, and unit differences. Real multi-document school files still require browser/device validation.
+
+
 **v0.26.0 — Numerical & Contextual Verification**
 - Extends claim-level citation review to inspect explicit numeric values, percentages, currency amounts, common units, calendar dates, and standalone years in each cited claim.
 - Normalizes common Indonesian number formatting (for example, "1.500.000" and "1,5") and common equivalent date formats before comparison; a value absent from the exact cited excerpts is surfaced for review.
