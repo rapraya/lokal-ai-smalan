@@ -32,6 +32,7 @@
     <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m-7 7 7-7 7 7"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.2a2.2 2.2 0 0 0 1.5-3.8 1.8 1.8 0 0 1 1.2-3.1H18a3 3 0 0 0 3-3c0-4.5-4-8.1-9-8.1Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="15" cy="8" r="1"/><circle cx="17" cy="11.5" r="1"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13z"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
@@ -97,7 +98,15 @@
           <label class="global-search"><svg><use href="#i-search"/></svg><input id="workspaceSearch" type="search" placeholder="Cari kemampuan..." autocomplete="off"><kbd>⌘ K</kbd></label>
           <div class="topbar-divider"></div>
           <div class="runtime-pill"><span class="runtime-dot"></span><span>Local-first mode</span></div>
-          <button class="icon-control theme-toggle" id="themeToggle" aria-label="Ganti tema"><svg id="themeIcon"><use href="#i-sun"/></svg></button>
+          <div class="theme-picker">
+            <button class="icon-control theme-toggle" id="themeToggle" type="button" aria-label="Pilih tema tampilan" aria-haspopup="true" aria-expanded="false" title="Pilih tema"><svg id="themeIcon"><use href="#i-palette"/></svg></button>
+            <div class="theme-menu" id="themeMenu" role="menu" aria-label="Pilihan tema" hidden>
+              <div class="theme-menu-heading">Pilih tema tampilan</div>
+              <button class="theme-option" type="button" role="menuitemradio" data-theme-choice="dark" aria-checked="false"><span class="theme-swatch theme-swatch-dark"></span><span><b>Gelap</b><small>Fokus dan nyaman di cahaya redup</small></span><svg><use href="#i-check"/></svg></button>
+              <button class="theme-option" type="button" role="menuitemradio" data-theme-choice="light" aria-checked="false"><span class="theme-swatch theme-swatch-light"></span><span><b>Terang</b><small>Bersih, minimal, dan profesional</small></span><svg><use href="#i-check"/></svg></button>
+              <button class="theme-option" type="button" role="menuitemradio" data-theme-choice="colorful" aria-checked="false"><span class="theme-swatch theme-swatch-colorful"></span><span><b>Colorful</b><small>Pastel cerah dengan aksen warna</small></span><svg><use href="#i-check"/></svg></button>
+            </div>
+          </div>
           <div class="profile-chip"><span class="profile-avatar">S</span><span class="profile-chevron">⌄</span></div>
         </div>
       </header>
