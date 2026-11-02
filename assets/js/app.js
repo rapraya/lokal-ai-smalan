@@ -536,7 +536,7 @@
     }).filter(Boolean).sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||a.index-b.index).slice(0,5);
   }
   function inspectKnowledgeCitationMarkers(response,sourceCount){
-    const markers=Array.from(String(response||"").matchAll(/\\[S(\\d+)\\]/gi),match=>Number(match[1]));
+    const markers=Array.from(String(response||"").matchAll(/\[S(\d+)\]/gi),match=>Number(match[1]));
     const used=Array.from(new Set(markers));
     return {used,invalid:used.filter(index=>!Number.isInteger(index)||index<1||index>sourceCount),missing:markers.length===0};
   }
