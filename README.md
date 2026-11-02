@@ -7,6 +7,14 @@ The architecture is **local-first, not local-only**: supported models should run
 ## Current status
 
 
+**v0.29.0 — Advanced Table Structure Recognition**
+- Recognizes up to three consecutive table-header levels and composes column labels from hierarchical group headers and leaf headers.
+- Attaches shorter, merged group-header rows above the detailed PDF table grid when their recognized identity/metric roles align with the columns below.
+- Carries blank identity cells forward within a table as a possible merged-cell label, while marking inherited identities in each evidence record so the user can review the inference.
+- Preserves header depth, header rows, normalized column labels, and data-row boundaries in PDF table metadata; repeated-header checks can use the composed header key.
+- Table conflict evidence displays the complete column header, row/column position, header depth, and whether the subject identity was inherited. Unrecognized tabular text is withheld from generic prose-number comparison rather than guessed.
+- Automated tests cover hierarchical PDF headers, multi-row text headers, merged group labels, inherited identity cells, row boundaries, and unrecognized-table fallback. Scanned/OCR tables, merged PDF cells, multiline rows, and complex layouts still require browser/device validation.
+
 **v0.28.0 — Subject-aware & Table-aware Evidence Verification**
 - Parses TAB-delimited PDF text lines into conservative table records when recognized identity columns and numeric metric/period columns are present.
 - Maps row identity from subject, class, category, indicator, and other recognized label columns; maps metrics from value headers; and keeps year/semester/month scope separate from measurement values.
