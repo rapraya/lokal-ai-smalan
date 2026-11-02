@@ -7,7 +7,7 @@ const start = app.indexOf("  function findKnowledgeSources(");
 const sourceStart = app.indexOf("  function groupKnowledgeSourcesBySection(");
 const end = app.indexOf("\n  function bindKnowledgeWorkspace()", start);
 assert.ok(start >= 0 && sourceStart >= 0 && end > start, "Knowledge source retrieval functions are missing.");
-const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers })";
+const source = app.slice(sourceStart, end) + "\n({ findKnowledgeSources, groupKnowledgeSourcesBySection, cosineSimilarity, splitKnowledgeEmbeddingText, buildKnowledgeEmbeddingSegments, findKnowledgeSourcesHybrid, selectKnowledgeSummarySources, selectKnowledgeSourcesPerDocument, selectKnowledgeSynthesisSources, listKnowledgeDocumentCoverage, inspectKnowledgeCitationMarkers, splitKnowledgeAnswerClaims, verifyKnowledgeAnswerSupport })";
 const api = vm.runInNewContext(source, vm.createContext({}));
 const pages = [
   { page: 1, documentName: "Pedoman.pdf", text: "Pendidikan karakter dan pembelajaran di sekolah." },
@@ -325,6 +325,56 @@ assert.deepEqual(
   { used: [], invalid: [], missing: true },
   "Answers without source markers must be flagged."
 );
+const citationEvidence = [
+  {
+    documentName: "Pedoman.pdf",
+    section: "Program Pembelajaran",
+    text: "Program pembelajaran meningkatkan capaian peserta didik melalui evaluasi berkala."
+  }
+];
+const supportedAudit = api.verifyKnowledgeAnswerSupport(
+  "Program pembelajaran meningkatkan capaian peserta didik [S1].",
+  citationEvidence
+);
+assert.equal(supportedAudit.claimCount, 1);
+assert.equal(supportedAudit.claims[0].status, "supported",
+  "Claims with strong lexical overlap against their cited excerpt should be marked textually supported.");
+assert.equal(supportedAudit.counts.supported, 1);
+const partialAudit = api.verifyKnowledgeAnswerSupport(
+  "Program pembelajaran meningkatkan kompetensi siswa melalui pendampingan intensif [S1].",
+  [{ text: "Program pembelajaran rutin dilaksanakan dengan evaluasi semester." }]
+);
+assert.equal(partialAudit.claims[0].status, "partial",
+  "Claims with limited but non-zero lexical overlap should require manual review.");
+const weakAudit = api.verifyKnowledgeAnswerSupport(
+  "Pemerintah menetapkan anggaran tahunan meningkat drastis [S1].",
+  citationEvidence
+);
+assert.equal(weakAudit.claims[0].status, "weak",
+  "A valid source marker alone must not imply that the excerpt supports the claim.");
+const uncitedAudit = api.verifyKnowledgeAnswerSupport(
+  "Kegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
+  citationEvidence
+);
+assert.equal(uncitedAudit.claims[0].status, "uncited",
+  "Factual-looking statements without source markers must be flagged.");
+const invalidAudit = api.verifyKnowledgeAnswerSupport(
+  "Program pembelajaran meningkatkan capaian peserta didik [S4].",
+  citationEvidence
+);
+assert.equal(invalidAudit.claims[0].status, "invalid");
+assert.deepEqual(Array.from(invalidAudit.claims[0].invalid), [4]);
+const multiClaimAudit = api.verifyKnowledgeAnswerSupport(
+  "Program pembelajaran meningkatkan capaian peserta didik [S1].\\\\nKegiatan ekstrakurikuler meningkatkan kehadiran peserta setiap semester.",
+  citationEvidence
+);
+assert.equal(multiClaimAudit.claimCount, 2, "Claim verification should inspect separate sentences independently.");
+assert.equal(multiClaimAudit.counts.supported, 1);
+assert.equal(multiClaimAudit.counts.uncited, 1);
+const shortAudit = api.verifyKnowledgeAnswerSupport("Kesimpulan utama [S1].", citationEvidence);
+assert.equal(shortAudit.claims[0].status, "limited",
+  "Very short claims should be labeled unassessed rather than assumed supported.");
+
 
 const summaryPages = [
   ...[1, 2, 3, 4, 5].map(page => ({ documentId: 10, documentName: "Panduan.pdf", page, text: "Isi halaman panduan " + page })),
