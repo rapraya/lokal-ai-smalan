@@ -33,3 +33,5 @@ jobs:
         run: node scripts/assistant-test.mjs
       - name: Run Personal AI privacy and context tests
         run: node scripts/personal-ai-test.mjs
+      - name: Run AI Knowledge retrieval tests
+        run: node scripts/knowledge-test.mjs
