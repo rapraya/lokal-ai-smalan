@@ -379,14 +379,14 @@
     try{
       for(let n=1;n<=pdf.numPages&&total<90000;n++){
         const page=await pdf.getPage(n),content=await page.getTextContent();
-        let text=content.items.map(x=>x.str||"").join(" ").replace(/\\s+/g," ").trim(),isOcr=false;
+        let text=content.items.map(x=>x.str||"").join(" ").replace(/\s+/g," ").trim(),isOcr=false;
         if(!text&&options.ocrEnabled&&ocrAttempted<20){\n          ocrAttempted++;
           try{
             if(!ocrWorker){const tesseract=await loadKnowledgeOcr();ocrWorker=await tesseract.createWorker("ind+eng",1,{logger:m=>{if(m.status==="recognizing text"&&typeof options.onProgress==="function")options.onProgress(n,pdf.numPages,m.progress);}});}
             const viewport=page.getViewport({scale:1.6}),canvas=document.createElement("canvas"),context=canvas.getContext("2d");
             canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
             await page.render({canvasContext:context,viewport}).promise;
-            const result=await ocrWorker.recognize(canvas);text=(result.data.text||"").replace(/\\s+/g," ").trim();canvas.width=0;canvas.height=0;
+            const result=await ocrWorker.recognize(canvas);text=(result.data.text||"").replace(/\s+/g," ").trim();canvas.width=0;canvas.height=0;
             if(text){isOcr=true;ocrCount++;}
           }catch(error){ocrError=error.message;break;}
         }
