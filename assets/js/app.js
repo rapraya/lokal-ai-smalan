@@ -2022,7 +2022,17 @@
   }
 
   async function unloadChatModel() {
-    if (!chatEngine || chatGenerating) return;
+    if (chatGenerating) return;
+    if (chatCloudEngine) {
+      const runtimeToUnload = chatCloudEngine;
+      try { await runtimeToUnload.unload(); } catch (_) {}
+      chatCloudEngine = null;
+      chatCloudModelId = "";
+      if (modelEngine) modelEngine.clearRuntime(runtimeToUnload);
+      syncChatControls();
+      return;
+    }
+    if (!chatEngine) return;
     const runtimeToUnload = chatEngine;
     try {
       await runtimeToUnload.unload();
@@ -2035,9 +2045,61 @@
     syncChatControls();
   }
 
+  async function loadSelectedChatProvider() {
+    const providerSelect = document.getElementById("chatProviderSelect");
+    const selectedProvider = providerSelect ? providerSelect.value : "local";
+    if (selectedProvider !== "openai") return loadChatModel();
+    if (chatEngine) {
+      setChatStatus("Lepaskan model lokal sebelum beralih ke GPT.", "error");
+      return;
+    }
+    const consent = document.getElementById("chatCloudConsent");
+    if (!consent || !consent.checked) {
+      setChatStatus("Centang persetujuan pemrosesan cloud untuk percakapan ini terlebih dahulu.", "error");
+      return;
+    }
+    if (!modelEngine || typeof modelEngine.checkGateway !== "function") {
+      setChatStatus("Secure AI Gateway belum tersedia.", "error");
+      return;
+    }
+
+    chatLoading = true;
+    chatLastError = "";
+    syncChatControls();
+    try {
+      const gateway = await modelEngine.checkGateway();
+      if (gateway.status !== "ready" || !gateway.allowedModels.length) {
+        throw new Error(gateway.message || "Gateway GPT belum siap.");
+      }
+      const modelSelect = document.getElementById("chatCloudModelSelect");
+      const selectedModel = modelSelect && gateway.allowedModels.includes(modelSelect.value)
+        ? modelSelect.value
+        : gateway.allowedModels[0];
+      const client = modelEngine.createOpenAIClient();
+      modelEngine.attachRuntime("openai", client, selectedModel);
+      chatCloudEngine = client;
+      chatCloudModelId = selectedModel;
+      chatLastError = "";
+      setChatStatus("GPT siap melalui secure gateway. Pesan Chat akan diproses oleh OpenAI.", "ready");
+    } catch (error) {
+      chatCloudEngine = null;
+      chatCloudModelId = "";
+      chatLastError = error && error.message ? error.message : "Gateway GPT belum dapat digunakan.";
+      setChatStatus(chatLastError, "error");
+    } finally {
+      chatLoading = false;
+      syncChatControls();
+    }
+  }
   async function submitChatMessage(value) {
     const prompt = String(value || "").trim();
-    if (!prompt || !chatEngine || chatGenerating) return;
+    const activeChatEngine = chatCloudEngine || chatEngine;
+    const cloudConsent = document.getElementById("chatCloudConsent");
+    if (!prompt || !activeChatEngine || chatGenerating) return;
+    if (chatCloudEngine && (!cloudConsent || !cloudConsent.checked)) {
+      setChatStatus("Persetujuan pemrosesan cloud tidak aktif. Aktifkan kembali sebelum mengirim pesan.", "error");
+      return;
+    }
     chatGenerating = true;
     chatLastError = "";
     chatMessages.push({ role: "user", content: prompt });
@@ -2048,8 +2110,11 @@
     const host = document.getElementById("chatMessages");
     const answerNode = host && host.querySelector(".chat-message:last-child .chat-message-text");
     try {
-      const stream = await chatEngine.chat.completions.create({
-        messages: [chatSystemMessage, ...(buildPersonalContextMessage() ? [buildPersonalContextMessage()] : []), ...chatMessages.slice(0, -1).slice(-24)],
+      const chatContext = chatCloudEngine
+        ? [chatSystemMessage, ...chatMessages.slice(0, -1).slice(-24)]
+        : [chatSystemMessage, ...(buildPersonalContextMessage() ? [buildPersonalContextMessage()] : []), ...chatMessages.slice(0, -1).slice(-24)];
+      const stream = await activeChatEngine.chat.completions.create({
+        messages: chatContext,
         temperature: 0.7,
         top_p: 0.9,
         max_tokens: 768,
