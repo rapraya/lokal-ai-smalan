@@ -128,9 +128,15 @@ Run functional tests, accessibility checks, responsive browser testing, privacy 
 Personal AI stores only user-entered preference values and manually added notes. Automatic memory extraction is not implemented. Data stays in page memory unless the user explicitly enables browser persistence. Persistence is stored under a versioned localStorage key with a consent flag; turning it off or clearing data removes that key. Browser storage is not encrypted and is not suitable for secrets or sensitive information. A separate disabled-by-default permission controls whether a bounded preference-and-note context is added to local WebLLM requests from Chat, Coding, Text, and Assistant. No cloud sync or transcript storage is added. The user can inspect and delete each note and clear all stored Personal AI data.
 
 
-## AI Knowledge workspace (v0.18.0)
+## AI Knowledge workspace (v0.19.0)
 
-The workspace now supports an in-memory collection of up to five PDF, TXT, and Markdown documents. Each file is processed independently under the existing per-file size and page limits. Users can remove one document or clear the collection. Cross-document lexical retrieval ranks relevant chunks across the complete loaded collection and preserves document filename plus page/section identity in source markers and displayed excerpts. Only the selected excerpts are passed to the already-loaded local WebLLM model. No document data is persisted or uploaded. Semantic embeddings, OCR for scanned PDFs, and browser/device validation remain future work.
+The multi-document collection now supports explicit opt-in OCR for scanned PDF pages. PDF.js still extracts embedded text first; when a page has no extractable text and the user has enabled OCR, the page is rendered to a canvas and processed in-browser by Tesseract.js with Indonesian and English language packs. OCR is capped at 20 pages per PDF and runs only for pages lacking embedded text. The Tesseract.js module and language data are fetched from external CDNs on demand; this is disclosed in the UI. OCR text is stored only in the current page session and then follows the same local retrieval path. OCR quality depends on scan clarity and layout; this does not guarantee accurate transcription.
+
+Retrieval now uses deterministic BM25-style term relevance across the loaded document chunks, with stop-word filtering, document-frequency weighting, length normalization, and a phrase bonus. It remains lexical retrieval, not semantic embedding search. Up to five excerpts are selected and sent to the already-loaded local WebLLM model, with filename and page/section citations shown for verification. No document is uploaded or persisted. Browser testing of OCR, accuracy evaluation, and embedding-based semantic search remain future work.
+
+## Previous AI Knowledge workspace (v0.18.0)
+
+The workspace now supports an in-memory collection of up to five PDF, TXT, and Markdown documents. Each file is processed independently under the existing per-file size and page limits. Users can remove one document or clear the collection. Cross-document lexical retrieval ranks relevant chunks across the complete loaded collection and preserves document filename plus page/section identity in source markers and displayed excerpts. Only the selected excerpts are passed to the already-loaded local WebLLM model. No document data is persisted or uploaded. Semantic embeddings, OCR for scanned PDFs, and browser/device validation remained future work at that version.
 
 ## Previous AI Knowledge alpha (v0.17.0)
 
