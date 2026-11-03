@@ -290,6 +290,10 @@ assert.ok(css.includes(".video-studio-grid{") && css.includes(".video-frame-resu
   css.includes("@media(max-width:600px){.video-workspace-card"),
   "Video Studio must include dedicated responsive and small-screen styles.");
 
+assert.ok(app.includes("function getLocalModelOptionsHtml()") &&
+  (app.match(/getLocalModelOptionsHtml\(\)/g) || []).length === 4 &&
+  !app.includes('value="Llama-3.2-1B-Instruct-q4f16_1-MLC"'),
+  "Chat, Coding, and Text must render local model options from the shared Model Engine catalog.");
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
   modelEngineCore.includes('id: "anthropic"') &&
@@ -473,9 +477,9 @@ assert.ok(css.includes(".data-column-filters") && css.includes(".data-explorer-t
   css.includes(".data-pagination") && css.includes(".data-th-sort"),
   "Data Explorer responsive styles are missing.");
 
-assert.ok(app.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
+assert.ok(modelEngineCore.includes("Llama-3.2-1B-Instruct-q4f16_1-MLC"),
   "The small Llama 3.2 1B model option is missing.");
-assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
+assert.ok(modelEngineCore.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
   "The Llama 3.2 3B model option is missing.");
 assert.ok(app.includes("CreateWebWorkerMLCEngine") && app.includes("initProgressCallback"),
   "WebLLM worker initialization/progress integration is missing.");
