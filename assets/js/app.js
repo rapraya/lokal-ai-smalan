@@ -52,6 +52,30 @@
 
   const icon = (name) => '<svg aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
 
+  function getLocalModelOptionsHtml() {
+    const snapshot = modelEngine && typeof modelEngine.getSnapshot === "function"
+      ? modelEngine.getSnapshot()
+      : null;
+    const provider = snapshot && Array.isArray(snapshot.providers)
+      ? snapshot.providers.find((item) => item.id === "local-webllm")
+      : null;
+    const models = provider && Array.isArray(provider.models) ? provider.models : [];
+    if (!models.length) {
+      return '<option value="" disabled selected>Model lokal belum tersedia</option>';
+    }
+    const escapeAttribute = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
+    return models.map((model) => {
+      const id = escapeAttribute(model.id || "");
+      const name = escapeAttribute(model.name || model.id || "Model lokal");
+      const memory = Number.isFinite(Number(model.memoryEstimateMB))
+        ? String(Number(model.memoryEstimateMB))
+        : "";
+      return '<option value="' + id + '" data-vram="' + escapeAttribute(memory) + '">' + name + '</option>';
+    }).join("");
+  }
+
   const modules = {
     chat: {
       title: "AI Chat", label: "CONVERSATIONAL INTELLIGENCE", icon: "message", color: "icon-blue",
@@ -1642,8 +1666,7 @@
           '<div id="chatLocalModelControls">' +
             '<label class="chat-field-label" for="chatModelSelect">Model lokal</label>' +
             '<select class="chat-model-select" id="chatModelSelect">' +
-              '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
-              '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+              ' + getLocalModelOptionsHtml() +
             '</select>' +
             '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
           '</div>' +
@@ -1686,8 +1709,7 @@
           '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU · shared with AI Chat</small></div></div>' +
           '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
           '<select class="chat-model-select" id="chatModelSelect">' +
-            '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
-            '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+            ' + getLocalModelOptionsHtml() +
           '</select>' +
           '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model lebih besar belum tentu lebih cepat atau lebih cocok untuk perangkat.</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
