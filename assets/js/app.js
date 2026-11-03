@@ -85,7 +85,7 @@
       title: "Video Studio", label: "LOCAL VIDEO TOOLS", icon: "video", color: "icon-orange",
       description: "Workspace video lokal untuk pemutaran, pembacaan metadata, pemilihan timestamp, dan ekspor frame PNG.",
       headline: "Temukan frame penting dari sebuah video.",
-      detail: "Versi awal mendukung file video hingga 100 MB dan 10 menit melalui pemutar browser, menampilkan resolusi serta durasi, dan mengekspor frame PNG dari timestamp terpilih. Batas frame 4.096 piksel per sisi dan 16 megapiksel. Format dan codec mengikuti dukungan browser. Pemotongan timeline, penggabungan klip, ekstraksi audio, dan generasi video AI belum diaktifkan.",
+      detail: "Versi awal mendukung file video hingga 100 MB dan durasi terindeks maksimal 10 menit melalui pemutar browser, menampilkan resolusi serta durasi saat tersedia, dan mengekspor frame PNG dari timestamp terpilih. Jika metadata tidak mencantumkan durasi, frame dicari melalui pemutaran lokal dengan batas timestamp 10 menit. Batas frame 4.096 piksel per sisi dan 16 megapiksel. Format dan codec mengikuti dukungan browser. Pemotongan timeline, penggabungan klip, ekstraksi audio, dan generasi video AI belum diaktifkan.",
       stages: [["Local video preview", "Memutar video lokal serta membaca durasi dan resolusi."], ["Frame capture", "Memilih timestamp dan mengekspor satu frame sebagai PNG."], ["Video editing & AI", "Pemotongan timeline, audio, transkripsi, dan generasi video setelah runtime yang sesuai tersedia dan diuji."]]
     },
     text: {
