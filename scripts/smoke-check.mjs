@@ -171,7 +171,7 @@ assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
   html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
   html.includes('assets/js/audio-lab.js?v=0.47.0') &&
-  html.includes("audio-tts-worker.js?v=0.47.0") &&
+  audioLab.includes("audio-tts-worker.js?v=0.47.0") &&
   app.includes("Whisper Tiny Multilingual") && app.includes("MMS Indonesian TTS") &&
   app.includes("CC BY-NC 4.0"),
   "Overview, navigation, and module metadata must describe local ASR and license-gated Indonesian TTS honestly.");
