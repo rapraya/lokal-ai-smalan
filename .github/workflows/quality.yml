@@ -24,6 +24,8 @@ jobs:
           node-version: 22
       - name: Check application JavaScript syntax
         run: node --check assets/js/app.js
+      - name: Check Image Studio syntax
+        run: node --check assets/js/image-studio.js
       - name: Check browser smoke script syntax
         run: node --check scripts/browser-smoke.mjs
       - name: Check Cloudflare gateway syntax
