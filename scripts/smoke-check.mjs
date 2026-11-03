@@ -122,7 +122,7 @@ assert.ok(videoStudio.includes('preload="metadata"') && videoStudio.includes("pl
   videoStudio.includes("player.videoHeight") && videoStudio.includes("function waitForSeeked()"),
   "Video Studio must read browser video metadata and wait for the selected frame before capture.");
 assert.ok(videoStudio.includes("context.drawImage(player, 0, 0, width, height)") &&
-  videoStudio.includes('}, "image/png") && videoStudio.includes("function downloadFrame()"),
+  videoStudio.includes('}, "image/png"') && videoStudio.includes("function downloadFrame()"),
   "Video Studio must capture and download a local PNG frame.");
 assert.ok(videoStudio.includes("File diproses di browser dan tidak diunggah.") &&
   videoStudio.includes("Pemotongan timeline") && !videoStudio.includes("fetch("),
