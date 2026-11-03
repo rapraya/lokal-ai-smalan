@@ -471,8 +471,9 @@
         const relativeStart = timestamp && Number.isFinite(timestamp[0]) ? timestamp[0] : 0;
         const relativeEnd = timestamp && Number.isFinite(timestamp[1])
           ? timestamp[1] : audioState.asrRangeDuration;
-        const start = Math.max(rangeStart, Math.min(rangeEnd - 0.1, rangeStart + relativeStart));
-        const end = Math.min(rangeEnd, Math.max(start + 0.1, rangeStart + relativeEnd));
+        const start = Math.max(rangeStart, Math.min(rangeEnd - 0.001, rangeStart + relativeStart));
+        const end = Math.min(rangeEnd, Math.max(start + 0.001, rangeStart + relativeEnd));
+        if (end <= start) return null;
         return { start, end, text };
       }).filter(Boolean);
       if (segments.length) return segments;
@@ -519,7 +520,7 @@
         .filter((segment) => segment.text && Number.isFinite(segment.start) && Number.isFinite(segment.end))
         .map((segment, index) => [
           String(index + 1),
-          formatSrtTime(segment.start) + " --> " + formatSrtTime(Math.max(segment.end, segment.start + 0.1)),
+          formatSrtTime(segment.start) + " --> " + formatSrtTime(segment.end),
           segment.text.trim()
         ].join("\n"));
       if (cues.length) downloadTranscript("srt", cues.join("\n\n") + "\n", "application/x-subrip");
