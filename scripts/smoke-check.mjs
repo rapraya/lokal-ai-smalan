@@ -256,6 +256,19 @@ assert.ok(videoStudio.includes('preload="metadata"') && videoStudio.includes("pl
   "Video Studio must read browser video metadata and support both seeking and playback-based frame capture.");
 assert.ok(videoStudio.includes("cancelPendingWait") && videoStudio.includes("const cancelWait = () => finish(new Error("), "Video Studio must expose cancellation for pending frame waits.");
 assert.ok(videoStudio.includes("if (current.cancelPendingWait) current.cancelPendingWait();"), "Video Studio teardown must cancel pending seek/playback waits immediately.");
+const clearVideoStart = videoStudio.indexOf("function clearVideo(message)");
+const clearVideoEnd = videoStudio.indexOf("function loadFile(file)", clearVideoStart);
+const clearVideoBody = videoStudio.slice(clearVideoStart, clearVideoEnd);
+assert.ok(clearVideoBody.includes('player.removeAttribute("src");') &&
+  clearVideoBody.includes('URL.revokeObjectURL(videoState.sourceUrl);') &&
+  clearVideoBody.includes('videoState.sourceUrl = "";') &&
+  clearVideoBody.includes('videoState.file = null;') &&
+  clearVideoBody.includes('videoState.durationKnown = false;') &&
+  clearVideoBody.includes('releasePreview();'),
+  "Clearing a video must detach the player, revoke its source/preview URLs, and reset file metadata.");
+assert.ok(videoStudio.includes('if (videoState.sourceUrl) URL.revokeObjectURL(videoState.sourceUrl);') &&
+  videoStudio.includes('releasePreview();'),
+  "Replacing a video must release the previous source and captured frame preview.");
 assert.ok(videoStudio.includes('current.file = null;') && videoStudio.includes('current.frameBlob = null;') &&
   videoStudio.includes('current.sourceUrl = "";') && videoStudio.includes('current.previewUrl = "";') &&
   videoStudio.includes('if (frameImage) frameImage.removeAttribute("src");') && videoStudio.includes('current.root = null;'),
