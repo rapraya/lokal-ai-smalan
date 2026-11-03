@@ -91,7 +91,7 @@ try {
   assert.equal(await desktop.locator('#imagePreviewContainer').isVisible(), false);
   assert.equal(await desktop.locator('#imageExportButton').isDisabled(), true);
 
-  await desktop.route("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2", async (route) => {
+  await desktop.context().route("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/javascript; charset=utf-8",
