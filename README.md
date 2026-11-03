@@ -6,6 +6,14 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.47.0 — Experimental Indonesian Text-to-Speech**
+- Adds opt-in browser-local Indonesian speech synthesis to Audio Lab using the MMS VITS ONNX conversion `payam1394/traxlate-mms-tts-ind`.
+- Uses the quantized q8 ONNX weight file (about 38.3 MB), Transformers.js 4.3.2, WebAssembly CPU, and a dedicated worker. The first model/runtime load requires an internet connection; generated text and audio stay in the browser and are not sent to an inference endpoint.
+- Requires explicit acknowledgement of the model's **CC BY-NC 4.0** license before model loading. The model is for noncommercial use only and attribution is required. Do not use it in a commercial context without separate permission.
+- Limits input to 500 characters and a generated waveform to 90 seconds. Output is previewable and downloadable as mono PCM16 WAV.
+- This is experimental: the model conversion was exported using Transformers.js 3.8.1 while this app uses 4.3.2. Browser tests mock the pipeline and verify license gating, worker lifecycle, audio output handling, WAV encoding, cancellation, and mobile layout; they do not verify real model compatibility, pronunciation quality, speed, or memory use on physical devices.
+- Model attribution and usage notes are in [Third-party model licenses](docs/THIRD-PARTY-MODEL-LICENSES.md).
+
 **v0.46.2 — Accurate SRT Cue Timing**
 - Preserves the Whisper segment's actual start timestamp while clamping its end to the selected source-audio range.
 - Ignores zero-length subtitle cues and avoids extending valid cues beyond the source clip.
