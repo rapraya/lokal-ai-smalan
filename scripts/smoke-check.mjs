@@ -294,6 +294,11 @@ assert.ok(app.includes("function getLocalModelOptionsHtml()") &&
   (app.match(/getLocalModelOptionsHtml\(\)/g) || []).length === 4 &&
   !app.includes('value="Llama-3.2-1B-Instruct-q4f16_1-MLC"'),
   "Chat, Coding, and Text must render local model options from the shared Model Engine catalog.");
+assert.ok(app.includes("function updateLocalModelHint(") &&
+  app.includes("navigator.deviceMemory") &&
+  app.includes("WebGPU tersedia; adapter dan alokasi model tetap perlu diuji.") &&
+  (app.match(/updateLocalModelHint\(modelSelect, modelHint\)/g) || []).length === 3,
+  "Chat, Coding, and Text must explain manifest memory, coarse device RAM reporting, and WebGPU compatibility limits.");
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
   modelEngineCore.includes('id: "anthropic"') &&
