@@ -6,6 +6,15 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.45.0 — Local Whisper Tiny Speech-to-Text (Alpha)**
+- Adds optional browser-local speech transcription to Audio Lab using Transformers.js 4.3.2 and the multilingual `onnx-community/whisper-tiny` model.
+- Runs quantized 8-bit inference through a dedicated single-thread WebAssembly worker on CPU; it does not require a GPU or API key.
+- The model weights are downloaded from Hugging Face on first use (approximately 45 MB; actual supporting-file transfer may vary) and cached by the browser. The Transformers.js runtime is loaded from jsDelivr. An internet connection is needed for first-time downloads.
+- Audio remains in the browser. The selected range is resampled to mono 16 kHz locally and transferred to the worker; there is no audio upload or cloud inference.
+- Each transcription is limited to a selected range of 120 seconds. Longer recordings can be processed in smaller ranges. Language choices are Indonesian, English, and automatic detection; 30-second chunks use 5-second overlap.
+- Adds download progress, worker cancellation, transcription timestamps, copyable results, and worker cleanup when leaving Audio Lab.
+- Automated browser coverage uses a deterministic mock of the Transformers.js pipeline to test worker wiring, progress, 16 kHz audio transfer, language selection, results, and cancellation. It does not establish real-device model speed, speech accuracy, or memory use; those still need testing on supported hardware.
+
 **v0.44.0 — Browser-local Video Studio Frame Capture**
 - Adds a browser-local video workspace for supported files up to 100 MB and 10 minutes.
 - Reads video metadata and previews the selected local file with the browser's native media player. If a container omits duration metadata, frame capture can advance through local playback with a 10-minute timestamp ceiling.
