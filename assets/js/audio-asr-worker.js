@@ -3,6 +3,7 @@ import { env, pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transfo
 const MODEL_ID = "onnx-community/whisper-tiny";
 let transcriber = null;
 let loadingPromise = null;
+let activeLoadRequestId = 0;
 
 function postError(requestId, error) {
   const message = error && error.message ? error.message : "Proses transkripsi lokal gagal.";
@@ -14,6 +15,7 @@ function reportProgress(info) {
   if (info.status === "progress_total") {
     self.postMessage({
       type: "model-progress",
+      requestId: activeLoadRequestId,
       progress: Number.isFinite(info.progress) ? info.progress : null,
       loaded: Number.isFinite(info.loaded) ? info.loaded : null,
       total: Number.isFinite(info.total) ? info.total : null,
@@ -24,6 +26,7 @@ function reportProgress(info) {
   if (info.status === "initiate" || info.status === "download") {
     self.postMessage({
       type: "model-stage",
+      requestId: activeLoadRequestId,
       stage: info.status,
       file: typeof info.file === "string" ? info.file : ""
     });
@@ -31,6 +34,7 @@ function reportProgress(info) {
 }
 
 async function loadModel(requestId) {
+  activeLoadRequestId = requestId;
   if (!loadingPromise) {
     loadingPromise = (async () => {
       env.backends.onnx.wasm.numThreads = 1;
