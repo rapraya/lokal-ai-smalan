@@ -38,6 +38,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Each transcription requires a selected range of at least 1 second and is limited to 120 seconds. Longer recordings can be processed in smaller ranges. Language choices are Indonesian, English, and automatic detection; 30-second chunks use 5-second overlap.
 - Adds download progress, worker cancellation, transcription timestamps, copyable results, and worker cleanup when leaving Audio Lab.
 - Automated browser coverage uses a deterministic mock of the Transformers.js pipeline to test worker wiring, progress, 16 kHz audio transfer, language selection, results, and cancellation. It does not establish real-device model speed, speech accuracy, or memory use; those still need testing on supported hardware.
+- A separate [real-model validation checklist](docs/audio-asr-real-validation.md) covers actual browser inference, Indonesian/English samples, transcript reference comparison, cancellation recovery, and network privacy inspection. Do not treat mocked browser tests as real-model validation.
 
 **v0.44.0 — Browser-local Video Studio Frame Capture**
 - Adds a browser-local video workspace for supported files up to 100 MB and 10 minutes.
