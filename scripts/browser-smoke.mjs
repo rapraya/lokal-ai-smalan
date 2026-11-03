@@ -348,7 +348,7 @@ try {
     return output && !output.hidden && player && player.src.startsWith("blob:") &&
       document.querySelector('#audioTtsStatus')?.dataset.state === "success";
   });
-  assert.match(await desktop.locator('#audioTtsOutputMeta').innerText(), /16,000 Hz/);
+  assert.match(await desktop.locator('#audioTtsOutputMeta').innerText(), /16[.,]000 Hz/);
   const ttsDownloadEvent = desktop.waitForEvent('download');
   await desktop.locator('#audioTtsDownloadButton').click();
   const ttsDownload = await ttsDownloadEvent;
