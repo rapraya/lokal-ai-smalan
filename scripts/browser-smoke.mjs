@@ -115,7 +115,7 @@ try {
               throw new Error("Unexpected ASR generation settings.");
             }
             calls += 1;
-            if (calls === 2) await new Promise((resolve) => setTimeout(resolve, 5000));
+            if (calls === 4) await new Promise((resolve) => setTimeout(resolve, 5000));
             const language = settings.language || "auto";
             const text = "Halo, ini uji transkripsi " + language + ".";
             return { text, chunks: [{ text, timestamp: [0, 0.5] }] };
@@ -130,7 +130,7 @@ try {
   await desktop.waitForSelector('.audio-lab-page');
   assert.match(await desktop.locator('.audio-lab-page').innerText(), /LOCAL AUDIO & SPEECH AI/);
   const sampleRate = 24000;
-  const audioFrames = sampleRate;
+  const audioFrames = sampleRate * 2;
   const wavFixture = Buffer.alloc(44 + audioFrames * 2);
   wavFixture.write('RIFF', 0);
   wavFixture.writeUInt32LE(36 + audioFrames * 2, 4);
@@ -153,7 +153,7 @@ try {
   await desktop.waitForFunction(() => {
     const duration = document.querySelector('#audioWaveformDuration');
     const exportButton = document.querySelector('#audioExportButton');
-    return duration && duration.textContent === '00:01' && exportButton && !exportButton.disabled;
+    return duration && duration.textContent === '00:02' && exportButton && !exportButton.disabled;
   });
   assert.match(await desktop.locator('#audioSourceDetails').innerText(), /24[.,]000 Hz/);
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), true);
@@ -221,8 +221,57 @@ try {
   assert.ok(asrTranscriptOutput.includes("Halo, ini uji transkripsi indonesian."),
     "Local ASR worker must return the mocked transcript. Status: " + asrTranscriptStatusText +
     " · Model: " + asrModelStatusAfterInference);
-  assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /kata · rentang/);
+  assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /kata · 1 bagian/);
   assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Transkripsi selesai/);
+  assert.equal(await desktop.locator('#audioAsrAppend').isChecked(), true,
+    "Sequential transcription must append to the previous result by default.");
+
+  await desktop.locator('#audioTrimStart').fill('1');
+  await desktop.locator('#audioTrimEnd').fill('2');
+  await desktop.locator('#audioAsrLanguage').selectOption('en');
+  await desktop.locator('#audioAsrTranscribeButton').click();
+  await desktop.waitForFunction(() => {
+    const output = document.querySelector('#audioAsrOutput');
+    return output && output.value.includes("Halo, ini uji transkripsi english.");
+  });
+  const appendedTranscript = await desktop.locator('#audioAsrOutput').inputValue();
+  assert.ok(appendedTranscript.includes("Halo, ini uji transkripsi indonesian.") &&
+    appendedTranscript.includes("[00:01.0–00:01.5] Halo, ini uji transkripsi english."),
+    "Appending a second range must retain the first transcript and apply the selected-range timestamp offset.");
+  assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /2 bagian/);
+
+  const txtDownloadEvent = desktop.waitForEvent('download');
+  await desktop.locator('#audioAsrTextButton').click();
+  const transcriptTextDownload = await txtDownloadEvent;
+  assert.equal(transcriptTextDownload.suggestedFilename(), 'sine-test-transcript.txt');
+  const transcriptText = await readFile(await transcriptTextDownload.path(), 'utf8');
+  assert.ok(transcriptText.includes("Halo, ini uji transkripsi indonesian.") &&
+    transcriptText.includes("Halo, ini uji transkripsi english."));
+
+  const srtDownloadEvent = desktop.waitForEvent('download');
+  await desktop.locator('#audioAsrSrtButton').click();
+  const transcriptSrtDownload = await srtDownloadEvent;
+  assert.equal(transcriptSrtDownload.suggestedFilename(), 'sine-test-transcript.srt');
+  const transcriptSrt = await readFile(await transcriptSrtDownload.path(), 'utf8');
+  assert.ok(transcriptSrt.includes("00:00:00,000 --> 00:00:00,500") &&
+    transcriptSrt.includes("00:00:01,000 --> 00:00:01,500") &&
+    transcriptSrt.includes("Halo, ini uji transkripsi english."),
+    "SRT export must contain ordered, timestamped subtitle cues from both selected ranges.");
+
+  await desktop.locator('#audioAsrAppend').uncheck();
+  await desktop.locator('#audioTrimStart').fill('0');
+  await desktop.locator('#audioTrimEnd').fill('1');
+  await desktop.locator('#audioAsrLanguage').selectOption('auto');
+  await desktop.locator('#audioAsrTranscribeButton').click();
+  await desktop.waitForFunction(() => {
+    const output = document.querySelector('#audioAsrOutput');
+    return output && output.value.includes("Halo, ini uji transkripsi auto.");
+  });
+  const replacedTranscript = await desktop.locator('#audioAsrOutput').inputValue();
+  assert.ok(replacedTranscript.includes("Halo, ini uji transkripsi auto.") &&
+    !replacedTranscript.includes("indonesian.") && !replacedTranscript.includes("english."),
+    "Disabling append must replace earlier transcript segments instead of duplicating them.");
+  assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /1 bagian/);
 
   await desktop.locator('#audioTrimStart').fill('0');
   await desktop.locator('#audioTrimEnd').fill('0.6');
@@ -242,6 +291,9 @@ try {
   assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Proses dibatalkan/);
   assert.equal(await desktop.locator('#audioAsrLoadButton').isEnabled(), true,
     "Cancelling ASR must terminate its worker and allow a clean reload.");
+  await desktop.locator('#audioAsrClearButton').click();
+  assert.equal(await desktop.locator('#audioAsrOutput').inputValue(), "");
+  assert.equal(await desktop.locator('#audioAsrSrtButton').isDisabled(), true);
   await desktop.locator('#audioClearButton').click();
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), false);
   assert.equal(await desktop.locator('#audioExportButton').isDisabled(), true);
