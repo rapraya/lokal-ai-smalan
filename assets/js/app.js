@@ -68,11 +68,11 @@
       stages: [["Code assistant", "Penjelasan kode, debugging, refactoring, dan dokumentasi."], ["Editor & project context", "Editor dengan syntax highlighting dan konteks berkas terpilih."], ["Safe execution", "Pengujian terisolasi dan review perubahan sebelum diterapkan."]]
     },
     image: {
-      title: "Image Studio", label: "GENERATIVE VISUALS", icon: "image", color: "icon-rose",
-      description: "Ruang kreatif untuk membuat konsep visual, memahami gambar, mengedit, dan menyiapkan aset desain.",
-      headline: "Visualisasikan ide tanpa batas.",
-      detail: "Analisis gambar dan beberapa tugas computer vision dapat dijalankan lokal dengan model kompatibel. Generasi gambar dari teks memerlukan runtime/model khusus; itu tidak otomatis tersedia hanya dengan memasang Transformers.js.",
-      stages: [["Image understanding", "Deskripsi gambar, klasifikasi, deteksi objek, dan pemrosesan visual."], ["Image creation", "Evaluasi model generatif dan kebutuhan GPU, memori, serta ruang penyimpanan."], ["Editing workspace", "Crop, resize, remove background, variasi, dan ekspor aset."]]
+      title: "Image Studio", label: "LOCAL IMAGE EDITOR", icon: "image", color: "icon-rose",
+      description: "Editor gambar berbasis browser untuk rotasi, pembalikan, pengubahan ukuran, konversi format, dan ekspor aset visual.",
+      headline: "Siapkan aset visual langsung di browser.",
+      detail: "Editor lokal tahap awal mendukung JPEG, PNG, dan WebP dengan batas ukuran file 20 MB dan keluaran hingga 40 megapiksel. File diproses di perangkat dan tidak diunggah. Generasi gambar AI, pemahaman gambar, dan penghapusan latar masih dalam tahap pengembangan.",
+      stages: [["Local image editing", "Rotasi, pembalikan, dan pratinjau perubahan gambar di browser."], ["Resize & conversion", "Mengubah dimensi dan mengekspor PNG, JPEG, atau WebP."], ["AI creative tools", "Generasi gambar, analisis visual, dan penghapusan latar melalui runtime khusus pada tahap berikutnya."]]
     },
     audio: {
       title: "Audio Lab", label: "SPEECH & SOUND", icon: "audio", color: "icon-mint",
@@ -1536,6 +1536,11 @@
     const config = modules[page] || pages[page];
     if (!config) return;
 
+    if (page === "image" && window.LokalAIImageStudio) {
+      workspace.innerHTML = window.LokalAIImageStudio.render();
+      window.LokalAIImageStudio.bind(workspace);
+      return;
+    }
     if (page === "chat") {
       workspace.innerHTML = renderChatWorkspace();
       bindChatWorkspace();
@@ -3742,6 +3747,9 @@
 
   function renderPage(page, updateHash = true) {
     const selected = page === "home" ? "home" : (modules[page] || pages[page] ? page : "home");
+    if (currentPage === "image" && selected !== "image" && window.LokalAIImageStudio) {
+      window.LokalAIImageStudio.destroy();
+    }
     currentPage = selected;
     breadcrumb.textContent = selected === "home" ? "Overview" : (modules[selected] || pages[selected]).title;
     updateNavigation(selected);
