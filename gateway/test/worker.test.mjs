@@ -206,13 +206,16 @@ const streamingFetch = async (url, options = {}) => {
   upstreamCalls += 1;
   const encoderLocal = new TextEncoder();
   const frames = [
-    'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"Halo"}\n\n',
-    'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":" streaming"}\n\n',
-    'event: response.completed\ndata: {"type":"response.completed","response":{"id":"resp_stream","model":"' + testModel + '","status":"completed","usage":{"input_tokens":5,"output_tokens":2}}}\n\n'
-  ];
+    'event: response.output_text.delta\r\ndata: {"type":"response.output_text.delta","delta":"Halo"}\r\n\r\n',
+    'event: response.output_text.delta\r\ndata: {"type":"response.output_text.delta","delta":" streaming"}\r\n\r\n',
+    'event: response.completed\r\ndata: {"type":"response.completed","response":{"id":"resp_stream","model":"' + testModel + '","status":"completed","usage":{"input_tokens":5,"output_tokens":2}}}\r\n\r\n'
+  ].join("");
+  const streamBytes = encoderLocal.encode(frames);
+  const splitAt = frames.indexOf("\r\n\r\n") + 1;
   return new Response(new ReadableStream({
     start(controller) {
-      for (const frame of frames) controller.enqueue(encoderLocal.encode(frame));
+      controller.enqueue(streamBytes.slice(0, splitAt));
+      controller.enqueue(streamBytes.slice(splitAt));
       controller.close();
     }
   }), { headers: { "content-type": "text/event-stream" } });

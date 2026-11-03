@@ -152,7 +152,8 @@
       while (true) {
         const item = await reader.read();
         if (item.done) break;
-        buffer += decoder.decode(item.value, { stream: true }).replace(/\r\n/g, "\n");
+        buffer += decoder.decode(item.value, { stream: true });
+        buffer = buffer.replace(/\r\n/g, "\n");
         let boundary;
         while ((boundary = buffer.indexOf("\n\n")) >= 0) {
           const frame = buffer.slice(0, boundary);

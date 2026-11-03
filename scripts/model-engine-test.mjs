@@ -137,12 +137,20 @@ assert.equal(gatewayRequestOptions[0].init.cache, "no-store");
 assert.equal(JSON.parse(gatewayRequestOptions[0].init.body).model, "gpt-6.1-sol");
 
 const streamBody = [
-  'data: {"id":"chunk-1","choices":[{"delta":{"content":"Halo"},"finish_reason":null}]}\n\n',
-  'data: {"id":"chunk-2","choices":[{"delta":{"content":" GPT"},"finish_reason":null}]}\n\n',
-  "data: [DONE]\n\n"
+  'data: {"id":"chunk-1","choices":[{"delta":{"content":"Halo"},"finish_reason":null}]}\r\n\r\n',
+  'data: {"id":"chunk-2","choices":[{"delta":{"content":" GPT"},"finish_reason":null}]}\r\n\r\n',
+  "data: [DONE]\r\n\r\n"
 ].join("");
+const streamBytes = new TextEncoder().encode(streamBody);
+const streamSplitAt = streamBody.indexOf("\r\n\r\n") + 1;
 const streamClient = engine.createOpenAIClient({
-  fetch: async () => new Response(streamBody, {
+  fetch: async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.enqueue(streamBytes.slice(0, streamSplitAt));
+      controller.enqueue(streamBytes.slice(streamSplitAt));
+      controller.close();
+    }
+  }), {
     headers: { "content-type": "text/event-stream" }
   })
 });
