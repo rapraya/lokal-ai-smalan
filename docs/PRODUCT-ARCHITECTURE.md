@@ -6,9 +6,9 @@ Lokal AI SMALAN is a browser-based, multi-capability AI workspace for SMALAN. Th
 
 The architecture is **local-first, not local-only**. Supported models should run in the browser whenever practical. Any future feature that needs an external service must identify the provider, disclose what data leaves the device, and require an explicit user choice. Never embed private API keys or secrets in the frontend.
 
-## Current implementation — v0.44.0
+## Current implementation — v0.45.0
 
-The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.44.0. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
+The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.45.0. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
 ### Application shell and model runtime
 - Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, browser-stored Dark/Light/Colorful themes, and a desktop-collapsible sidebar.
@@ -50,7 +50,7 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 - **AI Assistant:** in-session task planning and recommendations only. It does not execute actions, modify files, send messages, or access accounts.
 - **Personal AI:** user-managed preferences and manual notes; persistence and model-context inclusion are separate opt-ins. Browser storage is not encrypted and is unsuitable for secrets or sensitive data.
 - **Image Studio:** v0.42.0 adds a browser-local editor for JPEG/PNG/WebP rotation, flipping, resizing, and export with file/pixel limits. AI image generation, image understanding, and background removal remain roadmap items.
-- **Audio Lab:** v0.43.0 adds a browser-local audio utility for supported audio files up to 20 MB and 5 minutes: Web Audio decoding, waveform visualization, selected-range playback, and trimmed WAV PCM16 export. A decoded-sample budget bounds memory use; codec support varies by browser. AI transcription, text-to-speech, source separation, and model-based audio understanding are not enabled.
+- **Audio Lab:** v0.45.0 adds optional local speech-to-text using Transformers.js 4.3.2 and multilingual Whisper Tiny ONNX. A dedicated Web Worker runs 8-bit WebAssembly inference on one CPU thread; first use downloads approximately 45 MB of model assets from Hugging Face and loads the JS runtime from jsDelivr. Selected audio is resampled locally to mono 16 kHz and is not uploaded. Transcription is limited to 120 seconds per run with Indonesian, English, or automatic language selection. Text-to-speech, source separation, and other audio intelligence remain unimplemented. Browser smoke tests mock the Transformers.js pipeline, so real-device speed, memory use, and transcription accuracy remain open validation items.
 - **Video Studio:** v0.44.0 adds a browser-local video utility for supported files up to 100 MB and 10 minutes: native playback, metadata inspection, timestamp selection, and PNG frame capture. When duration metadata is missing, capture can advance through local playback with a 10-minute timestamp ceiling. Frame output is limited to 4,096 px per side and 16 megapixels. Codec support varies by browser; timeline editing, audio extraction, transcription, and AI video generation are not enabled.
 - **AI Navigator:** capability navigation and roadmap direction exist, but working map/routing workflows must not be represented as complete until implemented and validated.
 
