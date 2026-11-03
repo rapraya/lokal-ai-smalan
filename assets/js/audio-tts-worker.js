@@ -86,12 +86,13 @@ async function synthesize(requestId, payload) {
     if (audio.length > samplingRate * MAX_AUDIO_SECONDS) {
       throw new Error("Audio hasil melebihi batas 90 detik untuk satu proses.");
     }
+    const transferableAudio = audio.slice();
     self.postMessage({
       type: "synthesis-result",
       requestId,
-      audio,
+      audio: transferableAudio,
       samplingRate
-    }, [audio.buffer]);
+    }, [transferableAudio.buffer]);
   } catch (error) {
     postError(requestId, error);
   }
