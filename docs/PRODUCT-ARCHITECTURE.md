@@ -6,9 +6,9 @@ Lokal AI SMALAN is a browser-based, multi-capability AI workspace for SMALAN. Th
 
 The architecture is **local-first, not local-only**. Supported models should run in the browser whenever practical. Any future feature that needs an external service must identify the provider, disclose what data leaves the device, and require an explicit user choice. Never embed private API keys or secrets in the frontend.
 
-## Current implementation — v0.41.1
+## Current implementation — v0.43.0
 
-The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.42.1. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
+The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.43.0. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
 ### Application shell and model runtime
 - Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, browser-stored Dark/Light/Colorful themes, and a desktop-collapsible sidebar.
@@ -50,7 +50,8 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 - **AI Assistant:** in-session task planning and recommendations only. It does not execute actions, modify files, send messages, or access accounts.
 - **Personal AI:** user-managed preferences and manual notes; persistence and model-context inclusion are separate opt-ins. Browser storage is not encrypted and is unsuitable for secrets or sensitive data.
 - **Image Studio:** v0.42.0 adds a browser-local editor for JPEG/PNG/WebP rotation, flipping, resizing, and export with file/pixel limits. AI image generation, image understanding, and background removal remain roadmap items.
-- **Audio Lab, Video Studio, and AI Navigator:** capability navigation and roadmap direction exist, but full working model-backed workflows must not be represented as complete until implemented and validated.
+- **Audio Lab:** v0.43.0 adds a browser-local audio utility for supported audio files up to 20 MB and 5 minutes: Web Audio decoding, waveform visualization, selected-range playback, and trimmed WAV PCM16 export. A decoded-sample budget bounds memory use; codec support varies by browser. AI transcription, text-to-speech, source separation, and model-based audio understanding are not enabled.
+- **Video Studio and AI Navigator:** capability navigation and roadmap direction exist, but working editing or model-backed workflows must not be represented as complete until implemented and validated.
 
 ## Privacy and security rules
 
