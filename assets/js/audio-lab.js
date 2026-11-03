@@ -1148,6 +1148,13 @@
     if (asrClearButton) asrClearButton.addEventListener("click", clearTranscript);
     if (asrAppend) asrAppend.addEventListener("change", updateAsrControls);
     if (asrLanguage) asrLanguage.addEventListener("change", updateAsrControls);
+    if (ttsLicense) ttsLicense.addEventListener("change", updateTtsControls);
+    if (ttsInput) ttsInput.addEventListener("input", updateTtsControls);
+    if (ttsLoadButton) ttsLoadButton.addEventListener("click", loadTtsModel);
+    if (ttsCancelButton) ttsCancelButton.addEventListener("click", cancelTtsProcess);
+    if (ttsGenerateButton) ttsGenerateButton.addEventListener("click", synthesizeText);
+    if (ttsDownloadButton) ttsDownloadButton.addEventListener("click", downloadTtsAudio);
+    if (ttsClearButton) ttsClearButton.addEventListener("click", clearTtsAudio);
     player.addEventListener("timeupdate", () => {
       if (state === audioState && !player.paused && audioState.previewEnd > 0 && player.currentTime >= audioState.previewEnd) {
         player.pause();
@@ -1155,7 +1162,9 @@
     });
     setControlsEnabled(false);
     updateAsrControls();
+    updateTtsControls();
     setAsrStatus("Pilih bahasa dan rentang audio, lalu mulai transkripsi.", "info");
+    setTtsStatus("Setujui lisensi sebelum memuat model suara Bahasa Indonesia.", "info");
   }
 
   function destroy() {
@@ -1175,6 +1184,19 @@
     if (current.asrWorker) {
       current.asrWorker.terminate();
       current.asrWorker = null;
+    }
+    if (current.ttsWorker) {
+      current.ttsWorker.terminate();
+      current.ttsWorker = null;
+    }
+    if (current.ttsAudioUrl) URL.revokeObjectURL(current.ttsAudioUrl);
+    if (current.root) {
+      const ttsPlayer = current.root.querySelector("#audioTtsPlayer");
+      if (ttsPlayer) {
+        ttsPlayer.pause();
+        ttsPlayer.removeAttribute("src");
+        ttsPlayer.load();
+      }
     }
     state = null;
   }
