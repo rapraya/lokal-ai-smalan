@@ -45,6 +45,41 @@ try {
   assert.equal(await desktop.locator('#chatProviderSelect option[value="openai"]').isDisabled(), true,
     "Cloud GPT must remain unavailable when the production gateway is not deployed.");
 
+  await desktop.locator('.nav-link[data-page="image"]').click();
+  await desktop.waitForSelector('.image-studio-page');
+  assert.match(await desktop.locator('.image-studio-page').innerText(), /LOCAL IMAGE EDITOR/);
+  const pngFixture = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAYAAACddGYaAAAAF0lEQVR4nGP4z8DwHwwZ/v8HIyABZgEAqm8O8tH19KMAAAAASUVORK5CYII=', 'base64');
+  await desktop.locator('#imageFileInput').setInputFiles({ name: 'smalan-test.png', mimeType: 'image/png', buffer: pngFixture });
+  await desktop.waitForFunction(() => {
+    const image = document.querySelector('#imagePreview');
+    return image && image.complete && image.naturalWidth === 3 && image.naturalHeight === 2;
+  });
+  assert.equal(await desktop.locator('#imageSourceDimensions').innerText(), '3 × 2 px');
+  assert.equal(await desktop.locator('#imageExportButton').isEnabled(), true);
+
+  await desktop.locator('[data-image-action="rotate-right"]').click();
+  assert.equal(await desktop.locator('#imageWidth').inputValue(), '2');
+  assert.equal(await desktop.locator('#imageHeight').inputValue(), '3');
+  await desktop.locator('[data-image-action="flip-x"]').click();
+  assert.equal(await desktop.locator('[data-image-action="flip-x"]').getAttribute('aria-pressed'), 'true');
+  await desktop.locator('[data-image-action="reset"]').click();
+  assert.equal(await desktop.locator('#imageWidth').inputValue(), '3');
+  assert.equal(await desktop.locator('#imageHeight').inputValue(), '2');
+
+  await desktop.locator('#imageWidth').fill('6');
+  assert.equal(await desktop.locator('#imageHeight').inputValue(), '4', 'Aspect-ratio lock must update the paired dimension.');
+  await desktop.locator('#imageFormat').selectOption('image/jpeg');
+  await desktop.locator('#imageQuality').fill('0.7');
+  assert.equal(await desktop.locator('#imageQualityValue').innerText(), '70%');
+  const imageDownload = desktop.waitForEvent('download');
+  await desktop.locator('#imageExportButton').click();
+  const downloadedImage = await imageDownload;
+  assert.equal(downloadedImage.suggestedFilename(), 'smalan-test-edited.jpg');
+  await desktop.locator('#imageClearButton').click();
+  assert.equal(await desktop.locator('#imagePreviewContainer').isVisible(), false);
+  assert.equal(await desktop.locator('#imageExportButton').isDisabled(), true);
+
+
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   mobile.on("pageerror", (error) => runtimeErrors.push(error.message));
   const mobileResponse = await mobile.goto(baseURL, { waitUntil: "domcontentloaded" });
@@ -62,7 +97,7 @@ try {
   assert.equal(await mobile.locator("#menuToggle").getAttribute("aria-expanded"), "false");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop navigation, colorful theme persistence, sidebar collapse, mobile menu, AI Chat, and disabled cloud provider state.");
+  console.log("Browser smoke passed: desktop navigation, colorful theme persistence, sidebar collapse, mobile menu, AI Chat, disabled cloud provider, and local Image Studio loading/transforms/resizing/export/cleanup.");
 } finally {
   await browser.close();
 }
