@@ -1949,3 +1949,16 @@ body[data-theme="light"] .audio-asr-model-top strong,body[data-theme="light"] .a
 body[data-theme="colorful"] .audio-asr-model-card,body[data-theme="colorful"] .audio-asr-transcript-card{background:rgba(255,255,255,.035)}
 @media(max-width:850px){.audio-asr-grid{grid-template-columns:1fr}.audio-asr-model-card{display:grid;grid-template-columns:1fr;gap:9px}.audio-asr-model-card>p{margin:5px 0}.audio-asr-model-status{margin-top:2px}}
 @media(max-width:600px){.audio-transcription-card{padding:15px}.audio-asr-model-card,.audio-asr-transcript-card{padding:13px}.audio-asr-controls{grid-template-columns:1fr}.audio-asr-controls label{grid-column:auto}.audio-asr-controls select,.audio-asr-controls .button-primary{width:100%}.audio-asr-output-footer{align-items:flex-start}.audio-transcript-output{min-height:160px}}
+
+
+/* Audio transcript assembly and subtitle exports */
+.audio-asr-options{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:9px 0 2px}
+.audio-asr-append-toggle{display:flex;align-items:center;gap:8px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer}
+.audio-asr-append-toggle input{width:14px;height:14px;margin:0;accent-color:#6ec9a8}
+.audio-asr-options>span{color:var(--muted);font-size:11px;text-align:right}
+.audio-asr-output-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.audio-asr-copy-button{min-height:30px;padding:0 9px;font-size:11px}
+.audio-asr-copy-button:disabled{opacity:.45;cursor:not-allowed}
+.audio-asr-output-footer{align-items:flex-start}
+body[data-theme="light"] .audio-asr-append-toggle{color:#25364f}
+@media(max-width:700px){.audio-asr-options{align-items:flex-start;flex-direction:column;gap:5px}.audio-asr-options>span{text-align:left}.audio-asr-output-footer{flex-direction:column}.audio-asr-output-actions{justify-content:flex-start;width:100%}}
