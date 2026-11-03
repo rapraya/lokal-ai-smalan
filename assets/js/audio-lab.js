@@ -264,7 +264,9 @@
     }
 
     async function loadFile(file) {
-      if (!file || state !== audioState || audioState.busy) return;
+      if (!file) return;
+      fileInput.value = "";
+      if (state !== audioState || audioState.busy) return;
       if (!(file.type || "").startsWith("audio/")) {
         setStatus("File tidak dikenali sebagai audio. Pilih berkas audio yang didukung browser.", "error");
         fileInput.value = "";
