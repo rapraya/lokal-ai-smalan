@@ -98,31 +98,47 @@ try {
       headers: { "access-control-allow-origin": "*" },
       body: `
         export const env = { backends: { onnx: { wasm: { numThreads: 0 } } } };
-        let calls = 0;
+        let asrCalls = 0;
+        let ttsCalls = 0;
         export async function pipeline(task, model, options) {
-          if (task !== "automatic-speech-recognition" || model !== "onnx-community/whisper-tiny") {
-            throw new Error("Unexpected ASR pipeline configuration.");
-          }
-          if (options.device !== "wasm" || options.dtype !== "q8") {
-            throw new Error("ASR must use q8 WebAssembly inference.");
-          }
           if (typeof options.progress_callback === "function") {
             options.progress_callback({ status: "progress_total", progress: 100, loaded: 100, total: 100 });
           }
-          const transcriber = async (audio, settings) => {
-            if (!(audio instanceof Float32Array) || audio.length < 1) throw new Error("Expected resampled Float32Array audio.");
-            if (settings.task !== "transcribe" || settings.chunk_length_s !== 30 || settings.stride_length_s !== 5) {
-              throw new Error("Unexpected ASR generation settings.");
+          if (task === "automatic-speech-recognition" && model === "onnx-community/whisper-tiny") {
+            if (options.device !== "wasm" || options.dtype !== "q8") {
+              throw new Error("ASR must use q8 WebAssembly inference.");
             }
-            calls += 1;
-            if (calls === 4) await new Promise((resolve) => setTimeout(resolve, 5000));
-            const language = settings.language || "auto";
-            const text = "Halo, ini uji transkripsi " + language + ".";
-            const timestamp = calls === 3 ? [0.95, 1.2] : [0, 0.5];
-            return { text, chunks: [{ text, timestamp }] };
-          };
-          transcriber.dispose = async () => {};
-          return transcriber;
+            const transcriber = async (audio, settings) => {
+              if (!(audio instanceof Float32Array) || audio.length < 1) throw new Error("Expected resampled Float32Array audio.");
+              if (settings.task !== "transcribe" || settings.chunk_length_s !== 30 || settings.stride_length_s !== 5) {
+                throw new Error("Unexpected ASR generation settings.");
+              }
+              asrCalls += 1;
+              if (asrCalls === 4) await new Promise((resolve) => setTimeout(resolve, 5000));
+              const language = settings.language || "auto";
+              const text = "Halo, ini uji transkripsi " + language + ".";
+              const timestamp = asrCalls === 3 ? [0.95, 1.2] : [0, 0.5];
+              return { text, chunks: [{ text, timestamp }] };
+            };
+            transcriber.dispose = async () => {};
+            return transcriber;
+          }
+          if (task === "text-to-speech" && model === "payam1394/traxlate-mms-tts-ind") {
+            if (options.device !== "wasm" || options.dtype !== "q8") {
+              throw new Error("TTS must use q8 WebAssembly inference.");
+            }
+            const synthesizer = async (text) => {
+              if (typeof text !== "string" || !text.trim() || text.length > 500) {
+                throw new Error("TTS expected a nonempty text of at most 500 characters.");
+              }
+              ttsCalls += 1;
+              if (ttsCalls === 2) await new Promise((resolve) => setTimeout(resolve, 5000));
+              return { audio: new Float32Array(8000).fill(0.2), sampling_rate: 16000 };
+            };
+            synthesizer.dispose = async () => {};
+            return synthesizer;
+          }
+          throw new Error("Unexpected Transformers.js pipeline configuration: " + task + " · " + model);
         }
       `
     });
@@ -301,6 +317,66 @@ try {
   await desktop.locator('#audioAsrClearButton').click();
   assert.equal(await desktop.locator('#audioAsrOutput').inputValue(), "");
   assert.equal(await desktop.locator('#audioAsrSrtButton').isDisabled(), true);
+
+  assert.equal(await desktop.locator('#audioTtsLoadButton').isDisabled(), true,
+    "TTS model loading must remain disabled until the noncommercial license is acknowledged.");
+  assert.equal(await desktop.locator('#audioTtsGenerateButton').isDisabled(), true);
+  assert.match(await desktop.locator('.audio-tts-card').innerText(), /CC BY-NC 4\.0/);
+  assert.match(await desktop.locator('.audio-tts-card').innerText(), /nonkomersial/i);
+  assert.equal(await desktop.locator('#audioTtsLicense').isChecked(), false);
+  await desktop.locator('#audioTtsLicense').check();
+  assert.equal(await desktop.locator('#audioTtsLoadButton').isEnabled(), true);
+  await desktop.locator('#audioTtsLoadButton').click();
+  await desktop.waitForFunction(() => {
+    const status = document.querySelector('#audioTtsModelStatus');
+    const progress = document.querySelector('#audioTtsProgress');
+    return status && (/MMS Indonesian TTS siap/.test(status.textContent) ||
+      status.dataset.state === "error") && progress;
+  });
+  const ttsModelStatus = await desktop.locator('#audioTtsModelStatus').innerText();
+  assert.match(ttsModelStatus, /MMS Indonesian TTS siap/,
+    "Local Indonesian TTS worker must load the mocked Transformers.js pipeline. Actual status: " + ttsModelStatus);
+  assert.equal(await desktop.locator('#audioTtsProgress').evaluate((progress) => progress.value), 100);
+  assert.equal(await desktop.locator('#audioTtsGenerateButton').isDisabled(), true,
+    "TTS requires nonempty source text.");
+  await desktop.locator('#audioTtsInput').fill("Selamat pagi, peserta didik SMALAN.");
+  assert.equal(await desktop.locator('#audioTtsGenerateButton').isEnabled(), true);
+  await desktop.locator('#audioTtsGenerateButton').click();
+  await desktop.waitForFunction(() => {
+    const output = document.querySelector('#audioTtsOutput');
+    const player = document.querySelector('#audioTtsPlayer');
+    return output && !output.hidden && player && player.src.startsWith("blob:") &&
+      document.querySelector('#audioTtsStatus')?.dataset.state === "success";
+  });
+  assert.match(await desktop.locator('#audioTtsOutputMeta').innerText(), /16,000 Hz/);
+  const ttsDownloadEvent = desktop.waitForEvent('download');
+  await desktop.locator('#audioTtsDownloadButton').click();
+  const ttsDownload = await ttsDownloadEvent;
+  assert.equal(ttsDownload.suggestedFilename(), 'lokal-ai-speech-id.wav');
+  const ttsWav = await readFile(await ttsDownload.path());
+  assert.equal(ttsWav.toString('ascii', 0, 4), 'RIFF');
+  assert.equal(ttsWav.toString('ascii', 8, 12), 'WAVE');
+  assert.equal(ttsWav.readUInt16LE(20), 1, 'TTS download must use PCM WAV encoding.');
+  assert.equal(ttsWav.readUInt16LE(22), 1, 'TTS WAV output must be mono.');
+  assert.equal(ttsWav.readUInt32LE(24), 16000, 'TTS WAV output must preserve the generated sample rate.');
+  assert.equal(ttsWav.readUInt16LE(34), 16, 'TTS WAV output must use 16-bit PCM samples.');
+  assert.equal(ttsWav.readUInt32LE(40), 8000 * 2, 'TTS WAV payload must match the generated 0.5-second waveform.');
+  assert.equal(ttsWav.length, 44 + 8000 * 2, 'TTS WAV output must contain a valid PCM16 header and payload.');
+
+  await desktop.locator('#audioTtsGenerateButton').click();
+  await desktop.waitForFunction(() => {
+    const cancel = document.querySelector('#audioTtsCancelButton');
+    const status = document.querySelector('#audioTtsStatus');
+    return cancel && !cancel.hidden && status && /menyintesis suara/.test(status.textContent);
+  });
+  await desktop.locator('#audioTtsCancelButton').click();
+  assert.match(await desktop.locator('#audioTtsStatus').innerText(), /Proses dibatalkan/);
+  assert.equal(await desktop.locator('#audioTtsLoadButton').isEnabled(), true,
+    "Cancelling TTS must terminate its worker and allow a clean model reload.");
+  await desktop.locator('#audioTtsClearButton').click();
+  assert.equal(await desktop.locator('#audioTtsOutput').isVisible(), false);
+  assert.equal(await desktop.locator('#audioTtsDownloadButton').isDisabled(), true);
+
   await desktop.locator('#audioClearButton').click();
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), false);
   assert.equal(await desktop.locator('#audioExportButton').isDisabled(), true);
@@ -389,6 +465,7 @@ try {
   await mobile.locator('.nav-link[data-page="audio"]').click();
   await mobile.waitForSelector(".audio-lab-page");
   assert.equal(await mobile.locator(".audio-lab-grid").isVisible(), true, "Audio Lab controls must remain available on mobile.");
+  assert.equal(await mobile.locator(".audio-tts-grid").isVisible(), true, "Indonesian TTS controls must remain available on mobile.");
   const mobileHasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   assert.equal(mobileHasHorizontalOverflow, false, "Audio Lab must not introduce horizontal page overflow on mobile.");
   await mobile.locator("#menuToggle").click();
@@ -399,7 +476,7 @@ try {
   assert.equal(videoHasHorizontalOverflow, false, "Video Studio must not introduce horizontal page overflow on mobile.");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV editing and mocked Whisper ASR load/progress/transcription/cancellation, and Video Studio metadata/frame PNG export/cleanup.");
+  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV editing, mocked Whisper ASR, and Indonesian TTS license/load/synthesis/WAV export/cancel/cleanup, and Video Studio metadata/frame PNG export/cleanup.");
 } finally {
   await browser.close();
 }
