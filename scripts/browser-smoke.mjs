@@ -205,8 +205,18 @@ try {
   await desktop.locator('#audioAsrTranscribeButton').click();
   await desktop.waitForFunction(() => {
     const output = document.querySelector('#audioAsrOutput');
-    return output && output.value.includes("Halo, ini uji transkripsi indonesian.");
+    const status = document.querySelector('#audioAsrStatus');
+    const modelStatus = document.querySelector('#audioAsrModelStatus');
+    return (output && output.value.includes("Halo, ini uji transkripsi indonesian.")) ||
+      (status && status.dataset.state === "error") ||
+      (modelStatus && modelStatus.dataset.state === "error");
   });
+  const asrTranscriptStatusText = await desktop.locator('#audioAsrStatus').innerText();
+  const asrModelStatusAfterInference = await desktop.locator('#audioAsrModelStatus').innerText();
+  const asrTranscriptOutput = await desktop.locator('#audioAsrOutput').inputValue();
+  assert.ok(asrTranscriptOutput.includes("Halo, ini uji transkripsi indonesian."),
+    "Local ASR worker must return the mocked transcript. Status: " + asrTranscriptStatusText +
+    " · Model: " + asrModelStatusAfterInference);
   assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /kata · rentang/);
   assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Transkripsi selesai/);
 
