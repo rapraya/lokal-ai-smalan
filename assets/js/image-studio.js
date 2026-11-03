@@ -83,6 +83,8 @@
       file: null,
       image: null,
       sourceUrl: "",
+      pendingImageUrl: "",
+      loadRequestId: 0,
       rotation: 0,
       flipX: false,
       flipY: false,
@@ -146,6 +148,9 @@
 
     function clearImage(message) {
       if (!state) return;
+      state.loadRequestId += 1;
+      if (state.pendingImageUrl) URL.revokeObjectURL(state.pendingImageUrl);
+      state.pendingImageUrl = "";
       if (state.sourceUrl) URL.revokeObjectURL(state.sourceUrl);
       state.file = null;
       state.image = null;
@@ -177,9 +182,19 @@
         fileInput.value = "";
         return;
       }
+      const imageState = state;
+      imageState.loadRequestId += 1;
+      const requestId = imageState.loadRequestId;
+      if (imageState.pendingImageUrl) URL.revokeObjectURL(imageState.pendingImageUrl);
       const candidateUrl = URL.createObjectURL(file);
+      imageState.pendingImageUrl = candidateUrl;
       const image = new Image();
       image.onload = function () {
+        if (state !== imageState || imageState.loadRequestId !== requestId) {
+          URL.revokeObjectURL(candidateUrl);
+          return;
+        }
+        imageState.pendingImageUrl = "";
         const pixels = image.naturalWidth * image.naturalHeight;
         if (!image.naturalWidth || !image.naturalHeight || pixels > MAX_PIXELS) {
           URL.revokeObjectURL(candidateUrl);
@@ -211,6 +226,8 @@
       };
       image.onerror = function () {
         URL.revokeObjectURL(candidateUrl);
+        if (state !== imageState || imageState.loadRequestId !== requestId) return;
+        imageState.pendingImageUrl = "";
         setStatus("Gambar tidak dapat dibaca oleh browser.", "error");
         fileInput.value = "";
       };
@@ -286,6 +303,7 @@
         outputContext.drawImage(orientedCanvas, 0, 0, width, height);
         const quality = Number(qualityInput.value);
         const blob = await canvasToBlob(outputCanvas, mime, mime === "image/png" ? undefined : quality);
+        if (state !== imageState) return;
         const extension = mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
         const baseName = imageState.file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "gambar";
         const url = URL.createObjectURL(blob);
@@ -298,7 +316,9 @@
         setTimeout(() => URL.revokeObjectURL(url), 1500);
         setStatus("File berhasil disiapkan: " + width + " × " + height + " px · " + extension.toUpperCase() + ".", "success");
       } catch (error) {
-        setStatus(error && error.message ? error.message : "Gagal mengekspor gambar.", "error");
+        if (state === imageState) {
+          setStatus(error && error.message ? error.message : "Gagal mengekspor gambar.", "error");
+        }
       } finally {
         if (orientedCanvas) { orientedCanvas.width = 0; orientedCanvas.height = 0; }
         if (outputCanvas) { outputCanvas.width = 0; outputCanvas.height = 0; }
@@ -351,7 +371,15 @@
   }
 
   function destroy() {
-    if (state && state.sourceUrl) URL.revokeObjectURL(state.sourceUrl);
+    if (!state) return;
+    const current = state;
+    current.loadRequestId += 1;
+    if (current.pendingImageUrl) URL.revokeObjectURL(current.pendingImageUrl);
+    if (current.sourceUrl) URL.revokeObjectURL(current.sourceUrl);
+    current.pendingImageUrl = "";
+    current.sourceUrl = "";
+    current.file = null;
+    current.image = null;
     state = null;
   }
 
