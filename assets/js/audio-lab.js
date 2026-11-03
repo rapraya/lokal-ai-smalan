@@ -14,7 +14,7 @@
         '<button class="module-back" type="button" data-page="home"><svg aria-hidden="true"><use href="#i-arrow"></use></svg> Kembali ke overview</button>',
         '<div class="module-heading-row">',
           '<span class="module-heading-icon icon-mint"><svg aria-hidden="true"><use href="#i-audio"></use></svg></span>',
-          '<div><div class="eyebrow"><span class="eyebrow-pulse"></span> CREATIVE STUDIO · LOCAL AUDIO EDITOR</div><h1>Audio Lab</h1><p>Pratinjau audio, pilih bagian yang dibutuhkan, lalu ekspor potongannya sebagai WAV langsung di browser.</p></div>',
+          '<div><div class="eyebrow"><span class="eyebrow-pulse"></span> CREATIVE STUDIO · LOCAL AUDIO & SPEECH AI</div><h1>Audio Lab</h1><p>Pratinjau audio, pilih bagian yang dibutuhkan, lalu ekspor potongannya sebagai WAV langsung di browser.</p></div>',
         '</div>',
         '<div class="audio-lab-grid">',
           '<section class="audio-workspace-card audio-source-card">',
