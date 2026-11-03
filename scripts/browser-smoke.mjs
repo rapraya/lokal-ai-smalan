@@ -156,6 +156,70 @@ try {
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), false);
   assert.equal(await desktop.locator('#audioExportButton').isDisabled(), true);
 
+  await desktop.locator('.nav-link[data-page="video"]').click();
+  await desktop.waitForSelector('.video-studio-page');
+  assert.match(await desktop.locator('.video-studio-page').innerText(), /LOCAL VIDEO TOOLS/);
+  const videoFixture = await desktop.evaluate(async () => {
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported("video/webm;codecs=vp8")) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 160;
+    canvas.height = 90;
+    const context = canvas.getContext("2d");
+    const stream = canvas.captureStream(10);
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp8" });
+    const chunks = [];
+    recorder.addEventListener("dataavailable", (event) => {
+      if (event.data && event.data.size) chunks.push(event.data);
+    });
+    const stopped = new Promise((resolve) => recorder.addEventListener("stop", resolve, { once: true }));
+    recorder.start(100);
+    for (let frame = 0; frame < 12; frame += 1) {
+      context.fillStyle = frame % 2 ? "#f08b42" : "#234f91";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#ffffff";
+      context.fillRect(frame * 8, 20, 24, 24);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    recorder.stop();
+    await stopped;
+    stream.getTracks().forEach((track) => track.stop());
+    const blob = new Blob(chunks, { type: "video/webm" });
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  });
+  assert.ok(videoFixture && videoFixture.length > 0, "Chromium must be able to create the WebM smoke fixture.");
+  await desktop.locator('#videoFileInput').setInputFiles({
+    name: 'smalan-test.webm',
+    mimeType: 'video/webm',
+    buffer: Buffer.from(videoFixture)
+  });
+  await desktop.waitForFunction(() => {
+    const details = document.querySelector('#videoSourceDetails');
+    const capture = document.querySelector('#videoCaptureButton');
+    return details && /160 × 90 px/.test(details.textContent) && capture && !capture.disabled;
+  });
+  assert.equal(await desktop.locator('#videoLoadedPanel').isVisible(), true);
+  assert.match(await desktop.locator('#videoSourceDetails').innerText(), /160 × 90 px/);
+  await desktop.locator('#videoFrameTime').fill('0.5');
+  const captureTime = desktop.waitForFunction(() => {
+    const player = document.querySelector('#videoPlayer');
+    const preview = document.querySelector('#videoFrameResult');
+    return player && preview && !preview.hidden && player.currentTime >= 0.45 && player.currentTime <= 0.6;
+  });
+  await desktop.locator('#videoCaptureButton').click();
+  await captureTime;
+  assert.equal(await desktop.locator('#videoDownloadButton').isEnabled(), true);
+  const frameDownloadEvent = desktop.waitForEvent('download');
+  await desktop.locator('#videoDownloadButton').click();
+  const frameDownload = await frameDownloadEvent;
+  assert.equal(frameDownload.suggestedFilename(), 'smalan-test-frame-0-50.png');
+  const frameOutput = await readFile(await frameDownload.path());
+  assert.equal(frameOutput.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(frameOutput.readUInt32BE(16), 160, 'Captured frame PNG width must match video metadata.');
+  assert.equal(frameOutput.readUInt32BE(20), 90, 'Captured frame PNG height must match video metadata.');
+  await desktop.locator('#videoClearButton').click();
+  assert.equal(await desktop.locator('#videoLoadedPanel').isVisible(), false);
+  assert.equal(await desktop.locator('#videoCaptureButton').isDisabled(), true);
+
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   mobile.on("pageerror", (error) => runtimeErrors.push(error.message));
   const mobileResponse = await mobile.goto(baseURL, { waitUntil: "domcontentloaded" });
@@ -178,9 +242,14 @@ try {
   assert.equal(await mobile.locator(".audio-lab-grid").isVisible(), true, "Audio Lab controls must remain available on mobile.");
   const mobileHasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   assert.equal(mobileHasHorizontalOverflow, false, "Audio Lab must not introduce horizontal page overflow on mobile.");
+  await mobile.locator('.nav-link[data-page="video"]').click();
+  await mobile.waitForSelector(".video-studio-page");
+  assert.equal(await mobile.locator(".video-studio-grid").isVisible(), true, "Video Studio controls must remain available on mobile.");
+  const videoHasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  assert.equal(videoHasHorizontalOverflow, false, "Video Studio must not introduce horizontal page overflow on mobile.");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms and exports, and Audio Lab decode/waveform/trim/playback/WAV export/cleanup.");
+  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV trimming, and Video Studio metadata/frame PNG export/cleanup.");
 } finally {
   await browser.close();
 }
