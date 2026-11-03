@@ -57,9 +57,10 @@
             '</div>',
             '<div class="audio-asr-transcript-card">',
               '<div class="audio-asr-controls"><label for="audioAsrLanguage">Bahasa audio</label><select id="audioAsrLanguage" disabled><option value="id" selected>Bahasa Indonesia</option><option value="en">English</option><option value="auto">Deteksi otomatis</option></select><button type="button" id="audioAsrTranscribeButton" class="button-primary" disabled>Transkripsikan rentang pilihan</button></div>',
+              '<div class="audio-asr-options"><label class="audio-asr-append-toggle"><input type="checkbox" id="audioAsrAppend" checked> Tambahkan hasil ke transkrip sebelumnya</label><span>Gunakan rentang waktu berbeda untuk menyusun rekaman panjang.</span></div>',
               '<p class="audio-asr-range-hint" id="audioAsrRangeHint">Muat audio dan model. Setiap proses memerlukan minimal 1 detik dan dibatasi maksimal 2 menit; gunakan rentang mulai/akhir untuk rekaman yang lebih panjang.</p>',
               '<label class="audio-asr-output-label" for="audioAsrOutput">Hasil transkripsi</label><textarea id="audioAsrOutput" class="audio-transcript-output" rows="7" readonly placeholder="Hasil transkripsi akan muncul di sini…"></textarea>',
-              '<div class="audio-asr-output-footer"><span id="audioAsrOutputMeta">Belum ada hasil</span><button type="button" id="audioAsrCopyButton" class="audio-asr-copy-button" disabled>Salin teks</button></div>',
+              '<div class="audio-asr-output-footer"><span id="audioAsrOutputMeta">Belum ada hasil</span><div class="audio-asr-output-actions"><button type="button" id="audioAsrCopyButton" class="audio-asr-copy-button" disabled>Salin</button><button type="button" id="audioAsrTextButton" class="audio-asr-copy-button" disabled>Unduh TXT</button><button type="button" id="audioAsrSrtButton" class="audio-asr-copy-button" disabled>Unduh SRT</button><button type="button" id="audioAsrClearButton" class="audio-asr-copy-button" disabled>Hapus hasil</button></div></div>',
               '<p class="audio-asr-status" id="audioAsrStatus" role="status" aria-live="polite">Pilih bahasa dan rentang audio, lalu mulai transkripsi.</p>',
             '</div>',
           '</div>',
@@ -154,6 +155,10 @@
     const asrOutput = get("audioAsrOutput");
     const asrOutputMeta = get("audioAsrOutputMeta");
     const asrCopyButton = get("audioAsrCopyButton");
+    const asrAppend = get("audioAsrAppend");
+    const asrTextButton = get("audioAsrTextButton");
+    const asrSrtButton = get("audioAsrSrtButton");
+    const asrClearButton = get("audioAsrClearButton");
     const asrStatus = get("audioAsrStatus");
 
     if (!fileInput || !player || !waveform || !status) return;
@@ -171,7 +176,9 @@
       asrRequestId: 0,
       asrGeneration: 0,
       asrRangeStart: 0,
-      asrRangeDuration: 0
+      asrRangeDuration: 0,
+      asrAppendOnComplete: true,
+      asrTranscriptSegments: []
     };
     const audioState = state;
 
@@ -199,7 +206,12 @@
           (audioState.asrPhase !== "loading" && audioState.asrPhase !== "transcribing" && audioState.asrPhase !== "preparing");
       }
       if (asrLanguage) asrLanguage.disabled = audioState.busy;
-      if (asrCopyButton) asrCopyButton.disabled = !asrOutput || !asrOutput.value.trim() || audioState.busy;
+      if (asrAppend) asrAppend.disabled = audioState.busy;
+      const hasTranscript = audioState.asrTranscriptSegments.length > 0;
+      if (asrCopyButton) asrCopyButton.disabled = !hasTranscript || audioState.busy;
+      if (asrTextButton) asrTextButton.disabled = !hasTranscript || audioState.busy;
+      if (asrSrtButton) asrSrtButton.disabled = !hasTranscript || audioState.busy;
+      if (asrClearButton) asrClearButton.disabled = !hasTranscript || audioState.busy;
       if (asrRangeHint) {
         if (!range) {
           asrRangeHint.textContent = "Muat audio dan pilih rentang mulai/akhir terlebih dahulu.";
@@ -274,26 +286,29 @@
           if (asrStatus) setAsrStatus("Model sedang mengenali ucapan di CPU browser. Proses dapat memerlukan waktu.", "info");
           updateAsrControls();
         } else if (message.type === "transcription-result") {
-          const chunks = Array.isArray(message.chunks) ? message.chunks : [];
-          const lines = chunks.length ? chunks.map((chunk) => {
-            const text = (chunk.text || "").trim();
-            const timestamp = chunk.timestamp;
-            if (Array.isArray(timestamp) && Number.isFinite(timestamp[0]) && Number.isFinite(timestamp[1])) {
-              return "[" + formatAsrTime(audioState.asrRangeStart + timestamp[0]) + "–" +
-                formatAsrTime(audioState.asrRangeStart + timestamp[1]) + "] " + text;
-            }
-            return text;
-          }).filter(Boolean) : [];
-          const transcript = lines.length ? lines.join("\n") :
-            (typeof message.text === "string" ? message.text.trim() : "");
+          const incoming = normalizeTranscriptSegments(message);
+          const combined = audioState.asrAppendOnComplete
+            ? audioState.asrTranscriptSegments.concat(incoming)
+            : incoming;
+          audioState.asrTranscriptSegments = combined
+            .filter((segment) => segment.text)
+            .sort((a, b) => a.start - b.start || a.end - b.end);
+          const transcript = audioState.asrTranscriptSegments.map((segment) =>
+            "[" + formatAsrTime(segment.start) + "–" + formatAsrTime(segment.end) + "] " + segment.text
+          ).join("\n");
           if (asrOutput) asrOutput.value = transcript;
           const wordCount = transcript ? transcript.trim().split(/\s+/).length : 0;
+          const durationTotal = audioState.asrTranscriptSegments.reduce((sum, segment) =>
+            sum + Math.max(0, segment.end - segment.start), 0);
           if (asrOutputMeta) asrOutputMeta.textContent = transcript
-            ? wordCount.toLocaleString("id-ID") + " kata · rentang " + audioState.asrRangeDuration.toFixed(1) + " detik"
+            ? wordCount.toLocaleString("id-ID") + " kata · " + audioState.asrTranscriptSegments.length +
+              " bagian · " + durationTotal.toFixed(1) + " detik"
             : "Tidak ada ucapan yang dikenali";
           audioState.asrPhase = "ready";
           audioState.busy = false;
-          setAsrStatus(transcript ? "Transkripsi selesai. Periksa kembali nama, angka, istilah, dan tanda baca." :
+          setAsrStatus(transcript ? (audioState.asrAppendOnComplete && incoming.length
+            ? "Transkripsi selesai dan hasil ditambahkan. Periksa kembali nama, angka, istilah, dan tanda baca."
+            : "Transkripsi selesai. Periksa kembali nama, angka, istilah, dan tanda baca.") :
             "Model tidak menemukan ucapan pada rentang ini. Coba rentang lain atau periksa kualitas audio.",
             transcript ? "success" : "info");
           setStatus("Audio siap untuk diputar atau diolah kembali.", "success");
@@ -399,10 +414,11 @@
       const requestId = audioState.asrRequestId;
       audioState.asrRangeStart = range.start;
       audioState.asrRangeDuration = duration;
+      audioState.asrAppendOnComplete = Boolean(asrAppend && asrAppend.checked);
       audioState.asrPhase = "preparing";
       audioState.busy = true;
-      if (asrOutput) asrOutput.value = "";
-      if (asrOutputMeta) asrOutputMeta.textContent = "Menyiapkan audio…";
+      if (asrOutputMeta) asrOutputMeta.textContent = audioState.asrTranscriptSegments.length
+        ? "Menyiapkan bagian berikutnya…" : "Menyiapkan audio…";
       setAsrStatus("Menyesuaikan audio ke mono 16 kHz untuk model Whisper…", "info");
       setControlsEnabled(true);
       updateAsrControls();
@@ -439,6 +455,80 @@
           updateAsrControls();
         }
       }
+    }
+
+    function normalizeTranscriptSegments(message) {
+      const rangeStart = audioState.asrRangeStart;
+      const rangeEnd = rangeStart + audioState.asrRangeDuration;
+      const chunks = Array.isArray(message.chunks) ? message.chunks : [];
+      const segments = chunks.map((chunk) => {
+        const text = typeof chunk.text === "string" ? chunk.text.trim() : "";
+        if (!text) return null;
+        const timestamp = Array.isArray(chunk.timestamp) ? chunk.timestamp : null;
+        const relativeStart = timestamp && Number.isFinite(timestamp[0]) ? timestamp[0] : 0;
+        const relativeEnd = timestamp && Number.isFinite(timestamp[1])
+          ? timestamp[1] : audioState.asrRangeDuration;
+        const start = Math.max(rangeStart, Math.min(rangeEnd, rangeStart + relativeStart));
+        const end = Math.min(rangeEnd, Math.max(start + 0.1, rangeStart + relativeEnd));
+        return { start, end: Math.max(start + 0.1, end), text };
+      }).filter(Boolean);
+      if (segments.length) return segments;
+      const text = typeof message.text === "string" ? message.text.trim() : "";
+      return text ? [{ start: rangeStart, end: rangeEnd, text }] : [];
+    }
+
+    function formatSrtTime(value) {
+      const milliseconds = Math.max(0, Math.round((Number(value) || 0) * 1000));
+      const hours = Math.floor(milliseconds / 3600000);
+      const minutes = Math.floor((milliseconds % 3600000) / 60000);
+      const seconds = Math.floor((milliseconds % 60000) / 1000);
+      const millis = milliseconds % 1000;
+      return [hours, minutes, seconds].map((part) => String(part).padStart(2, "0")).join(":") +
+        "," + String(millis).padStart(3, "0");
+    }
+
+    function transcriptBaseName() {
+      const sourceName = audioState.file ? audioState.file.name : "audio";
+      return sourceName.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "audio";
+    }
+
+    function downloadTranscript(extension, content, mimeType) {
+      if (!content || !content.trim()) return;
+      const blob = new Blob([content], { type: mimeType + ";charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = transcriptBaseName() + "-transcript." + extension;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      global.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function exportTranscriptText() {
+      const value = asrOutput ? asrOutput.value.trim() : "";
+      if (value) downloadTranscript("txt", value + "\n", "text/plain");
+    }
+
+    function exportTranscriptSrt() {
+      const cues = audioState.asrTranscriptSegments
+        .filter((segment) => segment.text && Number.isFinite(segment.start) && Number.isFinite(segment.end))
+        .map((segment, index) => [
+          String(index + 1),
+          formatSrtTime(segment.start) + " --> " + formatSrtTime(Math.max(segment.end, segment.start + 0.1)),
+          segment.text.trim()
+        ].join("\n"));
+      if (cues.length) downloadTranscript("srt", cues.join("\n\n") + "\n", "application/x-subrip");
+    }
+
+    function clearTranscript() {
+      if (audioState.busy) return;
+      audioState.asrTranscriptSegments = [];
+      if (asrOutput) asrOutput.value = "";
+      if (asrOutputMeta) asrOutputMeta.textContent = "Belum ada hasil";
+      updateAsrControls();
+      setAsrStatus("Hasil transkripsi dihapus dari sesi ini.", "info");
     }
 
     async function copyTranscript() {
@@ -589,6 +679,7 @@
       if (get("audioWaveformDuration")) get("audioWaveformDuration").textContent = "00:00";
       if (get("audioSelectionDuration")) get("audioSelectionDuration").textContent = "00:00";
       setControlsEnabled(false);
+      audioState.asrTranscriptSegments = [];
       if (asrOutput) asrOutput.value = "";
       if (asrOutputMeta) asrOutputMeta.textContent = "Belum ada hasil";
       setAsrStatus(audioState.asrReady ? "Model siap. Muat audio dan pilih rentang maksimal 2 menit." :
@@ -616,6 +707,7 @@
       audioState.file = file;
       audioState.buffer = null;
       audioState.sourceUrl = URL.createObjectURL(file);
+      audioState.asrTranscriptSegments = [];
       if (asrOutput) asrOutput.value = "";
       if (asrOutputMeta) asrOutputMeta.textContent = "Belum ada hasil";
       setAsrStatus("Audio baru dimuat. Pilih rentang maksimal 2 menit untuk transkripsi.", "info");
@@ -731,6 +823,10 @@
     if (asrCancelButton) asrCancelButton.addEventListener("click", cancelAsrProcess);
     if (asrTranscribeButton) asrTranscribeButton.addEventListener("click", transcribeSelection);
     if (asrCopyButton) asrCopyButton.addEventListener("click", copyTranscript);
+    if (asrTextButton) asrTextButton.addEventListener("click", exportTranscriptText);
+    if (asrSrtButton) asrSrtButton.addEventListener("click", exportTranscriptSrt);
+    if (asrClearButton) asrClearButton.addEventListener("click", clearTranscript);
+    if (asrAppend) asrAppend.addEventListener("change", updateAsrControls);
     if (asrLanguage) asrLanguage.addEventListener("change", updateAsrControls);
     player.addEventListener("timeupdate", () => {
       if (state === audioState && !player.paused && audioState.previewEnd > 0 && player.currentTime >= audioState.previewEnd) {
