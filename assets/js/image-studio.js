@@ -13,7 +13,7 @@
         '<button class="module-back" type="button" data-page="home"><svg aria-hidden="true"><use href="#i-arrow"></use></svg> Kembali ke overview</button>',
         '<div class="module-heading-row">',
           '<span class="module-heading-icon icon-rose"><svg aria-hidden="true"><use href="#i-image"></use></svg></span>',
-          '<div><div class="eyebrow"><span class="eyebrow-pulse"></span> CREATIVE STUDIO · LOCAL EDITOR</div><h1>Image Studio</h1><p>Siapkan aset visual langsung di browser. Pilih gambar, atur orientasi dan dimensi, lalu ekspor sesuai kebutuhan.</p></div>',
+          '<div><div class="eyebrow"><span class="eyebrow-pulse"></span> CREATIVE STUDIO · LOCAL IMAGE EDITOR</div><h1>Image Studio</h1><p>Siapkan aset visual langsung di browser. Pilih gambar, atur orientasi dan dimensi, lalu ekspor sesuai kebutuhan.</p></div>',
         '</div>',
         '<div class="image-studio-grid">',
           '<section class="image-workspace-card image-preview-card">',
