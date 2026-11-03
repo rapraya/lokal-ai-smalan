@@ -563,6 +563,7 @@
       if (loadedPanel) loadedPanel.hidden = !enabled;
       if (get("audioSourceFootnote")) get("audioSourceFootnote").hidden = enabled;
       if (enabled) updateSelection();
+      else updateAsrControls();
     }
 
     function clearAudio(message) {
