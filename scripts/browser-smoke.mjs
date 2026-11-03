@@ -242,6 +242,7 @@ try {
   assert.equal(await mobile.locator(".audio-lab-grid").isVisible(), true, "Audio Lab controls must remain available on mobile.");
   const mobileHasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   assert.equal(mobileHasHorizontalOverflow, false, "Audio Lab must not introduce horizontal page overflow on mobile.");
+  await mobile.locator("#menuToggle").click();
   await mobile.locator('.nav-link[data-page="video"]').click();
   await mobile.waitForSelector(".video-studio-page");
   assert.equal(await mobile.locator(".video-studio-grid").isVisible(), true, "Video Studio controls must remain available on mobile.");
