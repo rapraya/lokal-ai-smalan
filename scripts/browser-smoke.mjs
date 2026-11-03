@@ -118,7 +118,8 @@ try {
             if (calls === 4) await new Promise((resolve) => setTimeout(resolve, 5000));
             const language = settings.language || "auto";
             const text = "Halo, ini uji transkripsi " + language + ".";
-            return { text, chunks: [{ text, timestamp: [0, 0.5] }] };
+            const timestamp = calls === 3 ? [0.95, 1.2] : [0, 0.5];
+            return { text, chunks: [{ text, timestamp }] };
           };
           transcriber.dispose = async () => {};
           return transcriber;
@@ -272,6 +273,12 @@ try {
     !replacedTranscript.includes("indonesian.") && !replacedTranscript.includes("english."),
     "Disabling append must replace earlier transcript segments instead of duplicating them.");
   assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /1 bagian/);
+  const boundarySrtEvent = desktop.waitForEvent('download');
+  await desktop.locator('#audioAsrSrtButton').click();
+  const boundarySrtDownload = await boundarySrtEvent;
+  const boundarySrt = await readFile(await boundarySrtDownload.path(), 'utf8');
+  assert.ok(boundarySrt.includes("00:00:00,950 --> 00:00:01,000"),
+    "Subtitle cue end times must be clamped to the exact selected source-range boundary.");
 
   await desktop.locator('#audioTrimStart').fill('0');
   await desktop.locator('#audioTrimEnd').fill('0.6');
