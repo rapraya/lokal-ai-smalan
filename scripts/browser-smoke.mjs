@@ -192,8 +192,13 @@ try {
   await desktop.waitForFunction(() => {
     const status = document.querySelector('#audioAsrModelStatus');
     const progress = document.querySelector('#audioAsrProgress');
-    return status && /Whisper Tiny siap/.test(status.textContent) && progress && progress.value === 100;
+    return status && (/Whisper Tiny siap/.test(status.textContent) ||
+      status.dataset.state === "error") && progress;
   });
+  const asrModelStatusText = await desktop.locator('#audioAsrModelStatus').innerText();
+  assert.match(asrModelStatusText, /Whisper Tiny siap/,
+    "Local ASR worker must load its mocked Transformers.js pipeline. Actual status: " + asrModelStatusText);
+  assert.equal(await desktop.locator('#audioAsrProgress').evaluate((progress) => progress.value), 100);
   assert.equal(await desktop.locator('#audioAsrTranscribeButton').isEnabled(), true,
     "A ready local ASR model and a selected audio range must enable transcription.");
   await desktop.locator('#audioAsrLanguage').selectOption('id');
