@@ -136,6 +136,13 @@ assert.ok(audioAsrWorker.includes('chunk_length_s: 30') &&
   audioAsrWorker.includes('options.language = "english"') &&
   audioAsrWorker.includes("progress_callback: reportProgress"),
   "Audio ASR worker must support chunked transcription, Indonesian/English language hints, automatic detection, and model download progress.");
+assert.ok(audioAsrWorker.includes("let loadEpoch = 0") &&
+  audioAsrWorker.includes("const epoch = loadEpoch") &&
+  audioAsrWorker.includes("epoch !== loadEpoch || loadingPromise !== promise") &&
+  audioAsrWorker.includes("loadEpoch += 1") &&
+  audioAsrWorker.includes("reportProgress(requestId, epoch, info)"),
+  "Audio ASR worker must ignore stale download progress, dispose late model loads after cancellation, and allow a clean retry after failure.");
+
 assert.ok(!audioAsrWorker.includes("fetch("),
   "Audio ASR worker must not manually upload audio bytes to a remote inference endpoint.");
 assert.ok(audioLab.includes("function encodeTtsWav(samples, sampleRate)") &&
