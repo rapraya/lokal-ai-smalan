@@ -169,12 +169,12 @@ assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
-  html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
+  app.includes("LOCAL AUDIO & SPEECH AI") &&
+  app.includes("Workspace audio lokal") && app.includes("Whisper Tiny Multilingual") &&
   html.includes('assets/js/audio-lab.js?v=0.47.0') &&
   audioLab.includes("audio-tts-worker.js?v=0.47.0") &&
-  app.includes("Whisper Tiny Multilingual") && app.includes("MMS VITS ONNX") &&
-  app.includes("CC BY-NC 4.0"),
-  "Overview, navigation, and module metadata must describe local ASR and license-gated Indonesian TTS honestly.");
+  app.includes("MMS VITS ONNX") && app.includes("CC BY-NC 4.0"),
+  "Navigation, application metadata, and worker wiring must describe local ASR and license-gated Indonesian TTS honestly.");
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
   css.includes("@media(max-width:600px){.audio-workspace-card") &&
   css.includes(".audio-transcription-card{") && css.includes(".audio-asr-grid{") &&
