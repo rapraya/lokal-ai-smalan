@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, audioAsrWorker, audioTtsWorker, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, audioAsrWorker, audioTtsWorker, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide, indonesianEvaluationFixture] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -19,7 +19,17 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
   readFile("gateway/wrangler.jsonc", "utf8"),
   readFile("gateway/scripts/deploy-readiness-check.mjs", "utf8"),
   readFile("gateway/PANDUAN-DEPLOYMENT-ID.md", "utf8"),
+  readFile("docs/test-fixtures/indonesian-model-evaluation.json", "utf8"),
 ]);
+
+const indonesianEvaluation = JSON.parse(indonesianEvaluationFixture);
+assert.ok(indonesianEvaluation.version && indonesianEvaluation.language === "id-ID" &&
+  Array.isArray(indonesianEvaluation.scoring_dimensions) &&
+  indonesianEvaluation.scoring_dimensions.length === 5 &&
+  Array.isArray(indonesianEvaluation.cases) &&
+  indonesianEvaluation.cases.length >= 8 &&
+  indonesianEvaluation.cases.every((item) => item.id && item.prompt && Array.isArray(item.expected) && item.expected.length > 0),
+  "The Indonesian model evaluation fixture must contain repeatable prompts and scoring dimensions.");
 
 const requiredModules = [
   "chat", "coding", "image", "audio", "video",
