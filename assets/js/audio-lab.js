@@ -65,7 +65,28 @@
             '</div>',
           '</div>',
         '</section>',
-        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Pratinjau, pemotongan, dan ekspor WAV tetap berjalan di browser. Transkripsi memakai Whisper Tiny Multilingual melalui WebAssembly CPU, dengan rentang 1–120 detik per proses dan bahasa Indonesia, Inggris, atau deteksi otomatis. Model dan pustaka pendukung diunduh dari CDN/Hugging Face; inferensi serta audio tetap di perangkat. Akurasi dipengaruhi kualitas rekaman, aksen, kebisingan, dan kemampuan perangkat. Text-to-speech, pemisahan suara, dan analisis audio lain belum diaktifkan.</p></div></div>',
+        '<section class="audio-workspace-card audio-tts-card">',
+          '<div class="audio-card-heading"><div><span class="chat-panel-label">LOCAL TEXT-TO-SPEECH · EXPERIMENTAL</span><h2>Ubah teks menjadi suara</h2></div><span class="audio-tts-local-indicator"><i></i> Bahasa Indonesia · Lokal</span></div>',
+          '<div class="audio-tts-grid">',
+            '<div class="audio-tts-model-card">',
+              '<div class="audio-asr-model-top"><span class="audio-asr-model-icon"><svg aria-hidden="true"><use href="#i-audio"></use></svg></span><div><strong>MMS Indonesian VITS</strong><span>ONNX · q8 · WebAssembly CPU</span></div></div>',
+              '<p>Model suara Bahasa Indonesia untuk mengubah teks menjadi audio. Bobot ONNX quantized sekitar 38 MB; runtime dan file model diunduh saat pertama kali digunakan.</p>',
+              '<div class="audio-tts-license-box"><label><input type="checkbox" id="audioTtsLicense"> Saya memahami model ini berlisensi <strong>CC BY-NC 4.0</strong>: penggunaan nonkomersial dan atribusi wajib.</label><p>Sumber model: <a href="https://huggingface.co/payam1394/traxlate-mms-tts-ind" target="_blank" rel="noopener noreferrer">payam1394/traxlate-mms-tts-ind</a>, konversi dari <a href="https://huggingface.co/facebook/mms-tts-ind" target="_blank" rel="noopener noreferrer">Meta MMS Indonesian</a>. <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">Baca lisensi CC BY-NC 4.0</a>.</p></div>',
+              '<div class="audio-tts-model-actions"><button type="button" id="audioTtsLoadButton" class="button-outline" disabled>Setujui lisensi untuk memuat model</button><button type="button" id="audioTtsCancelButton" class="audio-asr-cancel-button" hidden>Batalkan proses</button></div>',
+              '<div class="audio-asr-progress-wrap" id="audioTtsProgressWrap" hidden><div class="audio-asr-progress-heading"><span id="audioTtsProgressLabel">Menyiapkan model…</span><strong id="audioTtsProgressValue">0%</strong></div><progress id="audioTtsProgress" max="100" value="0">0%</progress></div>',
+              '<p class="audio-asr-model-status" id="audioTtsModelStatus" role="status" aria-live="polite">Model belum dimuat. Centang persetujuan lisensi untuk mengaktifkan pemuatan model.</p>',
+            '</div>',
+            '<div class="audio-tts-workspace">',
+              '<label class="audio-asr-output-label" for="audioTtsInput">Teks Bahasa Indonesia · maksimal 500 karakter</label>',
+              '<textarea id="audioTtsInput" class="audio-tts-input" rows="5" maxlength="500" placeholder="Contoh: Selamat pagi, peserta didik SMAN 9 Bandar Lampung. Mari kita mulai kegiatan belajar hari ini."></textarea>',
+              '<div class="audio-tts-input-footer"><span id="audioTtsCharacterCount">0 / 500 karakter</span><button type="button" id="audioTtsGenerateButton" class="button-primary" disabled>Hasilkan suara</button></div>',
+              '<div class="audio-tts-output" id="audioTtsOutput" hidden><span class="chat-panel-label">HASIL SUARA</span><audio id="audioTtsPlayer" controls></audio><div class="audio-tts-output-actions"><span id="audioTtsOutputMeta">-</span><button type="button" id="audioTtsDownloadButton" class="audio-asr-copy-button">Unduh WAV</button><button type="button" id="audioTtsClearButton" class="audio-asr-copy-button">Hapus hasil</button></div></div>',
+              '<p class="audio-asr-status" id="audioTtsStatus" role="status" aria-live="polite">Teks akan diproses di worker lokal setelah model dimuat.</p>',
+            '</div>',
+          '</div>',
+          '<p class="audio-tts-disclosure">Eksperimental: model ini dikonversi menggunakan Transformers.js 3.8.1, sedangkan aplikasi memakai 4.3.2. Kompatibilitas runtime dan kualitas suara masih perlu diuji pada perangkat nyata. Model hanya untuk penggunaan nonkomersial sesuai lisensi CC BY-NC 4.0.</p>',
+        '</section>',
+        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Pratinjau, pemotongan, dan ekspor WAV berjalan di browser. Transkripsi memakai Whisper Tiny Multilingual melalui WebAssembly CPU, dengan rentang 1–120 detik per proses. Sintesis Bahasa Indonesia memakai model MMS VITS eksperimental melalui worker WebAssembly CPU. Model dan pustaka pendukung diunduh dari CDN/Hugging Face; inferensi serta audio tetap di perangkat. Akurasi transkripsi, kualitas suara, kecepatan, kompatibilitas, dan memori bergantung pada perangkat. Pemisahan suara dan analisis audio lain belum diaktifkan.</p></div></div>',
         '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Local-first by design.</span></footer>',
       '</div>'
     ].join("");
@@ -160,6 +181,23 @@
     const asrSrtButton = get("audioAsrSrtButton");
     const asrClearButton = get("audioAsrClearButton");
     const asrStatus = get("audioAsrStatus");
+    const ttsLicense = get("audioTtsLicense");
+    const ttsLoadButton = get("audioTtsLoadButton");
+    const ttsCancelButton = get("audioTtsCancelButton");
+    const ttsProgressWrap = get("audioTtsProgressWrap");
+    const ttsProgress = get("audioTtsProgress");
+    const ttsProgressValue = get("audioTtsProgressValue");
+    const ttsProgressLabel = get("audioTtsProgressLabel");
+    const ttsModelStatus = get("audioTtsModelStatus");
+    const ttsInput = get("audioTtsInput");
+    const ttsCharacterCount = get("audioTtsCharacterCount");
+    const ttsGenerateButton = get("audioTtsGenerateButton");
+    const ttsOutput = get("audioTtsOutput");
+    const ttsPlayer = get("audioTtsPlayer");
+    const ttsOutputMeta = get("audioTtsOutputMeta");
+    const ttsDownloadButton = get("audioTtsDownloadButton");
+    const ttsClearButton = get("audioTtsClearButton");
+    const ttsStatus = get("audioTtsStatus");
 
     if (!fileInput || !player || !waveform || !status) return;
     let invalidSelection = false;
@@ -178,7 +216,13 @@
       asrRangeStart: 0,
       asrRangeDuration: 0,
       asrAppendOnComplete: true,
-      asrTranscriptSegments: []
+      asrTranscriptSegments: [],
+      ttsWorker: null,
+      ttsReady: false,
+      ttsPhase: "idle",
+      ttsRequestId: 0,
+      ttsAudioUrl: "",
+      ttsAudioBlob: null
     };
     const audioState = state;
 
