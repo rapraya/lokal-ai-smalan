@@ -106,9 +106,10 @@
     function updateCaptureState() {
       if (state !== videoState) return;
       const value = Number(frameTime.value);
-      const validTime = Number.isFinite(value) && value >= 0 && value <= videoState.duration;
+      const maxTime = videoState.durationKnown ? videoState.duration : MAX_DURATION_SECONDS;
+      const validTime = Number.isFinite(value) && value >= 0 && value <= maxTime;
       captureButton.disabled = !videoState.file || videoState.busy || !validTime ||
-        !validateFrameDimensions() || videoState.duration > MAX_DURATION_SECONDS;
+        !validateFrameDimensions() || (videoState.durationKnown && videoState.duration > MAX_DURATION_SECONDS);
       clearButton.disabled = !videoState.file || videoState.busy;
       frameTime.disabled = !videoState.file || videoState.busy;
     }
@@ -166,6 +167,7 @@
       videoState.file = file;
       videoState.sourceUrl = URL.createObjectURL(file);
       videoState.duration = 0;
+      videoState.durationKnown = false;
       videoState.frameWidth = 0;
       videoState.frameHeight = 0;
       setControlsEnabled(true);
