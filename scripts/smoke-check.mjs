@@ -119,8 +119,9 @@ assert.ok(videoStudio.includes("MAX_FILE_BYTES = 100 * 1024 * 1024") &&
   videoStudio.includes("MAX_FRAME_PIXELS = 16_000_000"),
   "Video Studio must enforce bounded source file, duration, frame side, and pixel limits.");
 assert.ok(videoStudio.includes('preload="metadata"') && videoStudio.includes("player.videoWidth") &&
-  videoStudio.includes("player.videoHeight") && videoStudio.includes("function waitForSeeked()"),
-  "Video Studio must read browser video metadata and wait for the selected frame before capture.");
+  videoStudio.includes("player.videoHeight") && videoStudio.includes("function waitForSeeked()") &&
+  videoStudio.includes("durationKnown") && videoStudio.includes("function waitForPlaybackTime("),
+  "Video Studio must read browser video metadata and support both seeking and playback-based frame capture.");
 assert.ok(videoStudio.includes("context.drawImage(player, 0, 0, width, height)") &&
   videoStudio.includes('}, "image/png"') && videoStudio.includes("function downloadFrame()"),
   "Video Studio must capture and download a local PNG frame.");
