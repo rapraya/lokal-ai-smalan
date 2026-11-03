@@ -666,6 +666,18 @@
         setControlsEnabled(Boolean(audioState.buffer));
         updateAsrControls();
       };
+      worker.onmessageerror = () => {
+        if (state !== audioState || audioState.asrWorker !== worker) return;
+        audioState.asrReady = false;
+        audioState.asrPhase = "idle";
+        audioState.busy = false;
+        audioState.asrWorker = null;
+        worker.terminate();
+        setAsrModelStatus("Pesan dari worker transkripsi tidak dapat dibaca. Muat ulang model untuk mencoba kembali.", "error");
+        setAsrStatus("Komunikasi worker terputus. Audio sumber tetap berada di browser.", "error");
+        setControlsEnabled(Boolean(audioState.buffer));
+        updateAsrControls();
+      };
       return worker;
     }
 
