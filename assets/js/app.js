@@ -1666,7 +1666,7 @@
           '<div id="chatLocalModelControls">' +
             '<label class="chat-field-label" for="chatModelSelect">Model lokal</label>' +
             '<select class="chat-model-select" id="chatModelSelect">' +
-              ' + getLocalModelOptionsHtml() +
+            getLocalModelOptionsHtml() +
             '</select>' +
             '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
           '</div>' +
@@ -1709,7 +1709,7 @@
           '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU · shared with AI Chat</small></div></div>' +
           '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
           '<select class="chat-model-select" id="chatModelSelect">' +
-            ' + getLocalModelOptionsHtml() +
+            getLocalModelOptionsHtml() +
           '</select>' +
           '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model lebih besar belum tentu lebih cepat atau lebih cocok untuk perangkat.</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
@@ -2370,8 +2370,7 @@
           '<div class="chat-engine-title"><span>' + icon("cpu") + '</span><div><b>Local language model</b><small>WebLLM · WebGPU · shared engine</small></div></div>' +
           '<label class="chat-field-label" for="chatModelSelect">Pilih model</label>' +
           '<select class="chat-model-select" id="chatModelSelect">' +
-            '<option value="Llama-3.2-1B-Instruct-q4f16_1-MLC" data-vram="879.04">Llama 3.2 · 1B · 4-bit</option>' +
-            '<option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" data-vram="2263.69">Llama 3.2 · 3B · 4-bit</option>' +
+            getLocalModelOptionsHtml() +
           '</select>' +
           '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Kualitas bahasa dan dukungan perangkat perlu diuji.</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
