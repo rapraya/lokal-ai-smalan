@@ -185,6 +185,18 @@ assert.ok(audioTtsWorker.includes("let loadEpoch = 0") &&
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
+assert.ok(audioLab.includes("state = null;") &&
+  audioLab.includes("current.buffer = null;") &&
+  audioLab.includes("current.file = null;") &&
+  audioLab.includes("current.ttsAudioBlob = null;") &&
+  audioLab.includes("current.asrTranscriptSegments = [];") &&
+  audioLab.includes("worker.onmessage = null;") &&
+  audioLab.includes("worker.onmessageerror = null;") &&
+  audioLab.includes("worker.terminate();") &&
+  audioLab.includes('player.removeAttribute("src");') &&
+  audioLab.includes("URL.revokeObjectURL(current.sourceUrl)") &&
+  audioLab.includes("URL.revokeObjectURL(current.ttsAudioUrl)"),
+  "Audio Lab destroy must invalidate callbacks, terminate workers, detach media, revoke object URLs, and release large in-memory buffers.");
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
   app.includes("LOCAL AUDIO & SPEECH AI") &&
   app.includes("Workspace audio lokal") && app.includes("Whisper Tiny Multilingual") &&
