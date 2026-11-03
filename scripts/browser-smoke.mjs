@@ -445,6 +445,99 @@ try {
   assert.equal(await desktop.locator('#videoLoadedPanel').isVisible(), false);
   assert.equal(await desktop.locator('#videoCaptureButton').isDisabled(), true);
 
+  // Exercise local chat model recovery with a deterministic WebLLM/Worker double.
+  const recovery = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  recovery.on("pageerror", (error) => runtimeErrors.push(error.message));
+  await recovery.addInitScript(() => {
+    window.__fakeWorkers = [];
+    window.__webllmInitCount = 0;
+    Object.defineProperty(navigator, "gpu", {
+      configurable: true,
+      value: { requestAdapter: async () => ({}) }
+    });
+    window.Worker = class extends EventTarget {
+      constructor() {
+        super();
+        this.terminated = false;
+        window.__fakeWorkers.push(this);
+      }
+      terminate() { this.terminated = true; }
+    };
+  });
+  await recovery.route("https://esm.run/@mlc-ai/web-llm@0.2.87", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/javascript; charset=utf-8",
+      headers: { "access-control-allow-origin": "*" },
+      body: `
+        export async function CreateWebWorkerMLCEngine(worker, model, options) {
+          window.__webllmInitCount += 1;
+          if (window.__webllmInitCount === 1) throw new Error("simulated model initialization failure");
+          return {
+            chat: { completions: { create: async () => ({
+              async *[Symbol.asyncIterator]() {
+                yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
+              }
+            }) } },
+            unload: async () => {}
+          };
+        }
+      `
+    });
+  });
+  const recoveryResponse = await recovery.goto(baseURL, { waitUntil: "domcontentloaded" });
+  assert.equal(recoveryResponse?.status(), 200);
+  await recovery.locator('.nav-link[data-page="chat"]').click();
+  await recovery.waitForSelector("#chatLoadButton");
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => {
+    const status = document.querySelector("#chatEngineStatus");
+    const button = document.querySelector("#chatLoadButton");
+    return status && /Gagal memuat model/.test(status.textContent) && button && !button.disabled;
+  });
+  assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
+    "A failed initialization must not leave a phantom active model session.");
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers.length), 1);
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[0].terminated), true,
+    "A failed initialization must terminate its worker.");
+
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => {
+    const status = document.querySelector("#chatEngineStatus");
+    return status && /Model siap/.test(status.textContent);
+  });
+  assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
+    "A retry after initialization failure must establish a usable runtime.");
+  await recovery.locator("#chatInput").fill("Uji pemulihan model");
+  await recovery.locator("#chatSendButton").click();
+  await recovery.waitForFunction(() => document.querySelector("#chatMessages")?.innerText.includes("Jawaban uji berhasil."));
+  await recovery.evaluate(() => {
+    const worker = window.__fakeWorkers[1];
+    worker.dispatchEvent(new ErrorEvent("error", { message: "simulated worker crash" }));
+  });
+  await recovery.waitForFunction(() => {
+    const status = document.querySelector("#chatEngineStatus");
+    const button = document.querySelector("#chatLoadButton");
+    return status && /Worker model mengalami kesalahan/.test(status.textContent) && button && !button.disabled;
+  });
+  assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
+    "A crashed worker must clear the active model controls.");
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[1].terminated), true,
+    "A crashed worker must be terminated.");
+
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
+  assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
+    "The model must be loadable again after a worker crash.");
+  await recovery.locator("#chatUnloadButton").click();
+  await recovery.waitForFunction(() => {
+    const button = document.querySelector("#chatLoadButton");
+    return button && !button.hidden && !button.disabled;
+  });
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[2].terminated), true,
+    "Normal model unload must terminate the worker.");
+  await recovery.close();
+
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   mobile.on("pageerror", (error) => runtimeErrors.push(error.message));
   const mobileResponse = await mobile.goto(baseURL, { waitUntil: "domcontentloaded" });
