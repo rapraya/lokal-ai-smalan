@@ -229,7 +229,7 @@
       if (typeof global.Worker !== "function") {
         throw new Error("Web Worker tidak tersedia pada browser ini.");
       }
-      const worker = new global.Worker("assets/js/audio-asr-worker.js", {
+      const worker = new global.Worker("assets/js/audio-asr-worker.js?v=0.45.0", {
         type: "module",
         name: "lokal-ai-audio-asr"
       });
@@ -536,6 +536,7 @@
         previewButton.disabled = true;
         setStatus("Pastikan waktu akhir lebih besar dari waktu mulai dan tidak melebihi durasi audio.", "error");
         drawWaveform();
+        updateAsrControls();
         return;
       }
       audioState.previewEnd = range.end;
