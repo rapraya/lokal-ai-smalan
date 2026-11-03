@@ -102,9 +102,21 @@ assert.ok(audioLab.includes("File diproses di browser dan tidak diunggah.") &&
   audioLab.includes("Transkripsi memakai Whisper Tiny Multilingual"),
   "Audio Lab must disclose local ASR and make its model/runtime limitations clear.");
 assert.ok(!audioLab.includes("fetch("), "Audio Lab must not upload audio or call a remote endpoint.");
+assert.ok(audioLab.includes("asrTranscriptSegments") && audioLab.includes("asrAppendOnComplete") &&
+  audioLab.includes("Tambahkan hasil ke transkrip sebelumnya") &&
+  audioLab.includes("normalizeTranscriptSegments(message)"),
+  "Audio Lab must be able to merge timestamped transcripts from sequential audio ranges.");
+assert.ok(audioLab.includes("function exportTranscriptText()") &&
+  audioLab.includes("function exportTranscriptSrt()") &&
+  audioLab.includes("formatSrtTime(segment.start)") &&
+  audioLab.includes('downloadTranscript("srt"'),
+  "Audio Lab must export the accumulated transcript as TXT and timestamped SRT subtitles.");
+assert.ok(audioLab.includes("audioAsrTextButton") && audioLab.includes("audioAsrSrtButton") &&
+  audioLab.includes("audioAsrClearButton"),
+  "Audio Lab must expose transcript download and clear controls.");
 assert.ok(audioLab.includes("duration > 120") &&
   audioLab.includes("new OfflineContext(1, frameCount, 16000)") &&
-  audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.45.0"') &&
+  audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.46.0"') &&
   audioLab.includes("worker.terminate()") &&
   audioLab.includes("global.navigator.clipboard.writeText"),
   "Audio Lab ASR must enforce a 120-second range, resample to mono 16 kHz, use a dedicated worker, support cancellation, and allow copying results.");
@@ -128,12 +140,13 @@ assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
   html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
-  html.includes('assets/js/audio-lab.js?v=0.45.0') &&
+  html.includes('assets/js/audio-lab.js?v=0.46.0') &&
   app.includes("Transkripsi memakai Whisper Tiny Multilingual"),
   "Overview, navigation, and module metadata must describe the implemented local Audio ASR honestly.");
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
   css.includes("@media(max-width:600px){.audio-workspace-card") &&
   css.includes(".audio-transcription-card{") && css.includes(".audio-asr-grid{") &&
+  css.includes(".audio-asr-options{") && css.includes(".audio-asr-output-actions{") &&
   css.includes("@media(max-width:600px){.audio-transcription-card"),
   "Audio Lab must include dedicated responsive editor and transcription styles.");
 
