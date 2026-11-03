@@ -6,6 +6,14 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.43.0 — Browser-local Audio Lab (Initial)**
+- Adds a local audio workspace for browser-decodable audio files up to 20 MB and 5 minutes.
+- Uses the Web Audio API to decode audio in the browser, display a waveform, play the selected range, and export a trimmed WAV file.
+- WAV output uses uncompressed PCM 16-bit and preserves the decoded sample rate and channel count.
+- Enforces a 20-million decoded-sample-point budget to limit memory use; actual codec support depends on the browser.
+- Audio bytes are not uploaded. AI transcription, text-to-speech, source separation, and model-based audio understanding are not yet enabled.
+- Adds Chromium browser coverage for audio decoding, waveform drawing, selected-range preview start, WAV header/payload verification, resource clearing, and mobile layout. Device-specific codec and memory behavior still need real-device validation.
+
 **v0.42.1 — Image Studio Export Verification**
 - Extends the GitHub Chromium journey to inspect downloaded PNG bytes and verify the exported pixel dimensions, then validate the JPEG file signature and selected quality setting.
 - Refreshes static asset cache identifiers so browsers request the latest editor and stylesheet files.
