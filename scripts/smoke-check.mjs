@@ -185,6 +185,17 @@ assert.ok(audioTtsWorker.includes("let loadEpoch = 0") &&
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
+
+const navigationCleanupStart = app.indexOf("function renderPage(page, updateHash = true)");
+const navigationCleanupEnd = app.indexOf("currentPage = selected;", navigationCleanupStart);
+const navigationCleanup = app.slice(navigationCleanupStart, navigationCleanupEnd);
+assert.ok(navigationCleanup.includes('if (currentPage === "audio" && window.LokalAIAudioLab)') &&
+  navigationCleanup.includes('if (currentPage === "image" && window.LokalAIImageStudio)') &&
+  navigationCleanup.includes('if (currentPage === "video" && window.LokalAIVideoStudio)') &&
+  !navigationCleanup.includes('selected !== "audio"') &&
+  !navigationCleanup.includes('selected !== "image"') &&
+  !navigationCleanup.includes('selected !== "video"'),
+  "Studio resources must be disposed before workspace DOM replacement, including same-page re-renders.");
 assert.ok(audioLab.includes("decodeContext: null,") &&
   audioLab.includes("decodeRequestId: 0,") &&
   audioLab.includes("const decodeRequestId = ++audioState.decodeRequestId;") &&
