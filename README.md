@@ -8,7 +8,7 @@ The architecture is **local-first, not local-only**: supported models should run
 
 **v0.44.0 — Browser-local Video Studio Frame Capture**
 - Adds a browser-local video workspace for supported files up to 100 MB and 10 minutes.
-- Reads video metadata and previews the selected local file with the browser's native media player.
+- Reads video metadata and previews the selected local file with the browser's native media player. If a container omits duration metadata, frame capture can advance through local playback with a 10-minute timestamp ceiling.
 - Captures a frame at a user-selected timestamp and exports it as PNG without uploading the source video.
 - Enforces a 4,096 px maximum frame side and a 16-megapixel export limit. Video codec support depends on the browser.
 - Timeline trimming, clip merging, audio extraction, transcription, and AI video generation are not enabled.
