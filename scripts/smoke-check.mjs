@@ -144,7 +144,7 @@ assert.ok(audioLab.includes("function encodeTtsWav(samples, sampleRate)") &&
 assert.ok(audioLab.includes('new global.Worker("assets/js/audio-tts-worker.js?v=0.47.0"') &&
   audioLab.includes("audioTtsLicense") && audioLab.includes("CC BY-NC 4.0") &&
   audioLab.includes("nonkomersial") &&
-  audioLab.includes("audioTtsLicense.checked"),
+  audioLab.includes("ttsLicense.checked"),
   "Indonesian TTS must use a dedicated worker and require explicit noncommercial-license acknowledgement before model loading.");
 assert.ok(audioLab.includes("audioTtsDownloadButton") && audioLab.includes("audioTtsPlayer") &&
   audioLab.includes("audioTtsClearButton") &&
@@ -172,7 +172,7 @@ assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><spa
   html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
   html.includes('assets/js/audio-lab.js?v=0.47.0') &&
   audioLab.includes("audio-tts-worker.js?v=0.47.0") &&
-  app.includes("Whisper Tiny Multilingual") && app.includes("MMS Indonesian TTS") &&
+  app.includes("Whisper Tiny Multilingual") && app.includes("MMS VITS ONNX") &&
   app.includes("CC BY-NC 4.0"),
   "Overview, navigation, and module metadata must describe local ASR and license-gated Indonesian TTS honestly.");
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
