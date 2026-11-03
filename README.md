@@ -6,6 +6,14 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.44.0 — Browser-local Video Studio Frame Capture**
+- Adds a browser-local video workspace for supported files up to 100 MB and 10 minutes.
+- Reads video metadata and previews the selected local file with the browser's native media player.
+- Captures a frame at a user-selected timestamp and exports it as PNG without uploading the source video.
+- Enforces a 4,096 px maximum frame side and a 16-megapixel export limit. Video codec support depends on the browser.
+- Timeline trimming, clip merging, audio extraction, transcription, and AI video generation are not enabled.
+- Adds Chromium coverage that creates a short WebM fixture, checks decoded metadata and timestamp seeking, verifies the exported PNG signature/dimensions, checks cleanup, and validates the mobile layout. Browser/device codec behavior still requires real-device validation.
+
 **v0.43.0 — Browser-local Audio Lab (Initial)**
 - Adds a local audio workspace for browser-decodable audio files up to 20 MB and 5 minutes.
 - Uses the Web Audio API to decode audio in the browser, display a waveform, play the selected range, and export a trimmed WAV file.
