@@ -23,13 +23,23 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
 ]);
 
 const indonesianEvaluation = JSON.parse(indonesianEvaluationFixture);
+const evaluationDimensionIds = indonesianEvaluation.scoring_dimensions.map((item) => item.id);
+const evaluationCaseIds = indonesianEvaluation.cases.map((item) => item.id);
 assert.ok(indonesianEvaluation.version && indonesianEvaluation.language === "id-ID" &&
   Array.isArray(indonesianEvaluation.scoring_dimensions) &&
   indonesianEvaluation.scoring_dimensions.length === 5 &&
+  evaluationDimensionIds.every(Boolean) &&
+  new Set(evaluationDimensionIds).size === evaluationDimensionIds.length &&
+  indonesianEvaluation.scoring_dimensions.every((item) => Number.isFinite(item.weight) && item.weight > 0) &&
+  indonesianEvaluation.scoring_dimensions.reduce((sum, item) => sum + item.weight, 0) === 100 &&
   Array.isArray(indonesianEvaluation.cases) &&
   indonesianEvaluation.cases.length >= 8 &&
-  indonesianEvaluation.cases.every((item) => item.id && item.prompt && Array.isArray(item.expected) && item.expected.length > 0),
-  "The Indonesian model evaluation fixture must contain repeatable prompts and scoring dimensions.");
+  evaluationCaseIds.every(Boolean) &&
+  new Set(evaluationCaseIds).size === evaluationCaseIds.length &&
+  indonesianEvaluation.cases.every((item) => item.id && item.category && item.title && item.prompt &&
+    Array.isArray(item.expected) && item.expected.length > 0 &&
+    Array.isArray(item.critical_checks) && item.critical_checks.length > 0),
+  "The Indonesian model evaluation fixture must have unique cases, complete scoring criteria, and weights totaling 100.");
 
 const requiredModules = [
   "chat", "coding", "image", "audio", "video",
