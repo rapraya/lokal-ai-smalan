@@ -210,7 +210,7 @@ try {
   await desktop.waitForFunction(() => {
     const cancel = document.querySelector('#audioAsrCancelButton');
     const status = document.querySelector('#audioAsrStatus');
-    return cancel && !cancel.hidden && status && /Mentranskripsikan/.test(status.textContent);
+    return cancel && !cancel.hidden && status && /CPU browser/.test(status.textContent);
   });
   await desktop.locator('#audioAsrCancelButton').click();
   assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Proses dibatalkan/);
