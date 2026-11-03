@@ -28,6 +28,8 @@ jobs:
         run: node --check assets/js/image-studio.js
       - name: Check Audio Lab syntax
         run: node --check assets/js/audio-lab.js
+      - name: Check Audio ASR worker module syntax
+        run: node --input-type=module --check < assets/js/audio-asr-worker.js
       - name: Check Video Studio syntax
         run: node --check assets/js/video-studio.js
       - name: Check browser smoke script syntax
