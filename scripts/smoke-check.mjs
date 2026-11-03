@@ -192,6 +192,13 @@ assert.ok(audioLab.includes("decodeContext: null,") &&
   audioLab.includes("current.decodeRequestId += 1;") &&
   audioLab.includes("current.decodeContext.close()"),
   "Audio Lab must invalidate pending decode work and close its active AudioContext when the page is destroyed.");
+
+assert.ok(audioLab.includes('audioState.file = null;') &&
+  audioLab.includes('URL.revokeObjectURL(audioState.sourceUrl);') &&
+  audioLab.includes('player.removeAttribute("src");') &&
+  audioLab.includes('if (loadedPanel) loadedPanel.hidden = true;') &&
+  audioLab.includes('if (dropzone) dropzone.hidden = false;'),
+  "Audio Lab must release the selected file, object URL, player source, and stale UI when decoding fails.");
 assert.ok(audioLab.includes("state = null;") &&
   audioLab.includes("current.buffer = null;") &&
   audioLab.includes("current.file = null;") &&
