@@ -77,7 +77,8 @@
       duration: 0,
       durationKnown: false,
       frameWidth: 0,
-      frameHeight: 0
+      frameHeight: 0,
+      cancelPendingWait: null
     };
     const videoState = state;
 
@@ -225,6 +226,7 @@
           player.removeEventListener("seeked", onSeeked);
           player.removeEventListener("error", onError);
           global.clearTimeout(timeout);
+          if (videoState.cancelPendingWait === cancelWait) videoState.cancelPendingWait = null;
         };
         const finish = (error) => {
           if (settled) return;
@@ -233,6 +235,8 @@
           if (error) reject(error);
           else resolve();
         };
+        const cancelWait = () => finish(new Error("Pengambilan frame dibatalkan karena Video Studio ditutup atau dimuat ulang."));
+        videoState.cancelPendingWait = cancelWait;
         const onSeeked = () => finish();
         const onError = () => finish(new Error("Browser gagal berpindah ke timestamp yang dipilih."));
         const timeout = global.setTimeout(() => finish(new Error("Waktu tunggu perpindahan frame habis.")), 8000);
@@ -253,6 +257,7 @@
           player.removeEventListener("error", onError);
           global.clearTimeout(timeout);
           player.muted = previousMuted;
+          if (videoState.cancelPendingWait === cancelWait) videoState.cancelPendingWait = null;
         };
         const finish = (error) => {
           if (settled) return;
@@ -262,6 +267,8 @@
           if (error) reject(error);
           else resolve();
         };
+        const cancelWait = () => finish(new Error("Pengambilan frame dibatalkan karena Video Studio ditutup atau dimuat ulang."));
+        videoState.cancelPendingWait = cancelWait;
         const onTimeUpdate = () => {
           if (player.currentTime >= target - 0.015) finish();
         };
@@ -396,6 +403,7 @@
   function destroy() {
     if (!state) return;
     const current = state;
+    if (current.cancelPendingWait) current.cancelPendingWait();
     if (current.root) {
       const player = current.root.querySelector("#videoPlayer");
       if (player) {
