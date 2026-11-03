@@ -239,7 +239,8 @@
     }
 
     async function exportImage() {
-      if (!state.image || state.busy) return;
+      const imageState = state;
+      if (!imageState || !imageState.image || imageState.busy) return;
       const width = Number(widthInput.value);
       const height = Number(heightInput.value);
       if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > MAX_SIDE || height > MAX_SIDE) {
@@ -251,22 +252,26 @@
         return;
       }
 
-      state.busy = true;
+      imageState.busy = true;
       setControlsEnabled(true);
       setStatus("Menyiapkan gambar di browser…", "info");
       let orientedCanvas;
       let outputCanvas;
       try {
-        const oriented = orientedSize();
+        const swap = imageState.rotation % 180 !== 0;
+        const oriented = {
+          width: swap ? imageState.image.naturalHeight : imageState.image.naturalWidth,
+          height: swap ? imageState.image.naturalWidth : imageState.image.naturalHeight
+        };
         orientedCanvas = document.createElement("canvas");
         orientedCanvas.width = oriented.width;
         orientedCanvas.height = oriented.height;
         const orientedContext = orientedCanvas.getContext("2d", { alpha: true });
         if (!orientedContext) throw new Error("Canvas 2D tidak tersedia pada browser ini.");
         orientedContext.translate(oriented.width / 2, oriented.height / 2);
-        orientedContext.scale(state.flipX ? -1 : 1, state.flipY ? -1 : 1);
-        orientedContext.rotate(state.rotation * Math.PI / 180);
-        orientedContext.drawImage(state.image, -state.image.naturalWidth / 2, -state.image.naturalHeight / 2);
+        orientedContext.scale(imageState.flipX ? -1 : 1, imageState.flipY ? -1 : 1);
+        orientedContext.rotate(imageState.rotation * Math.PI / 180);
+        orientedContext.drawImage(imageState.image, -imageState.image.naturalWidth / 2, -imageState.image.naturalHeight / 2);
 
         outputCanvas = document.createElement("canvas");
         outputCanvas.width = width;
@@ -282,7 +287,7 @@
         const quality = Number(qualityInput.value);
         const blob = await canvasToBlob(outputCanvas, mime, mime === "image/png" ? undefined : quality);
         const extension = mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
-        const baseName = state.file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "gambar";
+        const baseName = imageState.file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "gambar";
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
@@ -297,8 +302,8 @@
       } finally {
         if (orientedCanvas) { orientedCanvas.width = 0; orientedCanvas.height = 0; }
         if (outputCanvas) { outputCanvas.width = 0; outputCanvas.height = 0; }
-        state.busy = false;
-        setControlsEnabled(Boolean(state.image));
+        imageState.busy = false;
+        if (state === imageState) setControlsEnabled(Boolean(imageState.image));
       }
     }
 
