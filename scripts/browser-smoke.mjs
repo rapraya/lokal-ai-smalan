@@ -199,8 +199,12 @@ try {
   assert.match(asrModelStatusText, /Whisper Tiny siap/,
     "Local ASR worker must load its mocked Transformers.js pipeline. Actual status: " + asrModelStatusText);
   assert.equal(await desktop.locator('#audioAsrProgress').evaluate((progress) => progress.value), 100);
+  assert.equal(await desktop.locator('#audioAsrTranscribeButton').isDisabled(), true,
+    "A range shorter than one second must remain unavailable for transcription.");
+  await desktop.locator('#audioTrimStart').fill('0');
+  await desktop.locator('#audioTrimEnd').fill('1');
   assert.equal(await desktop.locator('#audioAsrTranscribeButton').isEnabled(), true,
-    "A ready local ASR model and a selected audio range must enable transcription.");
+    "A ready local ASR model and a one-second audio range must enable transcription.");
   await desktop.locator('#audioAsrLanguage').selectOption('id');
   await desktop.locator('#audioAsrTranscribeButton').click();
   await desktop.waitForFunction(() => {
