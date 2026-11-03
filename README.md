@@ -6,6 +6,11 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.42.1 — Image Studio Export Verification**
+- Extends the GitHub Chromium journey to inspect downloaded PNG bytes and verify the exported pixel dimensions, then validate the JPEG file signature and selected quality setting.
+- Refreshes static asset cache identifiers so browsers request the latest editor and stylesheet files.
+- No new cloud dependency or provider API key is required.
+
 **v0.42.0 — Local Image Studio Editor**
 - Introduces a browser-local image editing workspace for JPEG, PNG, and WebP files.
 - Adds 90-degree rotation, horizontal/vertical flipping, locked-aspect resizing, and PNG/JPEG/WebP export through Canvas.
