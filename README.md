@@ -6,6 +6,11 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.46.1 — Transcript Timestamp Boundary Fix**
+- Clamps normalized subtitle cue times to the selected source-audio range so SRT timestamps cannot extend beyond the original clip.
+- Distinguishes an empty new range from an empty overall transcript, preserving earlier appended results without reporting that new speech was added.
+- Refreshes browser asset cache identifiers for the Audio Lab refinement.
+
 **v0.46.0 — Multi-range Transcript Assembly & Subtitle Export**
 - Audio Lab can append successive 1–120 second Whisper results into one timestamped transcript or switch to replace mode for a fresh result.
 - Each segment keeps its absolute position in the original audio, so separately processed ranges can be combined without losing the source-time offset.
