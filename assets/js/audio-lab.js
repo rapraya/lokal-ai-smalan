@@ -306,11 +306,14 @@
             : "Tidak ada ucapan yang dikenali";
           audioState.asrPhase = "ready";
           audioState.busy = false;
-          setAsrStatus(transcript ? (audioState.asrAppendOnComplete && incoming.length
-            ? "Transkripsi selesai dan hasil ditambahkan. Periksa kembali nama, angka, istilah, dan tanda baca."
-            : "Transkripsi selesai. Periksa kembali nama, angka, istilah, dan tanda baca.") :
-            "Model tidak menemukan ucapan pada rentang ini. Coba rentang lain atau periksa kualitas audio.",
-            transcript ? "success" : "info");
+          const resultMessage = incoming.length
+            ? (audioState.asrAppendOnComplete && combined.length > incoming.length
+              ? "Transkripsi selesai dan hasil ditambahkan. Periksa kembali nama, angka, istilah, dan tanda baca."
+              : "Transkripsi selesai. Periksa kembali nama, angka, istilah, dan tanda baca.")
+            : (combined.length
+              ? "Tidak ada ucapan baru yang dikenali pada rentang ini. Hasil sebelumnya tetap dipertahankan."
+              : "Model tidak menemukan ucapan pada rentang ini. Coba rentang lain atau periksa kualitas audio.");
+          setAsrStatus(resultMessage, incoming.length ? "success" : "info");
           setStatus("Audio siap untuk diputar atau diolah kembali.", "success");
           setControlsEnabled(Boolean(audioState.buffer));
           updateAsrControls();
@@ -468,9 +471,9 @@
         const relativeStart = timestamp && Number.isFinite(timestamp[0]) ? timestamp[0] : 0;
         const relativeEnd = timestamp && Number.isFinite(timestamp[1])
           ? timestamp[1] : audioState.asrRangeDuration;
-        const start = Math.max(rangeStart, Math.min(rangeEnd, rangeStart + relativeStart));
+        const start = Math.max(rangeStart, Math.min(rangeEnd - 0.1, rangeStart + relativeStart));
         const end = Math.min(rangeEnd, Math.max(start + 0.1, rangeStart + relativeEnd));
-        return { start, end: Math.max(start + 0.1, end), text };
+        return { start, end, text };
       }).filter(Boolean);
       if (segments.length) return segments;
       const text = typeof message.text === "string" ? message.text.trim() : "";
