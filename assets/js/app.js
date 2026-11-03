@@ -3757,13 +3757,15 @@
 
   function renderPage(page, updateHash = true) {
     const selected = page === "home" ? "home" : (modules[page] || pages[page] ? page : "home");
-    if (currentPage === "image" && selected !== "image" && window.LokalAIImageStudio) {
+    // Release the current module before replacing workspace DOM, including same-page re-renders.
+    // This ensures detached media elements are paused and worker/object-URL resources are released.
+    if (currentPage === "image" && window.LokalAIImageStudio) {
       window.LokalAIImageStudio.destroy();
     }
-    if (currentPage === "video" && selected !== "video" && window.LokalAIVideoStudio) {
+    if (currentPage === "video" && window.LokalAIVideoStudio) {
       window.LokalAIVideoStudio.destroy();
     }
-    if (currentPage === "audio" && selected !== "audio" && window.LokalAIAudioLab) {
+    if (currentPage === "audio" && window.LokalAIAudioLab) {
       window.LokalAIAudioLab.destroy();
     }
     currentPage = selected;
