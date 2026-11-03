@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -10,6 +10,7 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
   readFile("docs/UI-DESIGN-SYSTEM.md", "utf8"),
   readFile("assets/js/model-engine-core.js", "utf8"),
   readFile("assets/js/image-studio.js", "utf8"),
+  readFile("assets/js/audio-lab.js", "utf8"),
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
   readFile("gateway/wrangler.jsonc", "utf8"),
@@ -80,6 +81,33 @@ assert.ok(imageStudio.includes("async function exportImage()") && imageStudio.in
 assert.ok(imageStudio.includes("File diproses di browser dan tidak diunggah.") && imageStudio.includes("Generasi gambar AI"), "Image Studio must disclose local processing and distinguish AI generation as not yet enabled.");
 assert.ok(app.includes('page === "image" && window.LokalAIImageStudio') && app.includes("window.LokalAIImageStudio.destroy()"), "Image Studio navigation must bind the editor and clean up local image resources.");
 assert.ok(html.includes('class="capability-status status-foundation">Editor lokal</span>'), "Overview must identify Image Studio as a local editor, not claim AI generation is available.");
+
+const audioScriptIndex = html.indexOf('assets/js/audio-lab.js?v=');
+assert.ok(audioScriptIndex > html.indexOf('assets/js/image-studio.js?v=') && audioScriptIndex < appScriptIndex,
+  "Audio Lab must load after the shared visual editor and before the application controller.");
+assert.ok(audioLab.includes("MAX_FILE_BYTES = 20 * 1024 * 1024") &&
+  audioLab.includes("MAX_DURATION_SECONDS = 300") &&
+  audioLab.includes("MAX_DECODED_SAMPLES = 20_000_000"),
+  "Audio Lab must enforce bounded file, duration, and decoded-memory limits.");
+assert.ok(audioLab.includes("decodeAudioData") && audioLab.includes("function drawWaveform()") &&
+  audioLab.includes("function encodeWav(") && audioLab.includes('type: "audio/wav"'),
+  "Audio Lab must decode audio locally, draw a waveform, and export a WAV file.");
+assert.ok(audioLab.includes("writeText(0, \"RIFF\")") && audioLab.includes("view.setUint16(34, 16, true)") &&
+  audioLab.includes("view.setUint16(20, 1, true)"),
+  "Audio Lab WAV export must use a RIFF/WAVE PCM 16-bit header.");
+assert.ok(audioLab.includes("File diproses di browser dan tidak diunggah.") &&
+  audioLab.includes("Transkripsi AI, text-to-speech"),
+  "Audio Lab must disclose browser-local processing and identify model-backed speech features as unavailable.");
+assert.ok(!audioLab.includes("fetch("), "Audio Lab must not upload audio or call a remote endpoint.");
+assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
+  app.includes("window.LokalAIAudioLab.destroy()"),
+  "Audio Lab navigation must bind the local editor and release its resources when leaving.");
+assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
+  html.includes("LOCAL AUDIO EDITOR") && html.includes("ekspor WAV langsung di browser"),
+  "Overview and navigation must describe the implemented local Audio Lab honestly.");
+assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
+  css.includes("@media(max-width:600px){.audio-workspace-card"),
+  "Audio Lab must include dedicated responsive and small-screen styles.");
 
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
