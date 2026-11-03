@@ -220,6 +220,13 @@ try {
   assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /kata · rentang/);
   assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Transkripsi selesai/);
 
+  await desktop.locator('#audioTrimStart').fill('0');
+  await desktop.locator('#audioTrimEnd').fill('0.6');
+  assert.equal(await desktop.locator('#audioAsrTranscribeButton').isDisabled(), true,
+    "ASR must prevent selections shorter than one second.");
+  assert.match(await desktop.locator('#audioAsrRangeHint').innerText(), /minimal 1 detik/);
+  await desktop.locator('#audioTrimEnd').fill('1');
+
   await desktop.locator('#audioAsrLanguage').selectOption('en');
   await desktop.locator('#audioAsrTranscribeButton').click();
   await desktop.waitForFunction(() => {
