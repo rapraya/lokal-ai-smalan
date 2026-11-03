@@ -75,11 +75,11 @@
       stages: [["Local image editing", "Rotasi, pembalikan, dan pratinjau perubahan gambar di browser."], ["Resize & conversion", "Mengubah dimensi dan mengekspor PNG, JPEG, atau WebP."], ["AI creative tools", "Generasi gambar, analisis visual, dan penghapusan latar melalui runtime khusus pada tahap berikutnya."]]
     },
     audio: {
-      title: "Audio Lab", label: "LOCAL AUDIO EDITOR", icon: "audio", color: "icon-mint",
-      description: "Workspace audio lokal untuk pemutaran, visualisasi waveform, pemotongan rentang, dan ekspor WAV.",
-      headline: "Pilih bagian suara, olah langsung di browser.",
-      detail: "Versi awal mendukung file audio hingga 20 MB dan 5 menit, decoding lokal melalui Web Audio API, pemutaran rentang pilihan, waveform, serta ekspor potongan WAV PCM 16-bit. Format yang bisa dibaca bergantung pada dukungan codec browser. Transkripsi AI, text-to-speech, pemisahan suara, dan analisis berbasis model belum diaktifkan.",
-      stages: [["Local audio preview", "Membaca audio, melihat durasi dan waveform, serta memutar rentang terpilih."], ["Trim & WAV export", "Menentukan waktu mulai/akhir lalu mengekspor audio PCM 16-bit."], ["Speech & audio AI", "Transkripsi, text-to-speech, pemisahan suara, dan pemahaman audio setelah model yang sesuai diintegrasikan dan diuji."]]
+      title: "Audio Lab", label: "LOCAL AUDIO & SPEECH AI", icon: "audio", color: "icon-mint",
+      description: "Workspace audio lokal untuk pemutaran, waveform, pemotongan, ekspor WAV, dan transkripsi ucapan dengan Whisper Tiny.",
+      headline: "Suara menjadi teks langsung di perangkat.",
+      detail: "Audio Lab mendukung pemutaran dan pengolahan file audio hingga 20 MB dan 5 menit, serta ekspor WAV PCM 16-bit. Transkripsi memakai Whisper Tiny Multilingual melalui Transformers.js 4.3.2 dan WebAssembly CPU 8-bit; unduhan awal model sekitar 45 MB dari Hugging Face. Setiap proses transkripsi dibatasi pada rentang maksimal 120 detik. Inferensi berjalan di browser dan file audio tidak diunggah. Kecepatan dan akurasi bergantung pada perangkat, kualitas rekaman, dan bahasa. Text-to-speech, pemisahan suara, serta analisis audio lain belum diaktifkan.",
+      stages: [["Local audio editing", "Memutar audio, melihat waveform, memilih rentang, dan mengekspor WAV PCM 16-bit."], ["Local speech-to-text", "Memuat model Whisper Tiny dan mentranskripsikan rentang hingga 120 detik di browser."], ["Speech & audio AI", "Text-to-speech, pemisahan suara, dan pemahaman audio lanjutan setelah model yang sesuai diintegrasikan dan diuji."]]
     },
     video: {
       title: "Video Studio", label: "LOCAL VIDEO TOOLS", icon: "video", color: "icon-orange",
