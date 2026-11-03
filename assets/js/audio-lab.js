@@ -124,6 +124,7 @@
     const status = get("audioStatus");
 
     if (!fileInput || !player || !waveform || !status) return;
+    let invalidSelection = false;
     state = {
       root,
       file: null,
@@ -214,12 +215,19 @@
       endInput.max = String(duration);
       const range = selectedRange();
       if (!range) {
+        invalidSelection = true;
+        audioState.previewEnd = 0;
         get("audioSelectionDuration").textContent = "Rentang tidak valid";
         exportButton.disabled = true;
         previewButton.disabled = true;
         setStatus("Pastikan waktu akhir lebih besar dari waktu mulai dan tidak melebihi durasi audio.", "error");
         drawWaveform();
         return;
+      }
+      audioState.previewEnd = range.end;
+      if (invalidSelection) {
+        invalidSelection = false;
+        setStatus("Rentang pilihan sudah valid dan siap dipratinjau atau diekspor.", "info");
       }
       get("audioSelectionDuration").textContent = formatTime(range.end - range.start) + " (" + (range.end - range.start).toFixed(2) + " detik)";
       exportButton.disabled = audioState.busy;
