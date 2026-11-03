@@ -303,7 +303,7 @@
         const length = ttsInput ? ttsInput.value.length : 0;
         ttsCharacterCount.textContent = length + " / 500 karakter";
       }
-      if (ttsLicense) ttsLicense.disabled = audioState.busy;
+      if (ttsLicense) ttsLicense.disabled = audioState.busy || audioState.ttsReady;
       if (ttsLoadButton) {
         ttsLoadButton.disabled = audioState.busy || audioState.ttsReady || !accepted;
         ttsLoadButton.textContent = audioState.ttsReady ? "Model siap digunakan" :
@@ -409,6 +409,7 @@
           if (ttsProgressLabel) ttsProgressLabel.textContent = "Model siap";
           setTtsModelStatus("MMS Indonesian TTS siap · WebAssembly CPU · q8.", "success");
           setTtsStatus("Model siap. Masukkan teks Bahasa Indonesia untuk menghasilkan suara.", "success");
+          setControlsEnabled(Boolean(audioState.buffer));
           updateTtsControls();
           updateAsrControls();
         } else if (message.type === "synthesis-stage") {
@@ -435,6 +436,7 @@
           }
           audioState.ttsPhase = "ready";
           audioState.busy = false;
+          setControlsEnabled(Boolean(audioState.buffer));
           updateTtsControls();
           updateAsrControls();
         } else if (message.type === "error") {
@@ -447,6 +449,7 @@
           } else {
             setTtsStatus(message.message || "Sintesis suara gagal.", "error");
           }
+          setControlsEnabled(Boolean(audioState.buffer));
           updateTtsControls();
           updateAsrControls();
         }
@@ -458,6 +461,7 @@
         audioState.ttsPhase = "idle";
         audioState.busy = false;
         worker.terminate();
+        setControlsEnabled(Boolean(audioState.buffer));
         setTtsModelStatus("Worker TTS gagal dijalankan. Periksa koneksi CDN dan dukungan browser.", "error");
         updateTtsControls();
         updateAsrControls();
@@ -477,6 +481,7 @@
         audioState.ttsRequestId += 1;
         audioState.ttsPhase = "loading";
         audioState.busy = true;
+        setControlsEnabled(Boolean(audioState.buffer));
         if (ttsProgressWrap) ttsProgressWrap.hidden = false;
         if (ttsProgress) ttsProgress.value = 0;
         if (ttsProgressValue) ttsProgressValue.textContent = "0%";
@@ -489,6 +494,7 @@
       } catch (error) {
         audioState.ttsPhase = "idle";
         audioState.busy = false;
+        setControlsEnabled(Boolean(audioState.buffer));
         setTtsModelStatus(error && error.message ? error.message : "Model TTS tidak dapat dimuat.", "error");
         updateTtsControls();
         updateAsrControls();
@@ -505,6 +511,7 @@
       audioState.ttsReady = false;
       audioState.ttsPhase = "idle";
       audioState.busy = false;
+      setControlsEnabled(Boolean(audioState.buffer));
       if (ttsProgressWrap) ttsProgressWrap.hidden = true;
       setTtsModelStatus("Proses dihentikan. Model dapat dimuat ulang; file model yang telah diunduh mungkin masih ada di cache browser.", "info");
       setTtsStatus("Proses dibatalkan. Muat model kembali sebelum sintesis berikutnya.", "info");
@@ -527,6 +534,7 @@
       audioState.ttsRequestId += 1;
       audioState.ttsPhase = "synthesizing";
       audioState.busy = true;
+      setControlsEnabled(Boolean(audioState.buffer));
       setTtsStatus("Mengirim teks ke worker lokal untuk disintesis…", "info");
       updateTtsControls();
       updateAsrControls();
