@@ -6,6 +6,12 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.46.0 — Multi-range Transcript Assembly & Subtitle Export**
+- Audio Lab can append successive 1–120 second Whisper results into one timestamped transcript or switch to replace mode for a fresh result.
+- Each segment keeps its absolute position in the original audio, so separately processed ranges can be combined without losing the source-time offset.
+- Adds transcript TXT download, SRT subtitle export with sequential cue numbers and millisecond timestamps, copy, and clear controls.
+- Browser smoke tests use a mocked ASR pipeline to verify append/replace behavior, timestamp offsets, TXT/SRT contents, minimum-range enforcement, cancellation, and output clearing. This validates the application workflow, not the real model's speech accuracy, device speed, or memory use.
+
 **v0.45.0 — Local Whisper Tiny Speech-to-Text (Alpha)**
 - Adds optional browser-local speech transcription to Audio Lab using Transformers.js 4.3.2 and the multilingual `onnx-community/whisper-tiny` model.
 - Runs quantized 8-bit inference through a dedicated single-thread WebAssembly worker on CPU; it does not require a GPU or API key.
