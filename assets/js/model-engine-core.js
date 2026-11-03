@@ -75,10 +75,14 @@
     }
     if (!validateClient(client)) throw new Error("Runtime tidak memenuhi kontrak chat.completions.");
     if (typeof modelId !== "string" || !modelId.trim()) throw new Error("Identitas model tidak valid.");
+    const normalizedModelId = modelId.trim();
+    if (localProvider && !provider.models.some((model) => model.id === normalizedModelId)) {
+      throw new Error("Model lokal tidak terdaftar dalam katalog Model Engine.");
+    }
 
     activeRuntime = {
       providerId,
-      modelId: modelId.trim(),
+      modelId: normalizedModelId,
       client,
       activatedAt: Date.now()
     };
@@ -257,7 +261,7 @@
   }
 
   global.LokalAIModelEngine = Object.freeze({
-    version: "0.2.0",
+    version: "0.2.1",
     getSnapshot,
     getClient,
     attachRuntime,
