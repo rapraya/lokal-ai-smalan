@@ -158,7 +158,7 @@ function validateChatRequest(payload, allowedModels) {
   if (!Number.isFinite(requestedTokens) || requestedTokens <= 0) {
     return { ok: false, message: "Batas token keluaran tidak valid." };
   }
-  const maxOutputTokens = Math.min(MAX_OUTPUT_TOKENS, Math.max(64, Math.floor(requestedTokens)));
+  const maxOutputTokens = Math.min(MAX_OUTPUT_TOKENS, Math.max(1, Math.floor(requestedTokens)));
 
   return {
     ok: true,
@@ -397,7 +397,8 @@ async function handleChatCompletion(request, env, identity, fetchImpl) {
   if (!upstream.ok) {
     clearTimeout(timeout);
     const message = normalizeOpenAiError(upstream.status);
-    return json({ error: { message } }, upstream.status === 429 ? 429 : upstream.status >= 500 ? 502 : 400);
+    const responseStatus = upstream.status === 429 ? 429 : (upstream.status === 401 || upstream.status === 403 || upstream.status >= 500 ? 502 : 400);
+    return json({ error: { message } }, responseStatus);
   }
 
   if (normalized.request.stream) {

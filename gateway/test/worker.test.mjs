@@ -112,6 +112,7 @@ assert.equal(validateChatRequest({ ...validPayload, model: "unapproved-model" },
 assert.equal(validateChatRequest({ ...validPayload, messages: [{ role: "tool", content: "x" }] }, [testModel]).ok, false);
 assert.equal(validateChatRequest({ ...validPayload, messages: [{ role: "user", content: "x".repeat(16_001) }] }, [testModel]).ok, false);
 assert.equal(validateChatRequest({ ...validPayload, messages: [{ role: "user", content: "x" }], max_tokens: 10_000 }, [testModel]).request.max_output_tokens, 2_048);
+assert.equal(validateChatRequest({ ...validPayload, max_tokens: 1 }, [testModel]).request.max_output_tokens, 1);
 
 const completion = makeChatCompletion({
   id: "resp_test",
@@ -173,6 +174,13 @@ const beforeRateLimit = upstreamCalls;
 const rateLimited = await handleRequest(makeRequest("/api/v1/chat/completions", { body: validPayload }), limitedEnv, { fetch: fakeFetch });
 assert.equal(rateLimited.status, 429);
 assert.equal(upstreamCalls, beforeRateLimit, "Rate-limited requests must not reach OpenAI.");
+
+const providerAuthFailure = await handleRequest(makeRequest("/api/v1/chat/completions", { body: validPayload }), env, { fetch: async () => new Response("provider secret diagnostic", { status: 401 }) });
+assert.equal(providerAuthFailure.status, 502, "Provider credential errors are gateway failures, not client input errors.");
+assert.match((await providerAuthFailure.json()).error.message, /Autentikasi provider gagal/);
+
+const providerRateLimit = await handleRequest(makeRequest("/api/v1/chat/completions", { body: validPayload }), env, { fetch: async () => new Response("provider rate limited", { status: 429 }) });
+assert.equal(providerRateLimit.status, 429, "Provider rate limits must remain distinguishable from gateway failures.");
 
 const noKeyEnv = { ...env, OPENAI_API_KEY: "" };
 const missingKey = await handleRequest(makeRequest("/api/v1/chat/completions", { body: validPayload }), noKeyEnv, { fetch: fakeFetch });
