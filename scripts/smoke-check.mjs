@@ -185,6 +185,13 @@ assert.ok(audioTtsWorker.includes("let loadEpoch = 0") &&
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
+assert.ok(audioLab.includes("decodeContext: null;") &&
+  audioLab.includes("decodeRequestId: 0;") &&
+  audioLab.includes("const decodeRequestId = ++audioState.decodeRequestId;") &&
+  audioLab.includes("decodeRequestId !== audioState.decodeRequestId") &&
+  audioLab.includes("current.decodeRequestId += 1;") &&
+  audioLab.includes("current.decodeContext.close()"),
+  "Audio Lab must invalidate pending decode work and close its active AudioContext when the page is destroyed.");
 assert.ok(audioLab.includes("state = null;") &&
   audioLab.includes("current.buffer = null;") &&
   audioLab.includes("current.file = null;") &&
