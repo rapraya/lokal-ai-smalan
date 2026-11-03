@@ -75,6 +75,7 @@
       frameBlob: null,
       busy: false,
       duration: 0,
+      durationKnown: false,
       frameWidth: 0,
       frameHeight: 0
     };
@@ -135,6 +136,7 @@
       videoState.sourceUrl = "";
       videoState.file = null;
       videoState.duration = 0;
+      videoState.durationKnown = false;
       videoState.frameWidth = 0;
       videoState.frameHeight = 0;
       frameTime.value = "0";
@@ -181,19 +183,21 @@
       const duration = player.duration;
       const width = player.videoWidth;
       const height = player.videoHeight;
-      if (!Number.isFinite(duration) || duration <= 0 || !width || !height) {
-        setStatus("Metadata video tidak lengkap atau tidak valid.", "error");
+      if (!width || !height) {
+        setStatus("Metadata dimensi video tidak lengkap atau tidak valid.", "error");
         return;
       }
-      videoState.duration = duration;
+      videoState.durationKnown = Number.isFinite(duration) && duration > 0;
+      videoState.duration = videoState.durationKnown ? duration : MAX_DURATION_SECONDS;
       videoState.frameWidth = width;
       videoState.frameHeight = height;
-      frameTime.max = String(Math.min(duration, MAX_DURATION_SECONDS));
+      frameTime.max = String(Math.min(videoState.duration, MAX_DURATION_SECONDS));
       frameTime.value = "0";
       const fileSize = (videoState.file.size / 1024 / 1024).toFixed(2);
+      const durationLabel = videoState.durationKnown ? duration.toFixed(2) + " detik" : "Durasi tidak tersedia";
       get("videoSourceDetails").textContent = width + " × " + height + " px · " +
-        duration.toFixed(2) + " detik · " + fileSize + " MB";
-      const tooLong = duration > MAX_DURATION_SECONDS;
+        durationLabel + " · " + fileSize + " MB";
+      const tooLong = videoState.durationKnown && duration > MAX_DURATION_SECONDS;
       const tooLargeFrame = !validateFrameDimensions();
       if (tooLong || tooLargeFrame) {
         const reason = tooLong ? "Durasi video melebihi batas 10 menit." :
@@ -202,12 +206,15 @@
         updateCaptureState();
         return;
       }
-      setStatus("Video siap. Pilih timestamp untuk mengambil frame PNG.", "success");
+      const readyMessage = videoState.durationKnown
+        ? "Video siap. Pilih timestamp untuk mengambil frame PNG."
+        : "Video siap. Durasi tidak tercantum; frame akan dicari melalui pemutaran lokal. Ambil timestamp secara berurutan.";
+      setStatus(readyMessage, videoState.durationKnown ? "success" : "info");
       updateCaptureState();
     }
 
-    function waitForSeeked() {
-      if (Math.abs(player.currentTime - Number(frameTime.value)) < 0.015 && !player.seeking) {
+    function waitForSeeked(target) {
+      if (Math.abs(player.currentTime - target) < 0.015 && !player.seeking) {
         return Promise.resolve();
       }
       return new Promise((resolve, reject) => {
@@ -229,8 +236,54 @@
         const timeout = global.setTimeout(() => finish(new Error("Waktu tunggu perpindahan frame habis.")), 8000);
         player.addEventListener("seeked", onSeeked, { once: true });
         player.addEventListener("error", onError, { once: true });
-        player.currentTime = Number(frameTime.value);
+        player.currentTime = target;
       });
+    }
+
+    function waitForPlaybackTime(target) {
+      if (player.currentTime >= target - 0.015 && !player.seeking) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const previousMuted = player.muted;
+        const cleanup = () => {
+          player.removeEventListener("timeupdate", onTimeUpdate);
+          player.removeEventListener("ended", onEnded);
+          player.removeEventListener("error", onError);
+          global.clearTimeout(timeout);
+          player.muted = previousMuted;
+        };
+        const finish = (error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          player.pause();
+          if (error) reject(error);
+          else resolve();
+        };
+        const onTimeUpdate = () => {
+          if (player.currentTime >= target - 0.015) finish();
+        };
+        const onEnded = () => finish(new Error("Video berakhir sebelum timestamp yang dipilih tercapai."));
+        const onError = () => finish(new Error("Browser gagal memutar video sampai timestamp yang dipilih."));
+        const timeout = global.setTimeout(() => finish(new Error("Waktu tunggu pemutaran frame habis.")), 12000);
+        player.addEventListener("timeupdate", onTimeUpdate);
+        player.addEventListener("ended", onEnded, { once: true });
+        player.addEventListener("error", onError, { once: true });
+        player.muted = true;
+        const playResult = player.play();
+        if (playResult && typeof playResult.catch === "function") {
+          playResult.catch(() => finish(new Error("Browser tidak dapat memutar video untuk mengambil frame.")));
+        }
+      });
+    }
+
+    function waitForTargetFrame(target) {
+      if (videoState.durationKnown) return waitForSeeked(target);
+      if (Math.abs(player.currentTime - target) < 0.015 && !player.seeking) return Promise.resolve();
+      if (player.currentTime > target + 0.015) {
+        return Promise.reject(new Error("Video ini tidak menyediakan indeks durasi untuk mundur. Ambil timestamp secara berurutan atau muat ulang videonya."));
+      }
+      return waitForPlaybackTime(target);
     }
 
     function canvasToBlob(canvas) {
@@ -245,8 +298,9 @@
     async function captureFrame() {
       if (state !== videoState || !videoState.file || videoState.busy) return;
       const requested = Number(frameTime.value);
-      if (!Number.isFinite(requested) || requested < 0 || requested > videoState.duration) {
-        setStatus("Timestamp harus berada di antara 0 dan durasi video.", "error");
+      if (!Number.isFinite(requested) || requested < 0 || requested > videoState.duration ||
+        (!videoState.durationKnown && requested > MAX_DURATION_SECONDS)) {
+        setStatus("Timestamp harus berada di antara 0 dan durasi video yang diizinkan.", "error");
         return;
       }
       if (!validateFrameDimensions()) {
@@ -260,7 +314,7 @@
       let canvas;
       try {
         player.pause();
-        await waitForSeeked();
+        await waitForTargetFrame(requested);
         if (state !== videoState) return;
         const width = player.videoWidth;
         const height = player.videoHeight;
