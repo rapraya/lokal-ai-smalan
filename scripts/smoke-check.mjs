@@ -479,6 +479,12 @@ assert.ok(app.includes("Llama-3.2-3B-Instruct-q4f16_1-MLC"),
   "The Llama 3.2 3B model option is missing.");
 assert.ok(app.includes("CreateWebWorkerMLCEngine") && app.includes("initProgressCallback"),
   "WebLLM worker initialization/progress integration is missing.");
+assert.ok(app.includes("const worker = chatWorker;") &&
+  app.includes("if (chatWorker === worker)") &&
+  app.includes("const failedRuntime = chatEngine;") &&
+  app.includes("modelEngine.clearRuntime(failedRuntime)") &&
+  app.includes('chatLastError = "Worker model mengalami kesalahan: " + message;'),
+  "A failed WebLLM worker must release the broken runtime and restore the model controls for retry.");
 assert.ok(app.includes("stream: true") && app.includes("for await (const chunk of stream)"),
   "Streaming response handling is missing.");
 assert.ok(app.includes("chatMessages.slice(0, -1).slice(-24)"),
