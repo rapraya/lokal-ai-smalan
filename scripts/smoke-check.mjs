@@ -297,7 +297,7 @@ assert.ok(app.includes("function getLocalModelOptionsHtml()") &&
 assert.ok(app.includes("function updateLocalModelHint(") &&
   app.includes("navigator.deviceMemory") &&
   app.includes("WebGPU tersedia; adapter dan alokasi model tetap perlu diuji.") &&
-  (app.match(/updateLocalModelHint\(modelSelect, modelHint\)/g) || []).length === 3,
+  (app.match(/modelSelect\.addEventListener\("change", \(\) => updateLocalModelHint/g) || []).length === 3,
   "Chat, Coding, and Text must explain manifest memory, coarse device RAM reporting, and WebGPU compatibility limits.");
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
