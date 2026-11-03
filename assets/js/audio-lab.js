@@ -245,7 +245,7 @@
       if (typeof global.Worker !== "function") {
         throw new Error("Web Worker tidak tersedia pada browser ini.");
       }
-      const worker = new global.Worker("assets/js/audio-asr-worker.js?v=0.45.0", {
+      const worker = new global.Worker("assets/js/audio-asr-worker.js?v=0.46.0", {
         type: "module",
         name: "lokal-ai-audio-asr"
       });
