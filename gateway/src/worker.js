@@ -299,6 +299,8 @@ function makeStreamingResponse(upstream, model, controller, onFinish) {
         }
         output.close();
       } catch (error) {
+        controller.abort(error || "Provider stream failed.");
+        try { await reader.cancel(error); } catch (_) {}
         output.error(error);
       } finally {
         reader.releaseLock();

@@ -237,6 +237,26 @@ assert.ok(streamText.includes('"content":"Halo"'));
 assert.ok(streamText.includes('"content":" streaming"'));
 assert.ok(streamText.includes("data: [DONE]"));
 
+let failedProviderSignal = null;
+const failedStreamFetch = async (url, options = {}) => {
+  if (url === "https://" + teamDomain + "/cdn-cgi/access/certs") {
+    return Response.json({ keys: [publicJwk] });
+  }
+  failedProviderSignal = options.signal;
+  return new Response(new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode('event: response.failed\\ndata: {"type":"response.failed"}\\n\\n'));
+    }
+  }), { headers: { "content-type": "text/event-stream" } });
+};
+const failedStreamResponse = await handleRequest(
+  makeRequest("/api/v1/chat/completions", { body: streamPayload }),
+  env,
+  { fetch: failedStreamFetch }
+);
+await assert.rejects(() => failedStreamResponse.text());
+assert.equal(failedProviderSignal.aborted, true, "A failed downstream stream must abort the upstream provider request.");
+
 const optionsResponse = await handleRequest(new Request("https://ai.smalan.sch.id/api/health", {
   method: "OPTIONS",
   headers: { origin: appOrigin }
