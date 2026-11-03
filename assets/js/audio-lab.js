@@ -270,6 +270,7 @@
             " detik siap diproses. Batas tiap proses 1–120 detik. Audio dipindai lokal dan tidak diunggah.";
         }
       }
+      updateTtsControls();
     }
 
     function setAsrModelStatus(message, type) {
