@@ -128,7 +128,7 @@ try {
   });
   await desktop.locator('.nav-link[data-page="audio"]').click();
   await desktop.waitForSelector('.audio-lab-page');
-  assert.match(await desktop.locator('.audio-lab-page').innerText(), /LOCAL AUDIO EDITOR/);
+  assert.match(await desktop.locator('.audio-lab-page').innerText(), /LOCAL AUDIO & SPEECH AI/);
   const sampleRate = 24000;
   const audioFrames = sampleRate;
   const wavFixture = Buffer.alloc(44 + audioFrames * 2);
@@ -314,7 +314,7 @@ try {
   assert.equal(videoHasHorizontalOverflow, false, "Video Studio must not introduce horizontal page overflow on mobile.");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV trimming, and Video Studio metadata/frame PNG export/cleanup.");
+  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV editing and mocked Whisper ASR load/progress/transcription/cancellation, and Video Studio metadata/frame PNG export/cleanup.");
 } finally {
   await browser.close();
 }
