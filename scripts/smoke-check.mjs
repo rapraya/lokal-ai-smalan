@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, audioAsrWorker, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -11,6 +11,7 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
   readFile("assets/js/model-engine-core.js", "utf8"),
   readFile("assets/js/image-studio.js", "utf8"),
   readFile("assets/js/audio-lab.js", "utf8"),
+  readFile("assets/js/audio-asr-worker.js", "utf8"),
   readFile("assets/js/video-studio.js", "utf8"),
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
@@ -97,18 +98,44 @@ assert.ok(audioLab.includes("writeText(0, \"RIFF\")") && audioLab.includes("view
   audioLab.includes("view.setUint16(20, 1, true)"),
   "Audio Lab WAV export must use a RIFF/WAVE PCM 16-bit header.");
 assert.ok(audioLab.includes("File diproses di browser dan tidak diunggah.") &&
-  audioLab.includes("Transkripsi AI, text-to-speech"),
-  "Audio Lab must disclose browser-local processing and identify model-backed speech features as unavailable.");
+  audioLab.includes("Whisper Tiny Multilingual") &&
+  audioLab.includes("Transkripsi memakai Whisper Tiny Multilingual"),
+  "Audio Lab must disclose local ASR and make its model/runtime limitations clear.");
 assert.ok(!audioLab.includes("fetch("), "Audio Lab must not upload audio or call a remote endpoint.");
+assert.ok(audioLab.includes("duration > 120") &&
+  audioLab.includes("new OfflineContext(1, frameCount, 16000)") &&
+  audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.45.0"') &&
+  audioLab.includes("worker.terminate()") &&
+  audioLab.includes("global.navigator.clipboard.writeText"),
+  "Audio Lab ASR must enforce a 120-second range, resample to mono 16 kHz, use a dedicated worker, support cancellation, and allow copying results.");
+assert.ok(audioAsrWorker.includes('@huggingface/transformers@4.3.2') &&
+  audioAsrWorker.includes('"automatic-speech-recognition"') &&
+  audioAsrWorker.includes('"onnx-community/whisper-tiny"') &&
+  audioAsrWorker.includes('device: "wasm"') &&
+  audioAsrWorker.includes('dtype: "q8"') &&
+  audioAsrWorker.includes("numThreads = 1"),
+  "Audio ASR worker must use the pinned multilingual Whisper Tiny model with quantized single-thread WebAssembly inference.");
+assert.ok(audioAsrWorker.includes('chunk_length_s: 30') &&
+  audioAsrWorker.includes('stride_length_s: 5') &&
+  audioAsrWorker.includes('options.language = "indonesian"') &&
+  audioAsrWorker.includes('options.language = "english"') &&
+  audioAsrWorker.includes("progress_callback: reportProgress"),
+  "Audio ASR worker must support chunked transcription, Indonesian/English language hints, automatic detection, and model download progress.");
+assert.ok(!audioAsrWorker.includes("fetch("),
+  "Audio ASR worker must not manually upload audio bytes to a remote inference endpoint.");
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
-  html.includes("LOCAL AUDIO EDITOR") && html.includes("ekspor WAV langsung di browser"),
-  "Overview and navigation must describe the implemented local Audio Lab honestly.");
+  html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
+  html.includes('assets/js/audio-lab.js?v=0.45.0') &&
+  app.includes("Transkripsi memakai Whisper Tiny Multilingual"),
+  "Overview, navigation, and module metadata must describe the implemented local Audio ASR honestly.");
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
-  css.includes("@media(max-width:600px){.audio-workspace-card"),
-  "Audio Lab must include dedicated responsive and small-screen styles.");
+  css.includes("@media(max-width:600px){.audio-workspace-card") &&
+  css.includes(".audio-transcription-card{") && css.includes(".audio-asr-grid{") &&
+  css.includes("@media(max-width:600px){.audio-transcription-card"),
+  "Audio Lab must include dedicated responsive editor and transcription styles.");
 
 const videoScriptIndex = html.indexOf('assets/js/video-studio.js?v=');
 assert.ok(videoScriptIndex > html.indexOf('assets/js/audio-lab.js?v=') && videoScriptIndex < appScriptIndex,
