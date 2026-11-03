@@ -8,7 +8,7 @@ The architecture is **local-first, not local-only**. Supported models should run
 
 ## Current implementation — v0.41.1
 
-The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.42.0. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
+The current `main` branch has progressed beyond the original v0.17 architecture notes and is at v0.42.1. The README is the detailed release record; this document summarizes the current architecture and delivery priorities.
 
 ### Application shell and model runtime
 - Responsive Modern Premium dashboard with navigation across 11 capability areas, capability search, browser-stored Dark/Light/Colorful themes, and a desktop-collapsible sidebar.
