@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, audioAsrWorker, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, audioAsrWorker, audioTtsWorker, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -12,6 +12,7 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
   readFile("assets/js/image-studio.js", "utf8"),
   readFile("assets/js/audio-lab.js", "utf8"),
   readFile("assets/js/audio-asr-worker.js", "utf8"),
+  readFile("assets/js/audio-tts-worker.js", "utf8"),
   readFile("assets/js/video-studio.js", "utf8"),
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
@@ -135,18 +136,51 @@ assert.ok(audioAsrWorker.includes('chunk_length_s: 30') &&
   "Audio ASR worker must support chunked transcription, Indonesian/English language hints, automatic detection, and model download progress.");
 assert.ok(!audioAsrWorker.includes("fetch("),
   "Audio ASR worker must not manually upload audio bytes to a remote inference endpoint.");
+assert.ok(audioLab.includes("function encodeTtsWav(samples, sampleRate)") &&
+  audioLab.includes("function loadTtsModel()") &&
+  audioLab.includes("function synthesizeText()") &&
+  audioLab.includes("function cancelTtsProcess()"),
+  "Audio Lab must encode TTS output as bounded WAV and expose explicit model load, generation, and cancellation.");
+assert.ok(audioLab.includes('new global.Worker("assets/js/audio-tts-worker.js?v=0.47.0"') &&
+  audioLab.includes("audioTtsLicense") && audioLab.includes("CC BY-NC 4.0") &&
+  audioLab.includes("nonkomersial") &&
+  audioLab.includes("audioTtsLicense.checked"),
+  "Indonesian TTS must use a dedicated worker and require explicit noncommercial-license acknowledgement before model loading.");
+assert.ok(audioLab.includes("audioTtsDownloadButton") && audioLab.includes("audioTtsPlayer") &&
+  audioLab.includes("audioTtsClearButton") &&
+  audioLab.includes("length > 500"),
+  "TTS workspace must limit text length, preview local speech, download WAV, and clear generated output.");
+assert.ok(!audioLab.includes("fetch("), "Audio Lab must not upload source text or audio for cloud inference.");
+assert.ok(audioTtsWorker.includes('@huggingface/transformers@4.3.2') &&
+  audioTtsWorker.includes('"text-to-speech"') &&
+  audioTtsWorker.includes('"payam1394/traxlate-mms-tts-ind"') &&
+  audioTtsWorker.includes('device: "wasm"') &&
+  audioTtsWorker.includes('dtype: "q8"') &&
+  audioTtsWorker.includes("numThreads = 1"),
+  "Audio TTS worker must use the pinned Indonesian MMS ONNX model with quantized single-thread WebAssembly inference.");
+assert.ok(audioTtsWorker.includes("MAX_TEXT_LENGTH = 500") &&
+  audioTtsWorker.includes("MAX_AUDIO_SECONDS = 90") &&
+  audioTtsWorker.includes("sampling_rate") &&
+  audioTtsWorker.includes("audio.buffer"),
+  "Audio TTS worker must bound input/output size and transfer generated waveform data back to the UI.");
+assert.ok(!audioTtsWorker.includes("fetch("),
+  "Audio TTS worker must not manually upload input text to a remote inference endpoint.");
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
 assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><span>Audio Lab</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
   html.includes("LOCAL AUDIO & SPEECH AI") && html.includes("model Whisper Tiny di browser") &&
-  html.includes('assets/js/audio-lab.js?v=0.46.2') &&
-  app.includes("Transkripsi memakai Whisper Tiny Multilingual"),
-  "Overview, navigation, and module metadata must describe the implemented local Audio ASR honestly.");
+  html.includes('assets/js/audio-lab.js?v=0.47.0') &&
+  html.includes("audio-tts-worker.js?v=0.47.0") &&
+  app.includes("Whisper Tiny Multilingual") && app.includes("MMS Indonesian TTS") &&
+  app.includes("CC BY-NC 4.0"),
+  "Overview, navigation, and module metadata must describe local ASR and license-gated Indonesian TTS honestly.");
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
   css.includes("@media(max-width:600px){.audio-workspace-card") &&
   css.includes(".audio-transcription-card{") && css.includes(".audio-asr-grid{") &&
   css.includes(".audio-asr-options{") && css.includes(".audio-asr-output-actions{") &&
+  css.includes(".audio-tts-grid{") && css.includes(".audio-tts-license-box{") &&
+  css.includes(".audio-tts-output{") && css.includes("@media(max-width:600px){.audio-tts-card") &&
   css.includes("@media(max-width:600px){.audio-transcription-card"),
   "Audio Lab must include dedicated responsive editor and transcription styles.");
 
