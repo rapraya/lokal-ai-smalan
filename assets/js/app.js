@@ -76,10 +76,10 @@
     },
     audio: {
       title: "Audio Lab", label: "LOCAL AUDIO & SPEECH AI", icon: "audio", color: "icon-mint",
-      description: "Workspace audio lokal untuk pemutaran, waveform, pemotongan, ekspor WAV, dan transkripsi ucapan dengan Whisper Tiny.",
-      headline: "Suara menjadi teks langsung di perangkat.",
-      detail: "Audio Lab mendukung pemutaran dan pengolahan file audio hingga 20 MB dan 5 menit, serta ekspor WAV PCM 16-bit. Transkripsi memakai Whisper Tiny Multilingual melalui Transformers.js 4.3.2 dan WebAssembly CPU 8-bit; unduhan awal model sekitar 45 MB dari Hugging Face. Setiap proses transkripsi dibatasi pada rentang 1–120 detik. Hasil dari beberapa rentang dapat digabung, disalin, atau diekspor sebagai TXT dan subtitle SRT bertimestamp. Inferensi berjalan di browser dan file audio tidak diunggah. Kecepatan dan akurasi bergantung pada perangkat, kualitas rekaman, dan bahasa. Text-to-speech, pemisahan suara, serta analisis audio lain belum diaktifkan.",
-      stages: [["Local audio editing", "Memutar audio, melihat waveform, memilih rentang, dan mengekspor WAV PCM 16-bit."], ["Local speech-to-text", "Memuat model Whisper Tiny dan mentranskripsikan rentang hingga 120 detik di browser."], ["Speech & audio AI", "Text-to-speech, pemisahan suara, dan pemahaman audio lanjutan setelah model yang sesuai diintegrasikan dan diuji."]]
+      description: "Workspace audio lokal untuk pemutaran, waveform, pemotongan, ekspor WAV, transkripsi, dan sintesis suara Bahasa Indonesia.",
+      headline: "Suara menjadi teks dan teks menjadi suara di perangkat.",
+      detail: "Audio Lab mendukung pemutaran dan pengolahan file audio hingga 20 MB dan 5 menit, serta ekspor WAV PCM 16-bit. Transkripsi memakai Whisper Tiny Multilingual melalui Transformers.js 4.3.2 dan WebAssembly CPU 8-bit; unduhan awal model sekitar 45 MB, dengan rentang 1–120 detik per proses. Hasil beberapa rentang dapat digabung dan diekspor sebagai TXT/SRT. Sintesis Bahasa Indonesia eksperimental menggunakan MMS VITS ONNX quantized sekitar 38 MB melalui worker WebAssembly CPU; model berlisensi CC BY-NC 4.0, hanya untuk penggunaan nonkomersial dan wajib atribusi. Pemuatan meminta persetujuan lisensi. Model TTS dikonversi dengan Transformers.js 3.8.1, sedangkan aplikasi memakai 4.3.2, sehingga kompatibilitas dan performa nyata masih perlu diuji. Teks serta audio tetap diproses di browser dan tidak dikirim ke endpoint inferensi.",
+      stages: [["Local audio editing", "Memutar audio, melihat waveform, memilih rentang, dan mengekspor WAV PCM 16-bit."], ["Local speech-to-text", "Whisper Tiny untuk transkripsi Indonesia/Inggris dan penggabungan rentang 1–120 detik."], ["Experimental Indonesian TTS", "MMS VITS ONNX mengubah teks menjadi suara melalui worker lokal setelah persetujuan lisensi nonkomersial."]]
     },
     video: {
       title: "Video Studio", label: "LOCAL VIDEO TOOLS", icon: "video", color: "icon-orange",
