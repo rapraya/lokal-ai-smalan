@@ -6,6 +6,14 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.42.0 — Local Image Studio Editor**
+- Introduces a browser-local image editing workspace for JPEG, PNG, and WebP files.
+- Adds 90-degree rotation, horizontal/vertical flipping, locked-aspect resizing, and PNG/JPEG/WebP export through Canvas.
+- Enforces a 20 MB source-file limit, 8,000 px maximum side length, and 40-megapixel processing/output budget; unsupported formats and oversized inputs fail closed.
+- Image bytes remain in the browser. Temporary object URLs and Canvas buffers are released when the user clears the image or leaves the workspace.
+- AI image generation, image understanding, and background removal remain explicitly unavailable; this release is a local editing utility, not a generative model.
+- Adds GitHub Actions browser coverage for image loading, transforms, dimension controls, export, and cleanup. Actual performance still depends on each device's browser and available memory.
+
 
 **v0.32.0 — Responsive Usability & Full-width Workspace**
 - Corrects desktop workspace sizing so the main area uses the full space beside the fixed sidebar without creating horizontal overflow.
