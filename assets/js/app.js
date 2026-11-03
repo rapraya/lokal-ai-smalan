@@ -52,6 +52,36 @@
 
   const icon = (name) => '<svg aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
 
+  function updateLocalModelHint(modelSelect, modelHint) {
+    if (!modelSelect || !modelHint) return;
+    const snapshot = modelEngine && typeof modelEngine.getSnapshot === "function"
+      ? modelEngine.getSnapshot()
+      : null;
+    const provider = snapshot && Array.isArray(snapshot.providers)
+      ? snapshot.providers.find((item) => item.id === "local-webllm")
+      : null;
+    const model = provider && Array.isArray(provider.models)
+      ? provider.models.find((item) => item.id === modelSelect.value)
+      : null;
+    if (!model) {
+      modelHint.textContent = "Katalog model belum tersedia. Periksa Model Engine sebelum memuat model.";
+      return;
+    }
+    const memory = Number.isFinite(Number(model.memoryEstimateMB))
+      ? Math.round(Number(model.memoryEstimateMB)).toLocaleString("id-ID") + " MB"
+      : "tidak dicantumkan";
+    const deviceMemory = Number(navigator.deviceMemory);
+    const deviceNote = Number.isFinite(deviceMemory) && deviceMemory > 0
+      ? " Browser memperkirakan RAM perangkat sekitar " + deviceMemory + " GB; ini bukan ukuran VRAM."
+      : " Browser tidak menyediakan estimasi RAM perangkat.";
+    const gpuNote = !window.isSecureContext
+      ? " WebGPU memerlukan HTTPS atau localhost."
+      : (!navigator.gpu ? " WebGPU tidak terdeteksi di browser ini." : " WebGPU tersedia; adapter dan alokasi model tetap perlu diuji.");
+    modelHint.textContent = "Jejak memori model pada manifest: ±" + memory +
+      " (bukan total RAM/VRAM yang dibutuhkan). Runtime, cache, dan konteks memerlukan memori tambahan." +
+      deviceNote + gpuNote;
+  }
+
   function getLocalModelOptionsHtml() {
     const snapshot = modelEngine && typeof modelEngine.getSnapshot === "function"
       ? modelEngine.getSnapshot()
@@ -1668,7 +1698,7 @@
             '<select class="chat-model-select" id="chatModelSelect">' +
             getLocalModelOptionsHtml() +
             '</select>' +
-            '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model ringan untuk uji awal; kualitas Bahasa Indonesia tetap perlu dievaluasi.</div>' +
+            '<div class="chat-model-hint" id="chatModelHint">Informasi kebutuhan memori dan kompatibilitas perangkat akan ditampilkan di sini.</div>' +
           '</div>' +
           '<div id="chatCloudModelControls" class="chat-cloud-model-controls" hidden>' +
             '<label class="chat-field-label" for="chatCloudModelSelect">Model GPT</label>' +
@@ -1711,7 +1741,7 @@
           '<select class="chat-model-select" id="chatModelSelect">' +
             getLocalModelOptionsHtml() +
           '</select>' +
-          '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Model lebih besar belum tentu lebih cepat atau lebih cocok untuk perangkat.</div>' +
+          '<div class="chat-model-hint" id="chatModelHint">Informasi kebutuhan memori dan kompatibilitas perangkat akan ditampilkan di sini.</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
           '<button class="chat-unload-button" id="chatUnloadButton" type="button" hidden>Lepaskan model</button>' +
           '<div class="chat-progress" id="chatProgress" hidden><div class="chat-progress-track"><span id="chatProgressBar"></span></div><p id="chatProgressText">Menyiapkan runtime…</p></div>' +
@@ -1752,11 +1782,8 @@
     const copyButton = document.getElementById("codingCopyButton");
 
     if (modelSelect && modelHint) {
-      modelSelect.addEventListener("change", () => {
-        const option = modelSelect.selectedOptions[0];
-        const memory = option ? option.dataset.vram : "";
-        modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kompatibilitas tetap bergantung pada perangkat.";
-      });
+      updateLocalModelHint(modelSelect, modelHint);
+      modelSelect.addEventListener("change", () => updateLocalModelHint(modelSelect, modelHint));
     }
     if (loadButton) loadButton.addEventListener("click", loadChatModel);
     if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
@@ -2312,11 +2339,8 @@
       });
     }
     if (modelSelect && modelHint) {
-      modelSelect.addEventListener("change", () => {
-        const option = modelSelect.selectedOptions[0];
-        const memory = option ? option.dataset.vram : "";
-        modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kompatibilitas tetap bergantung pada perangkat.";
-      });
+      updateLocalModelHint(modelSelect, modelHint);
+      modelSelect.addEventListener("change", () => updateLocalModelHint(modelSelect, modelHint));
     }
     if (providerSelect) {
       providerSelect.addEventListener("change", syncProviderPresentation);
@@ -2372,7 +2396,7 @@
           '<select class="chat-model-select" id="chatModelSelect">' +
             getLocalModelOptionsHtml() +
           '</select>' +
-          '<div class="chat-model-hint" id="chatModelHint">Estimasi VRAM manifest: ±879 MB. Kualitas bahasa dan dukungan perangkat perlu diuji.</div>' +
+          '<div class="chat-model-hint" id="chatModelHint">Informasi kebutuhan memori dan kompatibilitas perangkat akan ditampilkan di sini.</div>' +
           '<button class="chat-load-button" id="chatLoadButton" type="button">Muat model lokal ' + icon("arrow") + '</button>' +
           '<button class="chat-unload-button" id="chatUnloadButton" type="button" hidden>Lepaskan model</button>' +
           '<div class="chat-progress" id="chatProgress" hidden><div class="chat-progress-track"><span id="chatProgressBar"></span></div><p id="chatProgressText">Menyiapkan runtime…</p></div>' +
@@ -2437,11 +2461,8 @@
     if (loadButton) loadButton.addEventListener("click", loadChatModel);
     if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
     if (modelSelect && modelHint) {
-      modelSelect.addEventListener("change", () => {
-        const option = modelSelect.selectedOptions[0];
-        const memory = option ? option.dataset.vram : "";
-        modelHint.textContent = "Estimasi VRAM manifest: ±" + memory + " MB. Nilai bukan jaminan kebutuhan minimal; kemampuan bahasa dan kompatibilitas tetap perlu diuji.";
-      });
+      updateLocalModelHint(modelSelect, modelHint);
+      modelSelect.addEventListener("change", () => updateLocalModelHint(modelSelect, modelHint));
     }
     if (task) task.addEventListener("change", syncTextTaskFields);
     if (input) input.addEventListener("input", syncChatControls);
