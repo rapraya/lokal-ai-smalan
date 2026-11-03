@@ -117,7 +117,7 @@ assert.ok(audioLab.includes("audioAsrTextButton") && audioLab.includes("audioAsr
   "Audio Lab must expose transcript download and clear controls.");
 assert.ok(audioLab.includes("duration > 120") &&
   audioLab.includes("new OfflineContext(1, frameCount, 16000)") &&
-  audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.46.2"') &&
+  audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.47.0"') &&
   audioLab.includes("worker.terminate()") &&
   audioLab.includes("global.navigator.clipboard.writeText"),
   "Audio Lab ASR must enforce a 120-second range, resample to mono 16 kHz, use a dedicated worker, support cancellation, and allow copying results.");
