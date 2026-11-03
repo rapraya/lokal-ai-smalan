@@ -174,6 +174,14 @@ assert.ok(audioTtsWorker.includes("MAX_TEXT_LENGTH = 500") &&
   "Audio TTS worker must bound input/output size and transfer generated waveform data back to the UI.");
 assert.ok(!audioTtsWorker.includes("fetch("),
   "Audio TTS worker must not manually upload input text to a remote inference endpoint.");
+assert.ok(audioTtsWorker.includes("let loadEpoch = 0") &&
+  audioTtsWorker.includes("const epoch = loadEpoch") &&
+  audioTtsWorker.includes("epoch !== loadEpoch || loadingPromise !== promise") &&
+  audioTtsWorker.includes("loadEpoch += 1") &&
+  audioTtsWorker.includes("reportProgress(requestId, epoch, info)") &&
+  audioTtsWorker.includes("progress_callback: (info) => reportProgress(requestId, epoch, info)"),
+  "Audio TTS worker must ignore stale download progress, dispose late model loads after cancellation, and allow a clean retry after failure.");
+
 assert.ok(app.includes('page === "audio" && window.LokalAIAudioLab') &&
   app.includes("window.LokalAIAudioLab.destroy()"),
   "Audio Lab navigation must bind the local editor and release its resources when leaving.");
