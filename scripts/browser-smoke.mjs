@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { readFile } from "node:fs/promises";
 
 const baseURL = "http://127.0.0.1:4173";
 const browser = await chromium.launch({ headless: true });
@@ -68,13 +69,24 @@ try {
 
   await desktop.locator('#imageWidth').fill('6');
   assert.equal(await desktop.locator('#imageHeight').inputValue(), '4', 'Aspect-ratio lock must update the paired dimension.');
+  const pngDownloadEvent = desktop.waitForEvent('download');
+  await desktop.locator('#imageExportButton').click();
+  const pngDownload = await pngDownloadEvent;
+  assert.equal(pngDownload.suggestedFilename(), 'smalan-test-edited.png');
+  const pngOutput = await readFile(await pngDownload.path());
+  assert.equal(pngOutput.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(pngOutput.readUInt32BE(16), 6, 'Exported PNG width must match the selected output width.');
+  assert.equal(pngOutput.readUInt32BE(20), 4, 'Exported PNG height must match the locked aspect ratio.');
+
   await desktop.locator('#imageFormat').selectOption('image/jpeg');
   await desktop.locator('#imageQuality').fill('0.7');
   assert.equal(await desktop.locator('#imageQualityValue').innerText(), '70%');
-  const imageDownload = desktop.waitForEvent('download');
+  const imageDownloadEvent = desktop.waitForEvent('download');
   await desktop.locator('#imageExportButton').click();
-  const downloadedImage = await imageDownload;
+  const downloadedImage = await imageDownloadEvent;
   assert.equal(downloadedImage.suggestedFilename(), 'smalan-test-edited.jpg');
+  const jpegOutput = await readFile(await downloadedImage.path());
+  assert.deepEqual(Array.from(jpegOutput.subarray(0, 3)), [0xff, 0xd8, 0xff], 'JPEG export must contain a valid JPEG signature.');
   await desktop.locator('#imageClearButton').click();
   assert.equal(await desktop.locator('#imagePreviewContainer').isVisible(), false);
   assert.equal(await desktop.locator('#imageExportButton').isDisabled(), true);
