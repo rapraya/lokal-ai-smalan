@@ -245,7 +245,7 @@ const failedStreamFetch = async (url, options = {}) => {
   failedProviderSignal = options.signal;
   return new Response(new ReadableStream({
     start(controller) {
-      controller.enqueue(encoder.encode('event: response.failed\ndata: {"type":"response.failed"}\\n\\n'));
+      controller.enqueue(encoder.encode('event: response.failed\ndata: {"type":"response.failed"}\n\n'));
     }
   }), { headers: { "content-type": "text/event-stream" } });
 };
