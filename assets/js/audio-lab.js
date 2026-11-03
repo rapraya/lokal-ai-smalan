@@ -284,6 +284,278 @@
       asrStatus.dataset.state = type || "info";
     }
 
+    function setTtsModelStatus(message, type) {
+      if (!ttsModelStatus) return;
+      ttsModelStatus.textContent = message;
+      ttsModelStatus.dataset.state = type || "info";
+    }
+
+    function setTtsStatus(message, type) {
+      if (!ttsStatus) return;
+      ttsStatus.textContent = message;
+      ttsStatus.dataset.state = type || "info";
+    }
+
+    function updateTtsControls() {
+      const accepted = Boolean(ttsLicense && ttsLicense.checked);
+      const hasText = Boolean(ttsInput && ttsInput.value.trim());
+      if (ttsCharacterCount) {
+        const length = ttsInput ? ttsInput.value.length : 0;
+        ttsCharacterCount.textContent = length + " / 500 karakter";
+      }
+      if (ttsLicense) ttsLicense.disabled = audioState.busy;
+      if (ttsLoadButton) {
+        ttsLoadButton.disabled = audioState.busy || audioState.ttsReady || !accepted;
+        ttsLoadButton.textContent = audioState.ttsReady ? "Model siap digunakan" :
+          audioState.ttsPhase === "loading" ? "Memuat model…" :
+          accepted ? "Unduh & muat model" : "Setujui lisensi untuk memuat model";
+      }
+      if (ttsCancelButton) {
+        ttsCancelButton.hidden = !audioState.busy ||
+          (audioState.ttsPhase !== "loading" && audioState.ttsPhase !== "synthesizing");
+      }
+      if (ttsInput) ttsInput.disabled = audioState.busy;
+      if (ttsGenerateButton) ttsGenerateButton.disabled =
+        audioState.busy || !audioState.ttsReady || !hasText;
+      if (ttsDownloadButton) ttsDownloadButton.disabled = !audioState.ttsAudioBlob || audioState.busy;
+      if (ttsClearButton) ttsClearButton.disabled = !audioState.ttsAudioBlob || audioState.busy;
+    }
+
+    function encodeTtsWav(samples, sampleRate) {
+      if (!(samples instanceof Float32Array) || samples.length < 1 ||
+        !Number.isInteger(sampleRate) || sampleRate < 8000 || sampleRate > 48000) {
+        throw new Error("Waveform TTS tidak valid.");
+      }
+      if (samples.length > sampleRate * 90) {
+        throw new Error("Audio hasil melebihi batas 90 detik.");
+      }
+      const channels = 1;
+      const bytesPerSample = 2;
+      const dataSize = samples.length * bytesPerSample;
+      const output = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(output);
+      const writeText = (offset, value) => {
+        for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i));
+      };
+      writeText(0, "RIFF");
+      view.setUint32(4, 36 + dataSize, true);
+      writeText(8, "WAVE");
+      writeText(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, channels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * channels * bytesPerSample, true);
+      view.setUint16(32, channels * bytesPerSample, true);
+      view.setUint16(34, 16, true);
+      writeText(36, "data");
+      view.setUint32(40, dataSize, true);
+      for (let i = 0, offset = 44; i < samples.length; i += 1, offset += 2) {
+        const sample = Math.max(-1, Math.min(1, samples[i] || 0));
+        view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
+      }
+      return new Blob([output], { type: "audio/wav" });
+    }
+
+    function releaseTtsOutput() {
+      if (ttsPlayer) {
+        ttsPlayer.pause();
+        ttsPlayer.removeAttribute("src");
+        ttsPlayer.load();
+      }
+      if (audioState.ttsAudioUrl) URL.revokeObjectURL(audioState.ttsAudioUrl);
+      audioState.ttsAudioUrl = "";
+      audioState.ttsAudioBlob = null;
+      if (ttsOutput) ttsOutput.hidden = true;
+      if (ttsOutputMeta) ttsOutputMeta.textContent = "-";
+      updateTtsControls();
+    }
+
+    function ensureTtsWorker() {
+      if (audioState.ttsWorker) return audioState.ttsWorker;
+      if (typeof global.Worker !== "function") {
+        throw new Error("Web Worker tidak tersedia pada browser ini.");
+      }
+      const worker = new global.Worker("assets/js/audio-tts-worker.js?v=0.47.0", {
+        type: "module",
+        name: "lokal-ai-audio-tts"
+      });
+      audioState.ttsWorker = worker;
+      worker.onmessage = (event) => {
+        if (state !== audioState || audioState.ttsWorker !== worker) return;
+        const message = event.data || {};
+        if (message.requestId !== audioState.ttsRequestId) return;
+        if (message.type === "model-stage") {
+          const file = message.file ? " · " + message.file : "";
+          setTtsModelStatus((message.stage === "download" ? "Mengunduh" : "Menyiapkan") +
+            " komponen model" + file + "…", "info");
+          if (ttsProgressWrap) ttsProgressWrap.hidden = false;
+          if (ttsProgressLabel) ttsProgressLabel.textContent = "Menyiapkan file model…";
+        } else if (message.type === "model-progress") {
+          if (ttsProgressWrap) ttsProgressWrap.hidden = false;
+          if (Number.isFinite(message.progress)) {
+            const progress = Math.max(0, Math.min(100, message.progress));
+            if (ttsProgress) ttsProgress.value = progress;
+            if (ttsProgressValue) ttsProgressValue.textContent = Math.round(progress) + "%";
+            if (ttsProgressLabel) ttsProgressLabel.textContent = "Mengunduh MMS Indonesian TTS…";
+            setTtsModelStatus("Mengunduh model suara dari Hugging Face. Teks tidak dikirim ke server inferensi.", "info");
+          }
+        } else if (message.type === "model-ready") {
+          audioState.ttsReady = true;
+          audioState.ttsPhase = "ready";
+          audioState.busy = false;
+          if (ttsProgress) ttsProgress.value = 100;
+          if (ttsProgressValue) ttsProgressValue.textContent = "100%";
+          if (ttsProgressLabel) ttsProgressLabel.textContent = "Model siap";
+          setTtsModelStatus("MMS Indonesian TTS siap · WebAssembly CPU · q8.", "success");
+          setTtsStatus("Model siap. Masukkan teks Bahasa Indonesia untuk menghasilkan suara.", "success");
+          updateTtsControls();
+          updateAsrControls();
+        } else if (message.type === "synthesis-stage") {
+          audioState.ttsPhase = "synthesizing";
+          setTtsStatus("Model sedang menyintesis suara di perangkat ini. Proses dapat memerlukan waktu.", "info");
+          updateTtsControls();
+        } else if (message.type === "synthesis-result") {
+          try {
+            const blob = encodeTtsWav(message.audio, message.samplingRate);
+            releaseTtsOutput();
+            audioState.ttsAudioBlob = blob;
+            audioState.ttsAudioUrl = URL.createObjectURL(blob);
+            if (ttsPlayer) {
+              ttsPlayer.src = audioState.ttsAudioUrl;
+              ttsPlayer.load();
+            }
+            if (ttsOutput) ttsOutput.hidden = false;
+            if (ttsOutputMeta) {
+              ttsOutputMeta.textContent = formatTime(message.audio.length / message.samplingRate) +
+                " · " + message.samplingRate.toLocaleString("id-ID") + " Hz · WAV PCM 16-bit";
+            }
+            setTtsStatus("Suara berhasil dibuat di browser. Putar pratinjau atau unduh file WAV.", "success");
+          } catch (error) {
+            setTtsStatus(error && error.message ? error.message : "Output suara tidak dapat disiapkan.", "error");
+          }
+          audioState.ttsPhase = "ready";
+          audioState.busy = false;
+          updateTtsControls();
+          updateAsrControls();
+        } else if (message.type === "error") {
+          const wasLoading = audioState.ttsPhase === "loading";
+          audioState.ttsPhase = audioState.ttsReady ? "ready" : "idle";
+          audioState.busy = false;
+          if (wasLoading) {
+            audioState.ttsReady = false;
+            setTtsModelStatus(message.message || "Model TTS gagal dimuat.", "error");
+          } else {
+            setTtsStatus(message.message || "Sintesis suara gagal.", "error");
+          }
+          updateTtsControls();
+          updateAsrControls();
+        }
+      };
+      worker.onerror = (event) => {
+        if (state !== audioState || audioState.ttsWorker !== worker) return;
+        audioState.ttsWorker = null;
+        audioState.ttsReady = false;
+        audioState.ttsPhase = "idle";
+        audioState.busy = false;
+        worker.terminate();
+        setTtsModelStatus("Worker TTS gagal dijalankan. Periksa koneksi CDN dan dukungan browser.", "error");
+        updateTtsControls();
+        updateAsrControls();
+      };
+      return worker;
+    }
+
+    function loadTtsModel() {
+      if (audioState.busy || audioState.ttsReady) return;
+      if (!ttsLicense || !ttsLicense.checked) {
+        setTtsModelStatus("Setujui lisensi CC BY-NC 4.0 sebelum memuat model.", "error");
+        updateTtsControls();
+        return;
+      }
+      try {
+        const worker = ensureTtsWorker();
+        audioState.ttsRequestId += 1;
+        audioState.ttsPhase = "loading";
+        audioState.busy = true;
+        if (ttsProgressWrap) ttsProgressWrap.hidden = false;
+        if (ttsProgress) ttsProgress.value = 0;
+        if (ttsProgressValue) ttsProgressValue.textContent = "0%";
+        if (ttsProgressLabel) ttsProgressLabel.textContent = "Menyiapkan Transformers.js…";
+        setTtsModelStatus("Memuat Transformers.js dan MMS Indonesian VITS di browser…", "info");
+        setTtsStatus("Pemuatan model berlangsung di worker terpisah.", "info");
+        updateTtsControls();
+        updateAsrControls();
+        worker.postMessage({ type: "load-model", requestId: audioState.ttsRequestId });
+      } catch (error) {
+        audioState.ttsPhase = "idle";
+        audioState.busy = false;
+        setTtsModelStatus(error && error.message ? error.message : "Model TTS tidak dapat dimuat.", "error");
+        updateTtsControls();
+        updateAsrControls();
+      }
+    }
+
+    function cancelTtsProcess() {
+      if (!audioState.busy || (audioState.ttsPhase !== "loading" && audioState.ttsPhase !== "synthesizing")) return;
+      audioState.ttsRequestId += 1;
+      if (audioState.ttsWorker) {
+        audioState.ttsWorker.terminate();
+        audioState.ttsWorker = null;
+      }
+      audioState.ttsReady = false;
+      audioState.ttsPhase = "idle";
+      audioState.busy = false;
+      if (ttsProgressWrap) ttsProgressWrap.hidden = true;
+      setTtsModelStatus("Proses dihentikan. Model dapat dimuat ulang; file model yang telah diunduh mungkin masih ada di cache browser.", "info");
+      setTtsStatus("Proses dibatalkan. Muat model kembali sebelum sintesis berikutnya.", "info");
+      updateTtsControls();
+      updateAsrControls();
+    }
+
+    function synthesizeText() {
+      if (audioState.busy || !audioState.ttsReady || !ttsInput) return;
+      const text = ttsInput.value.trim();
+      if (!text || text.length > 500) {
+        setTtsStatus("Masukkan teks Bahasa Indonesia sepanjang 1–500 karakter.", "error");
+        return;
+      }
+      const worker = audioState.ttsWorker;
+      if (!worker) {
+        setTtsModelStatus("Worker TTS tidak tersedia. Muat model kembali.", "error");
+        return;
+      }
+      audioState.ttsRequestId += 1;
+      audioState.ttsPhase = "synthesizing";
+      audioState.busy = true;
+      setTtsStatus("Mengirim teks ke worker lokal untuk disintesis…", "info");
+      updateTtsControls();
+      updateAsrControls();
+      worker.postMessage({
+        type: "synthesize",
+        requestId: audioState.ttsRequestId,
+        payload: { text }
+      });
+    }
+
+    function downloadTtsAudio() {
+      if (!audioState.ttsAudioBlob || audioState.busy) return;
+      const url = URL.createObjectURL(audioState.ttsAudioBlob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "lokal-ai-speech-id.wav";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      global.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function clearTtsAudio() {
+      if (audioState.busy) return;
+      releaseTtsOutput();
+      setTtsStatus("Hasil suara dihapus dari sesi ini.", "info");
+    }
+
     function ensureAsrWorker() {
       if (audioState.asrWorker) return audioState.asrWorker;
       if (typeof global.Worker !== "function") {
