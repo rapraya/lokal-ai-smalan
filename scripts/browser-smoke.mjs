@@ -120,7 +120,7 @@ try {
     const exportButton = document.querySelector('#audioExportButton');
     return duration && duration.textContent === '00:01' && exportButton && !exportButton.disabled;
   });
-  assert.match(await desktop.locator('#audioSourceDetails').innerText(), /24,000 Hz/);
+  assert.match(await desktop.locator('#audioSourceDetails').innerText(), /24[.,]000 Hz/);
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), true);
   const waveformHasPixels = await desktop.locator('#audioWaveform').evaluate((canvas) => {
     const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
