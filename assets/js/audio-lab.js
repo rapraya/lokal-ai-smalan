@@ -70,7 +70,7 @@
           '<div class="audio-tts-grid">',
             '<div class="audio-tts-model-card">',
               '<div class="audio-asr-model-top"><span class="audio-asr-model-icon"><svg aria-hidden="true"><use href="#i-audio"></use></svg></span><div><strong>MMS Indonesian VITS</strong><span>ONNX · q8 · WebAssembly CPU</span></div></div>',
-              '<p>Model suara Bahasa Indonesia untuk mengubah teks menjadi audio. Bobot ONNX quantized sekitar 38 MB; runtime dan file model diunduh saat pertama kali digunakan.</p>',
+              '<p>Model suara Bahasa Indonesia untuk mengubah teks menjadi audio. Bobot ONNX q8 sekitar 38,3 MB; runtime dan file model diunduh saat pertama kali digunakan.</p>',
               '<div class="audio-tts-license-box"><label><input type="checkbox" id="audioTtsLicense"> Saya memahami model ini berlisensi <strong>CC BY-NC 4.0</strong>: penggunaan nonkomersial dan atribusi wajib.</label><p>Sumber model: <a href="https://huggingface.co/payam1394/traxlate-mms-tts-ind" target="_blank" rel="noopener noreferrer">payam1394/traxlate-mms-tts-ind</a>, konversi dari <a href="https://huggingface.co/facebook/mms-tts-ind" target="_blank" rel="noopener noreferrer">Meta MMS Indonesian</a>. <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">Baca lisensi CC BY-NC 4.0</a>.</p></div>',
               '<div class="audio-tts-model-actions"><button type="button" id="audioTtsLoadButton" class="button-outline" disabled>Setujui lisensi untuk memuat model</button><button type="button" id="audioTtsCancelButton" class="audio-asr-cancel-button" hidden>Batalkan proses</button></div>',
               '<div class="audio-asr-progress-wrap" id="audioTtsProgressWrap" hidden><div class="audio-asr-progress-heading"><span id="audioTtsProgressLabel">Menyiapkan model…</span><strong id="audioTtsProgressValue">0%</strong></div><progress id="audioTtsProgress" max="100" value="0">0%</progress></div>',
@@ -427,8 +427,7 @@
             }
             if (ttsOutput) ttsOutput.hidden = false;
             if (ttsOutputMeta) {
-              ttsOutputMeta.textContent = formatTime(message.audio.length / message.samplingRate) +
-                " · " + message.samplingRate.toLocaleString("id-ID") + " Hz · WAV PCM 16-bit";
+              ttsOutputMeta.textContent = (message.audio.length / message.samplingRate).toFixed(1) + " detik · " + message.samplingRate.toLocaleString("id-ID") + " Hz · WAV PCM 16-bit";
             }
             setTtsStatus("Suara berhasil dibuat di browser. Putar pratinjau atau unduh file WAV.", "success");
           } catch (error) {
@@ -561,7 +560,7 @@
       if (typeof global.Worker !== "function") {
         throw new Error("Web Worker tidak tersedia pada browser ini.");
       }
-      const worker = new global.Worker("assets/js/audio-asr-worker.js?v=0.46.2", {
+      const worker = new global.Worker("assets/js/audio-asr-worker.js?v=0.47.0", {
         type: "module",
         name: "lokal-ai-audio-asr"
       });
