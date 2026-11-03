@@ -254,6 +254,9 @@ assert.ok(videoStudio.includes('preload="metadata"') && videoStudio.includes("pl
   videoStudio.includes("player.videoHeight") && videoStudio.includes("function waitForSeeked(target)") &&
   videoStudio.includes("durationKnown") && videoStudio.includes("function waitForPlaybackTime("),
   "Video Studio must read browser video metadata and support both seeking and playback-based frame capture.");
+assert.ok(videoStudio.includes("cancelPendingWait") && videoStudio.includes("const cancelWait = () => finish(new Error("), "Video Studio must expose cancellation for pending frame waits.");
+assert.ok(videoStudio.includes("if (current.cancelPendingWait) current.cancelPendingWait();"), "Video Studio teardown must cancel pending seek/playback waits immediately.");
+assert.ok(videoStudio.includes("videoState.cancelPendingWait === cancelWait") && videoStudio.includes("Pengambilan frame dibatalkan"), "Video Studio wait cancellation must release listeners/timers and restore playback state.");
 assert.ok(videoStudio.includes("context.drawImage(player, 0, 0, width, height)") &&
   videoStudio.includes('}, "image/png"') && videoStudio.includes("function downloadFrame()"),
   "Video Studio must capture and download a local PNG frame.");
