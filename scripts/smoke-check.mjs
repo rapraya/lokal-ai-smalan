@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, audioLab, videoStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -11,6 +11,7 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudi
   readFile("assets/js/model-engine-core.js", "utf8"),
   readFile("assets/js/image-studio.js", "utf8"),
   readFile("assets/js/audio-lab.js", "utf8"),
+  readFile("assets/js/video-studio.js", "utf8"),
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
   readFile("gateway/wrangler.jsonc", "utf8"),
@@ -108,6 +109,33 @@ assert.ok(html.includes('data-page="audio"><svg><use href="#i-audio"/></svg><spa
 assert.ok(css.includes(".audio-lab-grid{") && css.includes(".audio-waveform-wrap{") &&
   css.includes("@media(max-width:600px){.audio-workspace-card"),
   "Audio Lab must include dedicated responsive and small-screen styles.");
+
+const videoScriptIndex = html.indexOf('assets/js/video-studio.js?v=');
+assert.ok(videoScriptIndex > html.indexOf('assets/js/audio-lab.js?v=') && videoScriptIndex < appScriptIndex,
+  "Video Studio must load after Audio Lab and before the application controller.");
+assert.ok(videoStudio.includes("MAX_FILE_BYTES = 100 * 1024 * 1024") &&
+  videoStudio.includes("MAX_DURATION_SECONDS = 600") &&
+  videoStudio.includes("MAX_FRAME_SIDE = 4096") &&
+  videoStudio.includes("MAX_FRAME_PIXELS = 16_000_000"),
+  "Video Studio must enforce bounded source file, duration, frame side, and pixel limits.");
+assert.ok(videoStudio.includes('preload="metadata"') && videoStudio.includes("player.videoWidth") &&
+  videoStudio.includes("player.videoHeight") && videoStudio.includes("function waitForSeeked()"),
+  "Video Studio must read browser video metadata and wait for the selected frame before capture.");
+assert.ok(videoStudio.includes("context.drawImage(player, 0, 0, width, height)") &&
+  videoStudio.includes('}, "image/png") && videoStudio.includes("function downloadFrame()"),
+  "Video Studio must capture and download a local PNG frame.");
+assert.ok(videoStudio.includes("File diproses di browser dan tidak diunggah.") &&
+  videoStudio.includes("Pemotongan timeline") && !videoStudio.includes("fetch("),
+  "Video Studio must disclose local processing, identify unimplemented features, and avoid remote uploads.");
+assert.ok(app.includes('page === "video" && window.LokalAIVideoStudio') &&
+  app.includes("window.LokalAIVideoStudio.destroy()"),
+  "Video Studio navigation must bind the local editor and release its resources when leaving.");
+assert.ok(html.includes('data-page="video"><svg><use href="#i-video"/></svg><span>Video Studio</span><span class="nav-status nav-status-alpha">Lokal</span>') &&
+  html.includes("LOCAL VIDEO TOOLS") && html.includes("ekspor frame PNG langsung di browser"),
+  "Overview and navigation must describe the implemented local Video Studio honestly.");
+assert.ok(css.includes(".video-studio-grid{") && css.includes(".video-frame-result{") &&
+  css.includes("@media(max-width:600px){.video-workspace-card"),
+  "Video Studio must include dedicated responsive and small-screen styles.");
 
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
