@@ -91,6 +91,41 @@ try {
   assert.equal(await desktop.locator('#imagePreviewContainer').isVisible(), false);
   assert.equal(await desktop.locator('#imageExportButton').isDisabled(), true);
 
+  await desktop.route("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/javascript; charset=utf-8",
+      headers: { "access-control-allow-origin": "*" },
+      body: `
+        export const env = { backends: { onnx: { wasm: { numThreads: 0 } } } };
+        let calls = 0;
+        export async function pipeline(task, model, options) {
+          if (task !== "automatic-speech-recognition" || model !== "onnx-community/whisper-tiny") {
+            throw new Error("Unexpected ASR pipeline configuration.");
+          }
+          if (options.device !== "wasm" || options.dtype !== "q8") {
+            throw new Error("ASR must use q8 WebAssembly inference.");
+          }
+          if (typeof options.progress_callback === "function") {
+            options.progress_callback({ status: "progress_total", progress: 100, loaded: 100, total: 100 });
+          }
+          const transcriber = async (audio, settings) => {
+            if (!(audio instanceof Float32Array) || audio.length < 1) throw new Error("Expected resampled Float32Array audio.");
+            if (settings.task !== "transcribe" || settings.chunk_length_s !== 30 || settings.stride_length_s !== 5) {
+              throw new Error("Unexpected ASR generation settings.");
+            }
+            calls += 1;
+            if (calls === 2) await new Promise((resolve) => setTimeout(resolve, 5000));
+            const language = settings.language || "auto";
+            const text = "Halo, ini uji transkripsi " + language + ".";
+            return { text, chunks: [{ text, timestamp: [0, 0.5] }] };
+          };
+          transcriber.dispose = async () => {};
+          return transcriber;
+        }
+      `
+    });
+  });
   await desktop.locator('.nav-link[data-page="audio"]').click();
   await desktop.waitForSelector('.audio-lab-page');
   assert.match(await desktop.locator('.audio-lab-page').innerText(), /LOCAL AUDIO EDITOR/);
@@ -152,6 +187,35 @@ try {
   assert.equal(trimmedWav.readUInt32LE(24), sampleRate, 'WAV export must preserve the decoded sample rate.');
   assert.equal(trimmedWav.readUInt32LE(40), 14400 * 2, 'WAV payload must contain exactly the selected 0.6-second range.');
   assert.equal(trimmedWav.length, 44 + 14400 * 2, 'WAV output must contain a complete PCM16 header and payload.');
+
+  await desktop.locator('#audioAsrLoadButton').click();
+  await desktop.waitForFunction(() => {
+    const status = document.querySelector('#audioAsrModelStatus');
+    const progress = document.querySelector('#audioAsrProgress');
+    return status && /Whisper Tiny siap/.test(status.textContent) && progress && progress.value === 100;
+  });
+  assert.equal(await desktop.locator('#audioAsrTranscribeButton').isEnabled(), true,
+    "A ready local ASR model and a selected audio range must enable transcription.");
+  await desktop.locator('#audioAsrLanguage').selectOption('id');
+  await desktop.locator('#audioAsrTranscribeButton').click();
+  await desktop.waitForFunction(() => {
+    const output = document.querySelector('#audioAsrOutput');
+    return output && output.value.includes("Halo, ini uji transkripsi indonesian.");
+  });
+  assert.match(await desktop.locator('#audioAsrOutputMeta').innerText(), /kata · rentang/);
+  assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Transkripsi selesai/);
+
+  await desktop.locator('#audioAsrLanguage').selectOption('en');
+  await desktop.locator('#audioAsrTranscribeButton').click();
+  await desktop.waitForFunction(() => {
+    const cancel = document.querySelector('#audioAsrCancelButton');
+    const status = document.querySelector('#audioAsrStatus');
+    return cancel && !cancel.hidden && status && /Mentranskripsikan/.test(status.textContent);
+  });
+  await desktop.locator('#audioAsrCancelButton').click();
+  assert.match(await desktop.locator('#audioAsrStatus').innerText(), /Proses dibatalkan/);
+  assert.equal(await desktop.locator('#audioAsrLoadButton').isEnabled(), true,
+    "Cancelling ASR must terminate its worker and allow a clean reload.");
   await desktop.locator('#audioClearButton').click();
   assert.equal(await desktop.locator('#audioLoadedPanel').isVisible(), false);
   assert.equal(await desktop.locator('#audioExportButton').isDisabled(), true);
