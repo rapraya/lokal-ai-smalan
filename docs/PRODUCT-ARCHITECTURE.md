@@ -49,7 +49,8 @@ The current `main` branch has progressed beyond the original v0.17 architecture 
 - **Text & Language:** drafting, editing, proofreading, summarization, translation, and extraction using the shared local model; Indonesian quality and translation fidelity need evaluation.
 - **AI Assistant:** in-session task planning and recommendations only. It does not execute actions, modify files, send messages, or access accounts.
 - **Personal AI:** user-managed preferences and manual notes; persistence and model-context inclusion are separate opt-ins. Browser storage is not encrypted and is unsuitable for secrets or sensitive data.
-- **Image Studio, Audio Lab, Video Studio, and AI Navigator:** capability navigation and roadmap direction exist, but full working model-backed workflows must not be represented as complete until implemented and validated.
+- **Image Studio:** v0.42.0 adds a browser-local editor for JPEG/PNG/WebP rotation, flipping, resizing, and export with file/pixel limits. AI image generation, image understanding, and background removal remain roadmap items.
+- **Audio Lab, Video Studio, and AI Navigator:** capability navigation and roadmap direction exist, but full working model-backed workflows must not be represented as complete until implemented and validated.
 
 ## Privacy and security rules
 
