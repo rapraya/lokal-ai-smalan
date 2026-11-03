@@ -5,19 +5,19 @@ const MAX_TEXT_LENGTH = 500;
 const MAX_AUDIO_SECONDS = 90;
 let synthesizer = null;
 let loadingPromise = null;
-let activeLoadRequestId = 0;
+let loadEpoch = 0;
 
 function postError(requestId, error) {
   const message = error && error.message ? error.message : "Sintesis suara lokal gagal.";
   self.postMessage({ type: "error", requestId, message });
 }
 
-function reportProgress(info) {
-  if (!info || typeof info !== "object") return;
+function reportProgress(requestId, epoch, info) {
+  if (epoch !== loadEpoch || !info || typeof info !== "object") return;
   if (info.status === "progress_total") {
     self.postMessage({
       type: "model-progress",
-      requestId: activeLoadRequestId,
+      requestId,
       progress: Number.isFinite(info.progress) ? info.progress : null,
       loaded: Number.isFinite(info.loaded) ? info.loaded : null,
       total: Number.isFinite(info.total) ? info.total : null,
@@ -28,7 +28,7 @@ function reportProgress(info) {
   if (info.status === "initiate" || info.status === "download") {
     self.postMessage({
       type: "model-stage",
-      requestId: activeLoadRequestId,
+      requestId,
       stage: info.status,
       file: typeof info.file === "string" ? info.file : ""
     });
@@ -36,20 +36,29 @@ function reportProgress(info) {
 }
 
 async function loadModel(requestId) {
-  activeLoadRequestId = requestId;
+  const epoch = loadEpoch;
   if (!loadingPromise) {
-    loadingPromise = (async () => {
+    const promise = (async () => {
       env.backends.onnx.wasm.numThreads = 1;
       return pipeline("text-to-speech", MODEL_ID, {
         device: "wasm",
         dtype: "q8",
-        progress_callback: reportProgress
+        progress_callback: (info) => reportProgress(requestId, epoch, info)
       });
     })();
+    loadingPromise = promise;
   }
 
+  const promise = loadingPromise;
   try {
-    synthesizer = await loadingPromise;
+    const loadedSynthesizer = await promise;
+    if (epoch !== loadEpoch || loadingPromise !== promise) {
+      if (loadedSynthesizer && typeof loadedSynthesizer.dispose === "function") {
+        await loadedSynthesizer.dispose();
+      }
+      return;
+    }
+    synthesizer = loadedSynthesizer;
     self.postMessage({
       type: "model-ready",
       requestId,
@@ -57,9 +66,11 @@ async function loadModel(requestId) {
       runtime: "WebAssembly CPU · q8"
     });
   } catch (error) {
-    loadingPromise = null;
-    synthesizer = null;
-    postError(requestId, error);
+    if (epoch === loadEpoch && loadingPromise === promise) {
+      loadingPromise = null;
+      synthesizer = null;
+      postError(requestId, error);
+    }
   }
 }
 
@@ -106,11 +117,13 @@ self.addEventListener("message", (event) => {
   } else if (message.type === "synthesize") {
     synthesize(requestId, message.payload || {});
   } else if (message.type === "dispose") {
-    if (synthesizer && typeof synthesizer.dispose === "function") {
-      Promise.resolve(synthesizer.dispose()).catch(() => {});
-    }
+    loadEpoch += 1;
+    const currentSynthesizer = synthesizer;
     synthesizer = null;
     loadingPromise = null;
+    if (currentSynthesizer && typeof currentSynthesizer.dispose === "function") {
+      Promise.resolve(currentSynthesizer.dispose()).catch(() => {});
+    }
     self.postMessage({ type: "disposed", requestId });
   }
 });
