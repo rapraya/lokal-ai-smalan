@@ -82,11 +82,11 @@
       stages: [["Local audio preview", "Membaca audio, melihat durasi dan waveform, serta memutar rentang terpilih."], ["Trim & WAV export", "Menentukan waktu mulai/akhir lalu mengekspor audio PCM 16-bit."], ["Speech & audio AI", "Transkripsi, text-to-speech, pemisahan suara, dan pemahaman audio setelah model yang sesuai diintegrasikan dan diuji."]]
     },
     video: {
-      title: "Video Studio", label: "MOTION & STORYTELLING", icon: "video", color: "icon-orange",
-      description: "Rancang cerita, olah klip, pahami isi video, dan siapkan konten visual bergerak.",
-      headline: "Cerita bergerak dari satu ide.",
-      detail: "Pemrosesan klip di browser dapat memanfaatkan API media, tetapi generasi video dengan AI membutuhkan model dan runtime khusus dengan tuntutan komputasi yang jauh lebih besar. Layanan eksternal hanya akan menjadi opsi yang dinyatakan secara terbuka.",
-      stages: [["Video understanding", "Metadata, pemotongan klip, ekstraksi frame, dan transkripsi."], ["Video editing", "Alur penyuntingan berbasis browser dan ekspor hasil."], ["AI video generation", "Riset model, estimasi resource, dan evaluasi opsi lokal maupun eksternal."]]
+      title: "Video Studio", label: "LOCAL VIDEO TOOLS", icon: "video", color: "icon-orange",
+      description: "Workspace video lokal untuk pemutaran, pembacaan metadata, pemilihan timestamp, dan ekspor frame PNG.",
+      headline: "Temukan frame penting dari sebuah video.",
+      detail: "Versi awal mendukung file video hingga 100 MB dan 10 menit melalui pemutar browser, menampilkan resolusi serta durasi, dan mengekspor frame PNG dari timestamp terpilih. Batas frame 4.096 piksel per sisi dan 16 megapiksel. Format dan codec mengikuti dukungan browser. Pemotongan timeline, penggabungan klip, ekstraksi audio, dan generasi video AI belum diaktifkan.",
+      stages: [["Local video preview", "Memutar video lokal serta membaca durasi dan resolusi."], ["Frame capture", "Memilih timestamp dan mengekspor satu frame sebagai PNG."], ["Video editing & AI", "Pemotongan timeline, audio, transkripsi, dan generasi video setelah runtime yang sesuai tersedia dan diuji."]]
     },
     text: {
       title: "Text & Language", label: "LANGUAGE & KNOWLEDGE", icon: "type", color: "icon-sky",
@@ -1539,6 +1539,11 @@
     if (page === "image" && window.LokalAIImageStudio) {
       workspace.innerHTML = window.LokalAIImageStudio.render();
       window.LokalAIImageStudio.bind(workspace);
+      return;
+    }
+    if (page === "video" && window.LokalAIVideoStudio) {
+      workspace.innerHTML = window.LokalAIVideoStudio.render();
+      window.LokalAIVideoStudio.bind(workspace);
       return;
     }
     if (page === "audio" && window.LokalAIAudioLab) {
@@ -3754,6 +3759,9 @@
     const selected = page === "home" ? "home" : (modules[page] || pages[page] ? page : "home");
     if (currentPage === "image" && selected !== "image" && window.LokalAIImageStudio) {
       window.LokalAIImageStudio.destroy();
+    }
+    if (currentPage === "video" && selected !== "video" && window.LokalAIVideoStudio) {
+      window.LokalAIVideoStudio.destroy();
     }
     if (currentPage === "audio" && selected !== "audio" && window.LokalAIAudioLab) {
       window.LokalAIAudioLab.destroy();
