@@ -8,6 +8,8 @@ The intended product is local-first, not local-only. Provider selection must nev
 
 ## Current implementation in v0.41.1
 
+The browser-local Whisper Tiny ASR in Audio Lab is a separate media inference worker. It does not attach to or change the shared chat-completions runtime described below.
+
 - The current browser runtime is WebLLM 0.2.87 running in a Web Worker.
 - Llama 3.2 1B and 3B are registered as the current local model choices.
 - The same loaded local client is shared by AI Chat, AI Coding, Text & Language, AI Assistant, AI Knowledge, and optional Data Analyst interpretation.
