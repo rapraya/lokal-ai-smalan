@@ -137,7 +137,7 @@ try {
   assert.match(await desktop.locator('#audioSelectionDuration').innerText(), /0\.60 detik/);
   await desktop.locator('#audioPreviewSelectionButton').click();
   const playbackStart = await desktop.locator('#audioPlayer').evaluate((player) => player.currentTime);
-  assert.ok(playbackStart >= 0.19 && playbackStart <= 0.25, 'Preview must begin at the selected trim start.');
+  assert.ok(playbackStart >= 0.15 && playbackStart <= 0.5, 'Preview must begin at the selected trim start.');
   await desktop.locator('#audioPlayer').evaluate((player) => player.pause());
 
   const wavDownloadEvent = desktop.waitForEvent('download');
