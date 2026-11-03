@@ -45,7 +45,26 @@
             '<p class="audio-status" id="audioStatus" role="status" aria-live="polite">Pilih file audio untuk memulai. File diproses di browser dan tidak diunggah.</p>',
           '</aside>',
         '</div>',
-        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Audio dibaca dan dipotong di perangkat ini. Versi awal mendukung pemutaran, visualisasi waveform, pemilihan rentang, dan ekspor WAV PCM 16-bit. Transkripsi AI, text-to-speech, pemisahan suara, serta analisis audio berbasis model belum diaktifkan. Keberhasilan membaca format bergantung pada kemampuan browser.</p></div></div>',
+        '<section class="audio-workspace-card audio-transcription-card">',
+          '<div class="audio-card-heading"><div><span class="chat-panel-label">LOCAL SPEECH-TO-TEXT</span><h2>Transkripsi suara dengan AI</h2></div><span class="audio-asr-local-indicator"><i></i> Inferensi lokal</span></div>',
+          '<div class="audio-asr-grid">',
+            '<div class="audio-asr-model-card">',
+              '<div class="audio-asr-model-top"><span class="audio-asr-model-icon"><svg aria-hidden="true"><use href="#i-audio"></use></svg></span><div><strong>Whisper Tiny Multilingual</strong><span>Transformers.js · WebAssembly · 8-bit</span></div></div>',
+              '<p>Model multibahasa berjalan di CPU browser. Unduhan awal bobot model sekitar 45 MB; pemuatan pertama memerlukan koneksi internet. File suara tidak dikirim ke server.</p>',
+              '<div class="audio-asr-model-actions"><button type="button" id="audioAsrLoadButton" class="button-outline">Unduh & muat model</button><button type="button" id="audioAsrCancelButton" class="audio-asr-cancel-button" hidden>Batalkan proses</button></div>',
+              '<div class="audio-asr-progress-wrap" id="audioAsrProgressWrap" hidden><div class="audio-asr-progress-heading"><span id="audioAsrProgressLabel">Menyiapkan model…</span><strong id="audioAsrProgressValue">0%</strong></div><progress id="audioAsrProgress" max="100" value="0">0%</progress></div>',
+              '<p class="audio-asr-model-status" id="audioAsrModelStatus" role="status" aria-live="polite">Model belum dimuat. Klik tombol untuk mengunduh dan menyiapkan model di browser.</p>',
+            '</div>',
+            '<div class="audio-asr-transcript-card">',
+              '<div class="audio-asr-controls"><label for="audioAsrLanguage">Bahasa audio</label><select id="audioAsrLanguage" disabled><option value="id" selected>Bahasa Indonesia</option><option value="en">English</option><option value="auto">Deteksi otomatis</option></select><button type="button" id="audioAsrTranscribeButton" class="button-primary" disabled>Transkripsikan rentang pilihan</button></div>',
+              '<p class="audio-asr-range-hint" id="audioAsrRangeHint">Muat audio dan model. Setiap proses dibatasi maksimal 2 menit; gunakan rentang mulai/akhir untuk rekaman yang lebih panjang.</p>',
+              '<label class="audio-asr-output-label" for="audioAsrOutput">Hasil transkripsi</label><textarea id="audioAsrOutput" class="audio-transcript-output" rows="7" readonly placeholder="Hasil transkripsi akan muncul di sini…"></textarea>',
+              '<div class="audio-asr-output-footer"><span id="audioAsrOutputMeta">Belum ada hasil</span><button type="button" id="audioAsrCopyButton" class="audio-asr-copy-button" disabled>Salin teks</button></div>',
+              '<p class="audio-asr-status" id="audioAsrStatus" role="status" aria-live="polite">Pilih bahasa dan rentang audio, lalu mulai transkripsi.</p>',
+            '</div>',
+          '</div>',
+        '</section>',
+        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Pratinjau, pemotongan, dan ekspor WAV tetap berjalan di browser. Transkripsi memakai Whisper Tiny Multilingual melalui WebAssembly CPU, dengan batas 2 menit per proses dan bahasa Indonesia, Inggris, atau deteksi otomatis. Model dan pustaka pendukung diunduh dari CDN/Hugging Face; inferensi serta audio tetap di perangkat. Akurasi dipengaruhi kualitas rekaman, aksen, kebisingan, dan kemampuan perangkat. Text-to-speech, pemisahan suara, dan analisis audio lain belum diaktifkan.</p></div></div>',
         '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Local-first by design.</span></footer>',
       '</div>'
     ].join("");
@@ -122,6 +141,20 @@
     const exportButton = get("audioExportButton");
     const clearButton = get("audioClearButton");
     const status = get("audioStatus");
+    const asrLoadButton = get("audioAsrLoadButton");
+    const asrCancelButton = get("audioAsrCancelButton");
+    const asrProgressWrap = get("audioAsrProgressWrap");
+    const asrProgress = get("audioAsrProgress");
+    const asrProgressValue = get("audioAsrProgressValue");
+    const asrProgressLabel = get("audioAsrProgressLabel");
+    const asrModelStatus = get("audioAsrModelStatus");
+    const asrLanguage = get("audioAsrLanguage");
+    const asrTranscribeButton = get("audioAsrTranscribeButton");
+    const asrRangeHint = get("audioAsrRangeHint");
+    const asrOutput = get("audioAsrOutput");
+    const asrOutputMeta = get("audioAsrOutputMeta");
+    const asrCopyButton = get("audioAsrCopyButton");
+    const asrStatus = get("audioAsrStatus");
 
     if (!fileInput || !player || !waveform || !status) return;
     let invalidSelection = false;
@@ -131,7 +164,14 @@
       buffer: null,
       sourceUrl: "",
       busy: false,
-      previewEnd: 0
+      previewEnd: 0,
+      asrWorker: null,
+      asrReady: false,
+      asrPhase: "idle",
+      asrRequestId: 0,
+      asrGeneration: 0,
+      asrRangeStart: 0,
+      asrRangeDuration: 0
     };
     const audioState = state;
 
@@ -139,6 +179,280 @@
       if (state !== audioState) return;
       status.textContent = message;
       status.dataset.state = type || "info";
+    }
+
+    function updateAsrControls() {
+      if (!asrTranscribeButton) return;
+      const range = selectedRange();
+      const duration = range ? range.end - range.start : 0;
+      const tooLong = duration > 120;
+      asrTranscribeButton.disabled = !audioState.asrReady || !audioState.buffer ||
+        !range || tooLong || audioState.busy;
+      if (asrLoadButton) {
+        asrLoadButton.disabled = audioState.asrReady || audioState.busy;
+        asrLoadButton.textContent = audioState.asrReady ? "Model siap digunakan" :
+          audioState.asrPhase === "loading" ? "Memuat model…" : "Unduh & muat model";
+      }
+      if (asrCancelButton) {
+        asrCancelButton.hidden = !audioState.busy ||
+          (audioState.asrPhase !== "loading" && audioState.asrPhase !== "transcribing" && audioState.asrPhase !== "preparing");
+      }
+      if (asrLanguage) asrLanguage.disabled = audioState.busy;
+      if (asrCopyButton) asrCopyButton.disabled = !asrOutput || !asrOutput.value.trim() || audioState.busy;
+      if (asrRangeHint) {
+        if (!range) {
+          asrRangeHint.textContent = "Muat audio dan pilih rentang mulai/akhir terlebih dahulu.";
+        } else if (tooLong) {
+          asrRangeHint.textContent = "Rentang saat ini " + duration.toFixed(1) +
+            " detik. Batas transkripsi adalah 120 detik per proses; perkecil rentang untuk melanjutkan.";
+        } else {
+          asrRangeHint.textContent = "Rentang " + duration.toFixed(1) +
+            " detik siap diproses. Audio dipindai lokal dan tidak diunggah.";
+        }
+      }
+    }
+
+    function setAsrModelStatus(message, type) {
+      if (!asrModelStatus) return;
+      asrModelStatus.textContent = message;
+      asrModelStatus.dataset.state = type || "info";
+    }
+
+    function setAsrStatus(message, type) {
+      if (!asrStatus) return;
+      asrStatus.textContent = message;
+      asrStatus.dataset.state = type || "info";
+    }
+
+    function ensureAsrWorker() {
+      if (audioState.asrWorker) return audioState.asrWorker;
+      if (typeof global.Worker !== "function") {
+        throw new Error("Web Worker tidak tersedia pada browser ini.");
+      }
+      const worker = new global.Worker("assets/js/audio-asr-worker.js", {
+        type: "module",
+        name: "lokal-ai-audio-asr"
+      });
+      audioState.asrWorker = worker;
+      worker.onmessage = (event) => {
+        if (state !== audioState || audioState.asrWorker !== worker) return;
+        const message = event.data || {};
+        if (message.requestId !== audioState.asrRequestId) return;
+
+        if (message.type === "model-stage") {
+          const file = message.file ? " · " + message.file : "";
+          setAsrModelStatus((message.stage === "download" ? "Mengunduh" : "Menyiapkan") +
+            " komponen model" + file + "…", "info");
+          if (asrProgressWrap) asrProgressWrap.hidden = false;
+          if (asrProgressLabel) asrProgressLabel.textContent = "Menyiapkan file model…";
+        } else if (message.type === "model-progress") {
+          if (asrProgressWrap) asrProgressWrap.hidden = false;
+          if (Number.isFinite(message.progress)) {
+            const progress = Math.max(0, Math.min(100, message.progress));
+            if (asrProgress) asrProgress.value = progress;
+            if (asrProgressValue) asrProgressValue.textContent = Math.round(progress) + "%";
+            if (asrProgressLabel) asrProgressLabel.textContent = "Mengunduh model Whisper Tiny…";
+            setAsrModelStatus("Mengunduh model multibahasa dari Hugging Face. File hanya model; audio tidak dikirim.", "info");
+          }
+        } else if (message.type === "model-ready") {
+          audioState.asrReady = true;
+          audioState.asrPhase = "ready";
+          audioState.busy = false;
+          if (asrProgress) asrProgress.value = 100;
+          if (asrProgressValue) asrProgressValue.textContent = "100%";
+          if (asrProgressLabel) asrProgressLabel.textContent = "Model siap";
+          setAsrModelStatus("Whisper Tiny siap · inferensi WebAssembly CPU · model tersimpan di cache browser.", "success");
+          setAsrStatus("Model siap. Pilih rentang audio maksimal 2 menit untuk mulai transkripsi.", "success");
+          setControlsEnabled(Boolean(audioState.buffer));
+          updateAsrControls();
+        } else if (message.type === "transcription-stage") {
+          audioState.asrPhase = "transcribing";
+          if (asrStatus) setAsrStatus("Model sedang mengenali ucapan di CPU browser. Proses dapat memerlukan waktu.", "info");
+          updateAsrControls();
+        } else if (message.type === "transcription-result") {
+          const chunks = Array.isArray(message.chunks) ? message.chunks : [];
+          const lines = chunks.length ? chunks.map((chunk) => {
+            const text = (chunk.text || "").trim();
+            const timestamp = chunk.timestamp;
+            if (Array.isArray(timestamp) && Number.isFinite(timestamp[0]) && Number.isFinite(timestamp[1])) {
+              return "[" + formatAsrTime(audioState.asrRangeStart + timestamp[0]) + "–" +
+                formatAsrTime(audioState.asrRangeStart + timestamp[1]) + "] " + text;
+            }
+            return text;
+          }).filter(Boolean) : [];
+          const transcript = lines.length ? lines.join("\n") :
+            (typeof message.text === "string" ? message.text.trim() : "");
+          if (asrOutput) asrOutput.value = transcript;
+          const wordCount = transcript ? transcript.trim().split(/\s+/).length : 0;
+          if (asrOutputMeta) asrOutputMeta.textContent = transcript
+            ? wordCount.toLocaleString("id-ID") + " kata · rentang " + audioState.asrRangeDuration.toFixed(1) + " detik"
+            : "Tidak ada ucapan yang dikenali";
+          audioState.asrPhase = "ready";
+          audioState.busy = false;
+          setAsrStatus(transcript ? "Transkripsi selesai. Periksa kembali nama, angka, istilah, dan tanda baca." :
+            "Model tidak menemukan ucapan pada rentang ini. Coba rentang lain atau periksa kualitas audio.",
+            transcript ? "success" : "info");
+          setStatus("Audio siap untuk diputar atau diolah kembali.", "success");
+          setControlsEnabled(Boolean(audioState.buffer));
+          updateAsrControls();
+        } else if (message.type === "error") {
+          const wasLoading = audioState.asrPhase === "loading";
+          audioState.asrPhase = audioState.asrReady ? "ready" : "idle";
+          audioState.busy = false;
+          if (wasLoading) {
+            audioState.asrReady = false;
+            setAsrModelStatus(message.message || "Model gagal dimuat.", "error");
+          } else {
+            setAsrStatus(message.message || "Transkripsi gagal.", "error");
+          }
+          setControlsEnabled(Boolean(audioState.buffer));
+          updateAsrControls();
+        }
+      };
+      worker.onerror = (event) => {
+        if (state !== audioState || audioState.asrWorker !== worker) return;
+        audioState.asrReady = false;
+        audioState.asrPhase = "idle";
+        audioState.busy = false;
+        audioState.asrWorker = null;
+        worker.terminate();
+        setAsrModelStatus("Worker transkripsi gagal dijalankan. Periksa koneksi CDN dan dukungan browser.", "error");
+        setControlsEnabled(Boolean(audioState.buffer));
+        updateAsrControls();
+      };
+      return worker;
+    }
+
+    function loadAsrModel() {
+      if (audioState.busy || audioState.asrReady) return;
+      try {
+        const worker = ensureAsrWorker();
+        audioState.asrRequestId += 1;
+        audioState.asrGeneration += 1;
+        audioState.asrPhase = "loading";
+        audioState.busy = true;
+        if (asrProgressWrap) asrProgressWrap.hidden = false;
+        if (asrProgress) asrProgress.value = 0;
+        if (asrProgressValue) asrProgressValue.textContent = "0%";
+        if (asrProgressLabel) asrProgressLabel.textContent = "Menyiapkan Transformers.js…";
+        setAsrModelStatus("Memuat Transformers.js dan menyiapkan Whisper Tiny di browser…", "info");
+        setAsrStatus("Pemuatan model berlangsung di worker terpisah.", "info");
+        setControlsEnabled(Boolean(audioState.buffer));
+        updateAsrControls();
+        worker.postMessage({ type: "load-model", requestId: audioState.asrRequestId });
+      } catch (error) {
+        audioState.busy = false;
+        audioState.asrPhase = "idle";
+        setAsrModelStatus(error && error.message ? error.message : "Model tidak dapat dimuat.", "error");
+        setControlsEnabled(Boolean(audioState.buffer));
+        updateAsrControls();
+      }
+    }
+
+    function cancelAsrProcess() {
+      if (!audioState.busy) return;
+      audioState.asrGeneration += 1;
+      audioState.asrRequestId += 1;
+      if (audioState.asrWorker) {
+        audioState.asrWorker.terminate();
+        audioState.asrWorker = null;
+      }
+      audioState.asrReady = false;
+      audioState.asrPhase = "idle";
+      audioState.busy = false;
+      if (asrProgressWrap) asrProgressWrap.hidden = true;
+      setAsrModelStatus("Proses dihentikan. Model dapat dimuat ulang; file model yang sudah diunduh mungkin masih ada di cache browser.", "info");
+      setAsrStatus("Proses dibatalkan. Muat model kembali sebelum transkripsi berikutnya.", "info");
+      setControlsEnabled(Boolean(audioState.buffer));
+      updateAsrControls();
+    }
+
+    function formatAsrTime(value) {
+      const safe = Math.max(0, Number(value) || 0);
+      const minutes = Math.floor(safe / 60);
+      const seconds = (safe % 60).toFixed(1).padStart(4, "0");
+      return String(minutes).padStart(2, "0") + ":" + seconds;
+    }
+
+    async function transcribeSelection() {
+      const range = selectedRange();
+      if (!range || !audioState.buffer || !audioState.asrReady || audioState.busy) return;
+      const duration = range.end - range.start;
+      if (duration > 120) {
+        setAsrStatus("Perkecil rentang menjadi maksimal 120 detik per proses.", "error");
+        updateAsrControls();
+        return;
+      }
+
+      const OfflineContext = global.OfflineAudioContext || global.webkitOfflineAudioContext;
+      if (!OfflineContext) {
+        setAsrStatus("OfflineAudioContext tidak tersedia pada browser ini.", "error");
+        return;
+      }
+
+      const generation = ++audioState.asrGeneration;
+      audioState.asrRequestId += 1;
+      const requestId = audioState.asrRequestId;
+      audioState.asrRangeStart = range.start;
+      audioState.asrRangeDuration = duration;
+      audioState.asrPhase = "preparing";
+      audioState.busy = true;
+      if (asrOutput) asrOutput.value = "";
+      if (asrOutputMeta) asrOutputMeta.textContent = "Menyiapkan audio…";
+      setAsrStatus("Menyesuaikan audio ke mono 16 kHz untuk model Whisper…", "info");
+      setControlsEnabled(true);
+      updateAsrControls();
+
+      try {
+        const frameCount = Math.max(1, Math.ceil(duration * 16000));
+        const offline = new OfflineContext(1, frameCount, 16000);
+        const source = offline.createBufferSource();
+        source.buffer = audioState.buffer;
+        source.connect(offline.destination);
+        source.start(0, range.start, duration);
+        const resampled = await offline.startRendering();
+        if (state !== audioState || generation !== audioState.asrGeneration) return;
+        const samples = resampled.getChannelData(0).slice();
+        const worker = audioState.asrWorker;
+        if (!worker || !audioState.asrReady) {
+          throw new Error("Worker model tidak tersedia. Muat model kembali.");
+        }
+        audioState.asrPhase = "transcribing";
+        setAsrStatus("Mentranskripsikan " + duration.toFixed(1) +
+          " detik audio di perangkat ini. Tunggu hingga hasil selesai atau batalkan proses.", "info");
+        updateAsrControls();
+        worker.postMessage({
+          type: "transcribe",
+          requestId,
+          payload: { audio: samples, language: asrLanguage ? asrLanguage.value : "id" }
+        }, [samples.buffer]);
+      } catch (error) {
+        if (state === audioState && generation === audioState.asrGeneration) {
+          audioState.asrPhase = "ready";
+          audioState.busy = false;
+          setAsrStatus(error && error.message ? error.message : "Audio gagal disiapkan untuk transkripsi.", "error");
+          setControlsEnabled(Boolean(audioState.buffer));
+          updateAsrControls();
+        }
+      }
+    }
+
+    async function copyTranscript() {
+      const value = asrOutput ? asrOutput.value.trim() : "";
+      if (!value) return;
+      try {
+        if (!global.navigator || !global.navigator.clipboard || !global.navigator.clipboard.writeText) {
+          throw new Error("Clipboard tidak tersedia.");
+        }
+        await global.navigator.clipboard.writeText(value);
+        setAsrStatus("Teks transkripsi berhasil disalin.", "success");
+      } catch (_) {
+        if (asrOutput) {
+          asrOutput.focus();
+          asrOutput.select();
+        }
+        setAsrStatus("Teks dipilih. Gunakan Ctrl+C atau menu salin untuk menyalin hasil.", "info");
+      }
     }
 
     function selectedRange() {
@@ -233,6 +547,7 @@
       exportButton.disabled = audioState.busy;
       previewButton.disabled = audioState.busy;
       drawWaveform();
+      updateAsrControls();
     }
 
     function setControlsEnabled(enabled) {
@@ -268,6 +583,11 @@
       if (get("audioWaveformDuration")) get("audioWaveformDuration").textContent = "00:00";
       if (get("audioSelectionDuration")) get("audioSelectionDuration").textContent = "00:00";
       setControlsEnabled(false);
+      if (asrOutput) asrOutput.value = "";
+      if (asrOutputMeta) asrOutputMeta.textContent = "Belum ada hasil";
+      setAsrStatus(audioState.asrReady ? "Model siap. Muat audio dan pilih rentang maksimal 2 menit." :
+        "Pilih bahasa dan rentang audio setelah model dimuat.", "info");
+      updateAsrControls();
       setStatus(message || "Pilih file audio untuk memulai. File diproses di browser dan tidak diunggah.", "info");
     }
 
@@ -290,6 +610,9 @@
       audioState.file = file;
       audioState.buffer = null;
       audioState.sourceUrl = URL.createObjectURL(file);
+      if (asrOutput) asrOutput.value = "";
+      if (asrOutputMeta) asrOutputMeta.textContent = "Belum ada hasil";
+      setAsrStatus("Audio baru dimuat. Pilih rentang maksimal 2 menit untuk transkripsi.", "info");
       player.src = audioState.sourceUrl;
       player.load();
       audioState.busy = true;
@@ -398,12 +721,19 @@
     previewButton.addEventListener("click", previewSelection);
     exportButton.addEventListener("click", exportSelection);
     clearButton.addEventListener("click", () => clearAudio());
+    if (asrLoadButton) asrLoadButton.addEventListener("click", loadAsrModel);
+    if (asrCancelButton) asrCancelButton.addEventListener("click", cancelAsrProcess);
+    if (asrTranscribeButton) asrTranscribeButton.addEventListener("click", transcribeSelection);
+    if (asrCopyButton) asrCopyButton.addEventListener("click", copyTranscript);
+    if (asrLanguage) asrLanguage.addEventListener("change", updateAsrControls);
     player.addEventListener("timeupdate", () => {
       if (state === audioState && !player.paused && audioState.previewEnd > 0 && player.currentTime >= audioState.previewEnd) {
         player.pause();
       }
     });
     setControlsEnabled(false);
+    updateAsrControls();
+    setAsrStatus("Pilih bahasa dan rentang audio, lalu mulai transkripsi.", "info");
   }
 
   function destroy() {
@@ -418,6 +748,12 @@
       }
     }
     if (current.sourceUrl) URL.revokeObjectURL(current.sourceUrl);
+    current.asrGeneration += 1;
+    current.asrRequestId += 1;
+    if (current.asrWorker) {
+      current.asrWorker.terminate();
+      current.asrWorker = null;
+    }
     state = null;
   }
 
