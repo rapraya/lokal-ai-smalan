@@ -1999,6 +1999,7 @@
       updateChatProgress({ progress: 0.02, text: "Memuat runtime WebLLM…" });
       const runtime = await import("https://esm.run/@mlc-ai/web-llm@0.2.87");
       chatWorker = new Worker(new URL("assets/js/webllm-worker.js", document.baseURI), { type: "module" });
+      const worker = chatWorker;
       let startupPending = true;
       let rejectWorkerStartup;
       const workerStartupFailure = new Promise((_, reject) => {
@@ -2012,6 +2013,16 @@
         if (startupPending) {
           startupPending = false;
           rejectWorkerStartup(failure);
+          return;
+        }
+        if (chatWorker === worker) {
+          worker.terminate();
+          chatWorker = null;
+          const failedRuntime = chatEngine;
+          chatEngine = null;
+          if (modelEngine) modelEngine.clearRuntime(failedRuntime);
+          chatModelId = "";
+          syncChatControls();
         }
       };
       chatWorker.addEventListener("error", (event) => {
