@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
+const [html, css, app, worker, readme, designSystem, modelEngineCore, imageStudio, gatewayWorker, gatewayReadme, gatewayConfig, gatewayDeployCheck, gatewayIndonesianGuide] = await Promise.all([
   readFile("index.html", "utf8"),
   readFile("assets/css/style.css", "utf8"),
   readFile("assets/js/app.js", "utf8"),
@@ -9,6 +9,7 @@ const [html, css, app, worker, readme, designSystem, modelEngineCore, gatewayWor
   readFile("README.md", "utf8"),
   readFile("docs/UI-DESIGN-SYSTEM.md", "utf8"),
   readFile("assets/js/model-engine-core.js", "utf8"),
+  readFile("assets/js/image-studio.js", "utf8"),
   readFile("gateway/src/worker.js", "utf8"),
   readFile("gateway/README.md", "utf8"),
   readFile("gateway/wrangler.jsonc", "utf8"),
@@ -73,6 +74,13 @@ const registryScriptIndex = html.indexOf('assets/js/model-engine-core.js?v=');
 const appScriptIndex = html.indexOf('assets/js/app.js?v=');
 assert.ok(registryScriptIndex >= 0 && appScriptIndex > registryScriptIndex,
   "The Model Engine registry must load before the application script.");
+assert.ok(html.includes('assets/js/image-studio.js?v=') && html.indexOf('assets/js/image-studio.js?v=') < html.indexOf('assets/js/app.js?v='), "Image Studio editor must load before the application controller.");
+assert.ok(imageStudio.includes("MAX_FILE_BYTES = 20 * 1024 * 1024") && imageStudio.includes("MAX_PIXELS = 40_000_000") && imageStudio.includes('new Set(["image/jpeg", "image/png", "image/webp"])'), "Image Studio must enforce file type, byte, and pixel bounds.");
+assert.ok(imageStudio.includes("async function exportImage()") && imageStudio.includes("canvasToBlob") && imageStudio.includes("URL.createObjectURL") && imageStudio.includes("function destroy()"), "Image Studio must provide local canvas export and release object URLs.");
+assert.ok(imageStudio.includes("File diproses di browser dan tidak diunggah.") && imageStudio.includes("Generasi gambar AI"), "Image Studio must disclose local processing and distinguish AI generation as not yet enabled.");
+assert.ok(app.includes('page === "image" && window.LokalAIImageStudio') && app.includes("window.LokalAIImageStudio.destroy()"), "Image Studio navigation must bind the editor and clean up local image resources.");
+assert.ok(html.includes('class="capability-status status-foundation">Editor lokal</span>'), "Overview must identify Image Studio as a local editor, not claim AI generation is available.");
+
 assert.ok(modelEngineCore.includes('id: "local-webllm"') &&
   modelEngineCore.includes('id: "openai"') &&
   modelEngineCore.includes('id: "anthropic"') &&
