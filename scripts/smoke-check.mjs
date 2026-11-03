@@ -119,6 +119,8 @@ assert.ok(audioLab.includes("duration > 120") &&
   audioLab.includes("new OfflineContext(1, frameCount, 16000)") &&
   audioLab.includes('new global.Worker("assets/js/audio-asr-worker.js?v=0.47.0"') &&
   audioLab.includes("worker.terminate()") &&
+  audioLab.includes("worker.onmessageerror") &&
+  audioLab.includes("Pesan dari worker transkripsi tidak dapat dibaca") &&
   audioLab.includes("global.navigator.clipboard.writeText"),
   "Audio Lab ASR must enforce a 120-second range, resample to mono 16 kHz, use a dedicated worker, support cancellation, and allow copying results.");
 assert.ok(audioAsrWorker.includes('@huggingface/transformers@4.3.2') &&
