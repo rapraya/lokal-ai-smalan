@@ -6,6 +6,11 @@ The architecture is **local-first, not local-only**: supported models should run
 
 ## Current status
 
+**v0.46.2 — Accurate SRT Cue Timing**
+- Preserves the Whisper segment's actual start timestamp while clamping its end to the selected source-audio range.
+- Ignores zero-length subtitle cues and avoids extending valid cues beyond the source clip.
+- Refreshes browser asset cache identifiers after the timing correction.
+
 **v0.46.1 — Transcript Timestamp Boundary Fix**
 - Clamps normalized subtitle cue times to the selected source-audio range so SRT timestamps cannot extend beyond the original clip.
 - Distinguishes an empty new range from an empty overall transcript, preserving earlier appended results without reporting that new speech was added.
