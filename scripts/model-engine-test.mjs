@@ -8,7 +8,7 @@ vm.runInNewContext(source, context);
 
 const engine = context.window.LokalAIModelEngine;
 assert.ok(engine, "The Model Engine registry must be exposed by the browser core.");
-assert.equal(engine.version, "0.2.0");
+assert.equal(engine.version, "0.2.1");
 
 const initial = engine.getSnapshot();
 assert.equal(initial.hasActiveRuntime, false);
@@ -44,6 +44,10 @@ assert.throws(
 assert.throws(
   () => engine.attachRuntime("local-webllm", { chat: { completions: { create() {} } } }, ""),
   /Identitas model/
+);
+assert.throws(
+  () => engine.attachRuntime("local-webllm", { chat: { completions: { create() {} } } }, "Llama-3.2-8B-Instruct-q4f16_1-MLC"),
+  /tidak terdaftar/
 );
 
 const fakeLocalClient = {
