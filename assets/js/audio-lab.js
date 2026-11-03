@@ -57,14 +57,14 @@
             '</div>',
             '<div class="audio-asr-transcript-card">',
               '<div class="audio-asr-controls"><label for="audioAsrLanguage">Bahasa audio</label><select id="audioAsrLanguage" disabled><option value="id" selected>Bahasa Indonesia</option><option value="en">English</option><option value="auto">Deteksi otomatis</option></select><button type="button" id="audioAsrTranscribeButton" class="button-primary" disabled>Transkripsikan rentang pilihan</button></div>',
-              '<p class="audio-asr-range-hint" id="audioAsrRangeHint">Muat audio dan model. Setiap proses dibatasi maksimal 2 menit; gunakan rentang mulai/akhir untuk rekaman yang lebih panjang.</p>',
+              '<p class="audio-asr-range-hint" id="audioAsrRangeHint">Muat audio dan model. Setiap proses memerlukan minimal 1 detik dan dibatasi maksimal 2 menit; gunakan rentang mulai/akhir untuk rekaman yang lebih panjang.</p>',
               '<label class="audio-asr-output-label" for="audioAsrOutput">Hasil transkripsi</label><textarea id="audioAsrOutput" class="audio-transcript-output" rows="7" readonly placeholder="Hasil transkripsi akan muncul di sini…"></textarea>',
               '<div class="audio-asr-output-footer"><span id="audioAsrOutputMeta">Belum ada hasil</span><button type="button" id="audioAsrCopyButton" class="audio-asr-copy-button" disabled>Salin teks</button></div>',
               '<p class="audio-asr-status" id="audioAsrStatus" role="status" aria-live="polite">Pilih bahasa dan rentang audio, lalu mulai transkripsi.</p>',
             '</div>',
           '</div>',
         '</section>',
-        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Pratinjau, pemotongan, dan ekspor WAV tetap berjalan di browser. Transkripsi memakai Whisper Tiny Multilingual melalui WebAssembly CPU, dengan batas 2 menit per proses dan bahasa Indonesia, Inggris, atau deteksi otomatis. Model dan pustaka pendukung diunduh dari CDN/Hugging Face; inferensi serta audio tetap di perangkat. Akurasi dipengaruhi kualitas rekaman, aksen, kebisingan, dan kemampuan perangkat. Text-to-speech, pemisahan suara, dan analisis audio lain belum diaktifkan.</p></div></div>',
+        '<div class="audio-capability-note"><div class="audio-note-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div><div><strong>Pemrosesan lokal dan batas fitur</strong><p>Pratinjau, pemotongan, dan ekspor WAV tetap berjalan di browser. Transkripsi memakai Whisper Tiny Multilingual melalui WebAssembly CPU, dengan rentang 1–120 detik per proses dan bahasa Indonesia, Inggris, atau deteksi otomatis. Model dan pustaka pendukung diunduh dari CDN/Hugging Face; inferensi serta audio tetap di perangkat. Akurasi dipengaruhi kualitas rekaman, aksen, kebisingan, dan kemampuan perangkat. Text-to-speech, pemisahan suara, dan analisis audio lain belum diaktifkan.</p></div></div>',
         '<footer class="main-footer"><span>© 2026 LOKAL AI <b>·</b> SMALAN</span><span>Local-first by design.</span></footer>',
       '</div>'
     ].join("");
@@ -185,9 +185,10 @@
       if (!asrTranscribeButton) return;
       const range = selectedRange();
       const duration = range ? range.end - range.start : 0;
+      const tooShort = Boolean(range && duration < 1);
       const tooLong = duration > 120;
       asrTranscribeButton.disabled = !audioState.asrReady || !audioState.buffer ||
-        !range || tooLong || audioState.busy;
+        !range || tooShort || tooLong || audioState.busy;
       if (asrLoadButton) {
         asrLoadButton.disabled = audioState.asrReady || audioState.busy;
         asrLoadButton.textContent = audioState.asrReady ? "Model siap digunakan" :
@@ -202,12 +203,15 @@
       if (asrRangeHint) {
         if (!range) {
           asrRangeHint.textContent = "Muat audio dan pilih rentang mulai/akhir terlebih dahulu.";
+        } else if (tooShort) {
+          asrRangeHint.textContent = "Rentang saat ini " + duration.toFixed(1) +
+            " detik. Pilih minimal 1 detik audio agar model dapat memprosesnya.";
         } else if (tooLong) {
           asrRangeHint.textContent = "Rentang saat ini " + duration.toFixed(1) +
             " detik. Batas transkripsi adalah 120 detik per proses; perkecil rentang untuk melanjutkan.";
         } else {
           asrRangeHint.textContent = "Rentang " + duration.toFixed(1) +
-            " detik siap diproses. Audio dipindai lokal dan tidak diunggah.";
+            " detik siap diproses. Batas tiap proses 1–120 detik. Audio dipindai lokal dan tidak diunggah.";
         }
       }
     }
@@ -262,7 +266,7 @@
           if (asrProgressValue) asrProgressValue.textContent = "100%";
           if (asrProgressLabel) asrProgressLabel.textContent = "Model siap";
           setAsrModelStatus("Whisper Tiny siap · inferensi WebAssembly CPU · model tersimpan di cache browser.", "success");
-          setAsrStatus("Model siap. Pilih rentang audio maksimal 2 menit untuk mulai transkripsi.", "success");
+          setAsrStatus("Model siap. Pilih rentang audio 1–120 detik untuk mulai transkripsi.", "success");
           setControlsEnabled(Boolean(audioState.buffer));
           updateAsrControls();
         } else if (message.type === "transcription-stage") {
