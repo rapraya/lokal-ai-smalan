@@ -134,7 +134,7 @@ assert.ok(audioAsrWorker.includes('chunk_length_s: 30') &&
   audioAsrWorker.includes('stride_length_s: 5') &&
   audioAsrWorker.includes('options.language = "indonesian"') &&
   audioAsrWorker.includes('options.language = "english"') &&
-  audioAsrWorker.includes("progress_callback: reportProgress"),
+  audioAsrWorker.includes("progress_callback: (info) => reportProgress(requestId, epoch, info)"),
   "Audio ASR worker must support chunked transcription, Indonesian/English language hints, automatic detection, and model download progress.");
 assert.ok(audioAsrWorker.includes("let loadEpoch = 0") &&
   audioAsrWorker.includes("const epoch = loadEpoch") &&
