@@ -199,7 +199,7 @@ The architecture is **local-first, not local-only**: supported models should run
 - Optional local chat history; saving is off by default. Coding prompts and context remain in the active browser session.
 - Copyable text output; generated code is displayed as text and is never executed or applied to project files.
 
-**Validation status:** JavaScript syntax and repository smoke checks run in GitHub Actions. The Chat, Coding, and Text runtime still need a real browser/WebGPU session to validate model downloads, device compatibility, language quality, and actual generation. Data Analyst calculations, AI Assistant prompts, Personal AI privacy gates, and AI Knowledge retrieval helpers, document-summary selection, cross-file comparison selection, and citation checks have automated fixture coverage; actual browser model downloads, embedding quality, OCR accuracy, model answer quality, and source display still need real-device testing. PDF parsing, OCR accuracy, and source display still need browser testing. Data Analyst CSV parsing, filtering, sorting, grouping, and deterministic calculations have automated unit coverage but still need hands-on browser testing with representative files, including pivot-table rendering, trend charts, trend highlights, report export, IQR outlier detection, Pearson correlation, and aggregate-only interpretation using the already-loaded local model, follow-up questions, focus modes, and Markdown report export. Image, Audio, Video, and Navigator remain UI and architecture plans. AI Assistant, Personal AI, and AI Knowledge have initial alpha workspaces; browser/device validation remains pending.
+**Validation status:** JavaScript syntax, repository smoke checks, and browser smoke checks run in GitHub Actions. Browser Smoke exercises desktop/mobile navigation and themes, AI Chat/cloud gating, Image Studio transforms and exports, Audio Lab WAV editing plus mocked Whisper ASR and experimental Indonesian TTS, and Video Studio using a generated WebM fixture for metadata, frame PNG export, and clear/reset behavior. These automated browser checks validate application flows, not real model accuracy, device performance, GPU memory use, or long-session stability. The real Whisper model still requires the recording, language, timestamp, cancellation, privacy, and recovery checks in [the Audio ASR real-validation checklist](docs/audio-asr-real-validation.md). Chat, Coding, and Text require a real WebGPU device session for model download, compatibility, and output-quality validation. Data Analyst calculations and AI Knowledge/Assistant/Personal AI helpers have automated fixture coverage, but representative-file and real-device checks remain pending for PDF/OCR, semantic retrieval quality, citations, model interpretation, and report rendering. Navigator remains a planned workspace.
 
 The WebGPU check only detects whether a browser can provide an adapter. It does not guarantee that a particular model will fit or run successfully.
 
@@ -209,18 +209,19 @@ A real-browser checklist for semantic retrieval, PDF/OCR, privacy/network inspec
 
 ## Workspace capabilities
 
-| Workspace | Direction |
+| Workspace | Current implementation |
 | --- | --- |
-| AI Chat | WebLLM-based local language-model conversations, streaming, and optional browser-local history. Initial code integration is present; device validation is pending. |
-| AI Coding | Initial local-model workspace for code generation, explanation, review, debugging, refactoring, and documentation. No code execution or automatic project-file changes. |
-| Image Studio | Image understanding, editing utilities, and a separately evaluated image-generation runtime. |
-| Audio Lab | Speech recognition, text-to-speech, audio understanding, and processing. |
-| Video Studio | Browser-based media tools, video understanding, and separately evaluated AI video generation. |
-| Text & Language | Initial local-model workspace for drafting, editing, proofreading, summarizing, translation, and information extraction. |
-| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables with cross-tab count/sum/average, and filtered CSV export. AI interpretation is not yet implemented; statistical decision support uses deterministic IQR and Pearson calculations. |
+| AI Chat | Shared local WebLLM runtime, streaming responses, and optional browser-local history. Real WebGPU/device validation remains pending. |
+| AI Coding | Local-model assistance for code generation, explanation, review, debugging, refactoring, and documentation. Generated code is displayed only; it is not executed or applied to project files. |
+| Image Studio | Local image import, preview, rotate/flip, resize, and PNG/JPEG/WebP export. AI image understanding and generation are not enabled yet. |
+| Audio Lab | Local audio preview, trimming, WAV export, Whisper Tiny multilingual ASR, TXT/SRT transcript export, and experimental Indonesian TTS with a noncommercial-license acknowledgement. Real model accuracy/performance validation remains pending. |
+| Video Studio | Local video preview, metadata inspection, timestamp-based frame capture, and PNG export. Timeline editing, clip merging, audio extraction, and AI video generation are not enabled yet. |
+| Text & Language | Local-model drafting, editing, proofreading, summarizing, translation, and information extraction. |
+| Data Analyst | Local CSV import, data-quality profile, descriptive statistics, histogram, global search, column-specific text filters and numeric ranges, sorting, pagination, grouped count/sum/average, local pivot tables, trend summaries/charts, IQR outlier detection, Pearson correlation, and filtered CSV export. AI interpretation is limited to aggregate summaries using the already-loaded local model. |
 | AI Assistant | In-session task planning with the local model; suggestions only, no actions executed. |
 | Personal AI | User-managed preferences and notes, with separate opt-ins for local persistence and model context. |
-| AI Knowledge | Multi-document PDF/TXT/Markdown collection, opt-in scanned-PDF OCR, BM25 cross-document retrieval, and local-model Q&A with visible filename/page excerpts. |\n| AI Navigator | Opt-in location, maps, route planning, and mobility assistance. |
+| AI Knowledge | Multi-document PDF/TXT/Markdown collection, opt-in scanned-PDF OCR, BM25 retrieval, optional semantic retrieval, and local-model Q&A with visible filename/page excerpts. |
+| AI Navigator | Planned opt-in location, maps, route planning, and mobility assistance. |
 
 See [the product architecture and roadmap](docs/PRODUCT-ARCHITECTURE.md) for feasibility notes, privacy rules, and delivery phases.
 
