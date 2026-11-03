@@ -161,7 +161,7 @@ assert.ok(audioTtsWorker.includes('@huggingface/transformers@4.3.2') &&
 assert.ok(audioTtsWorker.includes("MAX_TEXT_LENGTH = 500") &&
   audioTtsWorker.includes("MAX_AUDIO_SECONDS = 90") &&
   audioTtsWorker.includes("sampling_rate") &&
-  audioTtsWorker.includes("audio.buffer"),
+  audioTtsWorker.includes("transferableAudio.buffer"),
   "Audio TTS worker must bound input/output size and transfer generated waveform data back to the UI.");
 assert.ok(!audioTtsWorker.includes("fetch("),
   "Audio TTS worker must not manually upload input text to a remote inference endpoint.");
