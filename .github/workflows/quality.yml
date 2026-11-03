@@ -14,6 +14,7 @@ jobs:
   static-checks:
     name: JavaScript syntax and smoke checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,6 +24,8 @@ jobs:
           node-version: 22
       - name: Check application JavaScript syntax
         run: node --check assets/js/app.js
+      - name: Check browser smoke script syntax
+        run: node --check scripts/browser-smoke.mjs
       - name: Check Cloudflare gateway syntax
         run: node --check gateway/src/worker.js
       - name: Run secure AI gateway tests
