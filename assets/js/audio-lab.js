@@ -1190,35 +1190,55 @@
   function destroy() {
     if (!state) return;
     const current = state;
-    if (current.root) {
-      const player = current.root.querySelector("#audioPlayer");
-      if (player) {
+    const root = current.root;
+    // Invalidate callbacks before terminating workers or releasing media resources.
+    state = null;
+    current.asrGeneration += 1;
+    current.asrRequestId += 1;
+    current.ttsRequestId += 1;
+
+    const releasePlayer = (player) => {
+      if (!player) return;
+      try {
         player.pause();
         player.removeAttribute("src");
         player.load();
+      } catch (_) {}
+    };
+    if (root) {
+      releasePlayer(root.querySelector("#audioPlayer"));
+      releasePlayer(root.querySelector("#audioTtsPlayer"));
+      const waveform = root.querySelector("#audioWaveform");
+      if (waveform) {
+        const context = waveform.getContext("2d");
+        if (context) context.clearRect(0, 0, waveform.width, waveform.height);
       }
     }
+
     if (current.sourceUrl) URL.revokeObjectURL(current.sourceUrl);
-    current.asrGeneration += 1;
-    current.asrRequestId += 1;
-    if (current.asrWorker) {
-      current.asrWorker.terminate();
-      current.asrWorker = null;
-    }
-    if (current.ttsWorker) {
-      current.ttsWorker.terminate();
-      current.ttsWorker = null;
-    }
     if (current.ttsAudioUrl) URL.revokeObjectURL(current.ttsAudioUrl);
-    if (current.root) {
-      const ttsPlayer = current.root.querySelector("#audioTtsPlayer");
-      if (ttsPlayer) {
-        ttsPlayer.pause();
-        ttsPlayer.removeAttribute("src");
-        ttsPlayer.load();
-      }
-    }
-    state = null;
+
+    [current.asrWorker, current.ttsWorker].forEach((worker) => {
+      if (!worker) return;
+      worker.onmessage = null;
+      worker.onerror = null;
+      worker.onmessageerror = null;
+      worker.terminate();
+    });
+
+    // Drop large decoded buffers, file handles, transcript data, and generated audio.
+    current.asrWorker = null;
+    current.ttsWorker = null;
+    current.file = null;
+    current.buffer = null;
+    current.sourceUrl = "";
+    current.previewEnd = 0;
+    current.asrReady = false;
+    current.ttsReady = false;
+    current.asrTranscriptSegments = [];
+    current.ttsAudioUrl = "";
+    current.ttsAudioBlob = null;
+    current.root = null;
   }
 
   global.LokalAIAudioLab = Object.freeze({ render, bind, destroy });
