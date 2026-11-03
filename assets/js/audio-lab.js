@@ -1086,6 +1086,23 @@
       } catch (error) {
         if (state === audioState && decodeRequestId === audioState.decodeRequestId) {
           audioState.buffer = null;
+          audioState.file = null;
+          audioState.previewEnd = 0;
+          if (audioState.sourceUrl) URL.revokeObjectURL(audioState.sourceUrl);
+          audioState.sourceUrl = "";
+          player.pause();
+          player.removeAttribute("src");
+          player.load();
+          waveform.getContext("2d")?.clearRect(0, 0, WAVEFORM_WIDTH, WAVEFORM_HEIGHT);
+          if (loadedPanel) loadedPanel.hidden = true;
+          if (dropzone) dropzone.hidden = false;
+          if (get("audioSourceFootnote")) get("audioSourceFootnote").hidden = false;
+          if (get("audioSourceName")) get("audioSourceName").textContent = "Audio";
+          if (get("audioSourceDetails")) get("audioSourceDetails").textContent = "-";
+          if (get("audioWaveformDuration")) get("audioWaveformDuration").textContent = "00:00";
+          if (get("audioSelectionDuration")) get("audioSelectionDuration").textContent = "00:00";
+          startInput.value = "0";
+          endInput.value = "0";
           setControlsEnabled(false);
           const message = error && error.message ? error.message : "Browser tidak dapat membaca audio ini.";
           setStatus(message.includes("decode") || message.includes("Decoding") ? "Format atau codec audio ini tidak didukung oleh decoder browser." : message, "error");
