@@ -32,8 +32,6 @@ jobs:
         run: node --input-type=module --check < assets/js/audio-asr-worker.js
       - name: Check Audio TTS worker module syntax
         run: node --input-type=module --check < assets/js/audio-tts-worker.js
-      - name: Check Audio TTS worker module syntax
-        run: node --input-type=module --check < assets/js/audio-tts-worker.js
       - name: Check Video Studio syntax
         run: node --check assets/js/video-studio.js
       - name: Check browser smoke script syntax
