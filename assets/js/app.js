@@ -75,11 +75,11 @@
       stages: [["Local image editing", "Rotasi, pembalikan, dan pratinjau perubahan gambar di browser."], ["Resize & conversion", "Mengubah dimensi dan mengekspor PNG, JPEG, atau WebP."], ["AI creative tools", "Generasi gambar, analisis visual, dan penghapusan latar melalui runtime khusus pada tahap berikutnya."]]
     },
     audio: {
-      title: "Audio Lab", label: "SPEECH & SOUND", icon: "audio", color: "icon-mint",
-      description: "Kelola audio, ubah suara menjadi teks, buat suara dari teks, dan pahami konten percakapan.",
-      headline: "Suara menjadi pengalaman yang lebih cerdas.",
-      detail: "Pengenalan ucapan dan text-to-speech memiliki dukungan model di Transformers.js. Kualitas bahasa, ukuran model, latensi, dan kemampuan pemrosesan offline harus diuji untuk setiap model.",
-      stages: [["Speech to text", "Transkripsi audio dan penanganan bahasa yang didukung model."], ["Text to speech", "Membacakan teks dengan suara sintetis yang kompatibel."], ["Audio intelligence", "Klasifikasi, ringkasan, dan alur pengolahan audio lanjutan."]]
+      title: "Audio Lab", label: "LOCAL AUDIO EDITOR", icon: "audio", color: "icon-mint",
+      description: "Workspace audio lokal untuk pemutaran, visualisasi waveform, pemotongan rentang, dan ekspor WAV.",
+      headline: "Pilih bagian suara, olah langsung di browser.",
+      detail: "Versi awal mendukung file audio hingga 20 MB dan 5 menit, decoding lokal melalui Web Audio API, pemutaran rentang pilihan, waveform, serta ekspor potongan WAV PCM 16-bit. Format yang bisa dibaca bergantung pada dukungan codec browser. Transkripsi AI, text-to-speech, pemisahan suara, dan analisis berbasis model belum diaktifkan.",
+      stages: [["Local audio preview", "Membaca audio, melihat durasi dan waveform, serta memutar rentang terpilih."], ["Trim & WAV export", "Menentukan waktu mulai/akhir lalu mengekspor audio PCM 16-bit."], ["Speech & audio AI", "Transkripsi, text-to-speech, pemisahan suara, dan pemahaman audio setelah model yang sesuai diintegrasikan dan diuji."]]
     },
     video: {
       title: "Video Studio", label: "MOTION & STORYTELLING", icon: "video", color: "icon-orange",
@@ -1539,6 +1539,11 @@
     if (page === "image" && window.LokalAIImageStudio) {
       workspace.innerHTML = window.LokalAIImageStudio.render();
       window.LokalAIImageStudio.bind(workspace);
+      return;
+    }
+    if (page === "audio" && window.LokalAIAudioLab) {
+      workspace.innerHTML = window.LokalAIAudioLab.render();
+      window.LokalAIAudioLab.bind(workspace);
       return;
     }
     if (page === "chat") {
@@ -3749,6 +3754,9 @@
     const selected = page === "home" ? "home" : (modules[page] || pages[page] ? page : "home");
     if (currentPage === "image" && selected !== "image" && window.LokalAIImageStudio) {
       window.LokalAIImageStudio.destroy();
+    }
+    if (currentPage === "audio" && selected !== "audio" && window.LokalAIAudioLab) {
+      window.LokalAIAudioLab.destroy();
     }
     currentPage = selected;
     breadcrumb.textContent = selected === "home" ? "Overview" : (modules[selected] || pages[selected]).title;
