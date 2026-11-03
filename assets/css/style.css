@@ -1998,8 +1998,8 @@ body[data-theme="light"] .audio-asr-append-toggle{color:#25364f}
 .audio-tts-output-actions button{min-height:30px;padding:0 10px}
 .audio-tts-output-actions button:disabled{opacity:.45;cursor:not-allowed}
 .audio-tts-disclosure{margin:11px 1px 0;color:var(--muted);font-size:11px;line-height:1.6}
-.audio-tts-model-status[data-state="success"]{color:#81d4b8;border-color:rgba(92,190,160,.2)}
-.audio-tts-model-status[data-state="error"]{color:#eaa0a0;border-color:rgba(224,130,130,.25)}
+#audioTtsModelStatus[data-state="success"]{color:#81d4b8;border-color:rgba(92,190,160,.2)}
+#audioTtsModelStatus[data-state="error"]{color:#eaa0a0;border-color:rgba(224,130,130,.25)}
 body[data-theme="light"] .audio-tts-model-card,body[data-theme="light"] .audio-tts-workspace{background:#fbfcff}
 body[data-theme="light"] .audio-tts-input{background:#fff;color:#25364f}
 body[data-theme="light"] .audio-tts-model-top strong,body[data-theme="light"] .audio-tts-license-box>label{color:#25364f}
