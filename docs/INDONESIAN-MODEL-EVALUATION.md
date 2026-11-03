@@ -58,7 +58,7 @@ Kasus yang mengandung kegagalan kritis harus diperbaiki atau ditinjau sebelum mo
 
 ## Lembar hasil
 
-Buat satu lembar hasil per model dan perangkat. Catat setidaknya:
+Gunakan template [lembar hasil pengujian](test-fixtures/indonesian-model-evaluation-result-template.md) dan buat satu salinan per kombinasi perangkat, browser, dan model. Template mencatat kesiapan WebGPU, unduhan, inisialisasi, waktu respons pertama, durasi generasi, stabilitas worker, serta skor kualitas. Catat setidaknya:
 
 - ID kasus;
 - jawaban mentah;
@@ -67,6 +67,8 @@ Buat satu lembar hasil per model dan perangkat. Catat setidaknya:
 - kesalahan faktual / pelanggaran kritis;
 - latensi respons dan apakah streaming berhenti normal;
 - catatan penggunaan memori, crash, atau worker gagal.
+
+Pisahkan waktu unduh awal dari waktu inisialisasi setelah cache dan waktu inferensi. Ukur setidaknya tiga percobaan untuk metrik waktu. Catat token/detik hanya jika jumlah token benar-benar tersedia; jangan menaksirnya dari jumlah kata. Jangan menganggap `navigator.deviceMemory` sebagai VRAM atau mengarang angka penggunaan GPU jika browser tidak menyediakannya.
 
 Bandingkan 1B dan 3B hanya jika perangkat, browser, prompt, dan prosedur sama. Model yang lebih besar tidak otomatis lebih baik atau lebih cepat.
 
