@@ -414,6 +414,20 @@
     }
     if (current.sourceUrl) URL.revokeObjectURL(current.sourceUrl);
     if (current.previewUrl) URL.revokeObjectURL(current.previewUrl);
+    if (current.root) {
+      const frameImage = current.root.querySelector("#videoFrameImage");
+      if (frameImage) frameImage.removeAttribute("src");
+    }
+    current.file = null;
+    current.frameBlob = null;
+    current.sourceUrl = "";
+    current.previewUrl = "";
+    current.duration = 0;
+    current.durationKnown = false;
+    current.frameWidth = 0;
+    current.frameHeight = 0;
+    current.cancelPendingWait = null;
+    current.root = null;
     state = null;
   }
 
