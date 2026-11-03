@@ -203,6 +203,8 @@
     let invalidSelection = false;
     state = {
       root,
+      decodeContext: null,
+      decodeRequestId: 0,
       file: null,
       buffer: null,
       sourceUrl: "",
@@ -1056,15 +1058,17 @@
       audioState.busy = true;
       setControlsEnabled(false);
       setStatus("Membaca dan mendekode audio di browser…", "info");
+      const decodeRequestId = ++audioState.decodeRequestId;
       let audioContext;
       try {
         const AudioContextClass = global.AudioContext || global.webkitAudioContext;
         if (!AudioContextClass) throw new Error("Web Audio API tidak tersedia pada browser ini.");
         audioContext = new AudioContextClass({ sampleRate: 24000 });
+        audioState.decodeContext = audioContext;
         const bytes = await file.arrayBuffer();
-        if (state !== audioState) return;
+        if (state !== audioState || decodeRequestId !== audioState.decodeRequestId) return;
         const decoded = await audioContext.decodeAudioData(bytes.slice(0));
-        if (state !== audioState) return;
+        if (state !== audioState || decodeRequestId !== audioState.decodeRequestId) return;
         if (!Number.isFinite(decoded.duration) || decoded.duration <= 0 || decoded.duration > MAX_DURATION_SECONDS) {
           throw new Error("Durasi audio tidak valid atau melebihi batas 5 menit.");
         }
@@ -1080,7 +1084,7 @@
         setControlsEnabled(true);
         setStatus("Audio siap. Pilih rentang untuk dipratinjau atau diekspor sebagai WAV.", "success");
       } catch (error) {
-        if (state === audioState) {
+        if (state === audioState && decodeRequestId === audioState.decodeRequestId) {
           audioState.buffer = null;
           setControlsEnabled(false);
           const message = error && error.message ? error.message : "Browser tidak dapat membaca audio ini.";
@@ -1090,7 +1094,8 @@
         if (audioContext && audioContext.state !== "closed") {
           try { await audioContext.close(); } catch (_) {}
         }
-        if (state === audioState) {
+        if (audioState.decodeContext === audioContext) audioState.decodeContext = null;
+        if (state === audioState && decodeRequestId === audioState.decodeRequestId) {
           audioState.busy = false;
           setControlsEnabled(Boolean(audioState.buffer));
         }
@@ -1196,6 +1201,14 @@
     current.asrGeneration += 1;
     current.asrRequestId += 1;
     current.ttsRequestId += 1;
+    current.decodeRequestId += 1;
+    if (current.decodeContext && current.decodeContext.state !== "closed") {
+      try {
+        const closing = current.decodeContext.close();
+        if (closing && typeof closing.catch === "function") closing.catch(() => {});
+      } catch (_) {}
+    }
+    current.decodeContext = null;
 
     const releasePlayer = (player) => {
       if (!player) return;
