@@ -65,6 +65,12 @@ assert.equal(activeLocal.providers.find((provider) => provider.id === "local-web
 assert.equal(activeLocal.providers.find((provider) => provider.id === "local-webllm").active, true);
 
 const otherClient = { chat: { completions: { create() {} } } };
+assert.throws(
+  () => engine.attachRuntime("local-webllm", otherClient, "Llama-3.2-1B-Instruct-q4f16_1-MLC"),
+  /Runtime lain masih aktif/,
+  "A second client must not replace the shared runtime before the active one is released."
+);
+assert.equal(engine.getClient(), fakeLocalClient, "A rejected replacement must preserve the active runtime.");
 assert.equal(engine.clearRuntime(otherClient), false, "A different caller must not clear the active runtime.");
 assert.equal(engine.getClient(), fakeLocalClient);
 assert.equal(engine.clearRuntime(fakeLocalClient), true);
