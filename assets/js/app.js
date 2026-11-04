@@ -3757,6 +3757,8 @@
   }
 
   function bindDataWorkspace() {
+    const stopInterpretation = document.getElementById("dataInterpretStopButton");
+    if (stopInterpretation) stopInterpretation.addEventListener("click", cancelActiveGeneration);
     const fileInput = document.getElementById("dataFileInput");
     const restoredInterpretation = document.getElementById("dataInterpretResult");
     const restoredInterpretationStatus = document.getElementById("dataInterpretStatus");
