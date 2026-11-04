@@ -425,6 +425,7 @@
 
 
   let knowledgePages = [], knowledgeDocuments = [], knowledgeBusy = false, pdfJsPromise = null, ocrLibraryPromise = null, knowledgeSequence = 0;
+  let knowledgeAnswerSnapshot = null, knowledgeStatusSnapshot = "";
   let knowledgeEmbeddingWorker=null,knowledgeEmbeddingRequestId=0,knowledgeEmbeddingRequests=new Map();
   let knowledgeSemanticEnabled=false,knowledgeSemanticVectors=[],knowledgeSemanticPageIndices=[],knowledgeSemanticTruncated=false;
   function renderKnowledgeWorkspace() {
@@ -1227,6 +1228,9 @@
   }
   function bindKnowledgeWorkspace(){
     const file=document.getElementById("knowledgeFile"),ocrOption=document.getElementById("knowledgeOcrEnabled"),status=document.getElementById("knowledgeStatus"),clear=document.getElementById("knowledgeClear"),form=document.getElementById("knowledgeQuestionForm"),taskMode=document.getElementById("knowledgeTaskMode"),q=document.getElementById("knowledgeQuestion"),answer=document.getElementById("knowledgeAnswer");
+    if(answer&&knowledgeAnswerSnapshot)answer.replaceChildren(...Array.from(knowledgeAnswerSnapshot.childNodes).map(node=>node.cloneNode(true)));
+    if(status&&knowledgeStatusSnapshot)status.textContent=knowledgeStatusSnapshot;
+    else if(status&&knowledgeBusy)status.textContent="Analisis dokumen masih berjalan di sesi ini. Hasil akan tersedia setelah proses selesai.";
     q.addEventListener("input",syncKnowledgeControls);
     const sampleButton=document.getElementById("knowledgeLoadSamples");
     if(sampleButton)sampleButton.addEventListener("click",async()=>{
@@ -1298,6 +1302,7 @@
       knowledgeBusy=true;syncKnowledgeControls();
       status.textContent=knowledgeSemanticEnabled?"Menyiapkan bukti dengan semantik lokal dan BM25…":"Menyiapkan bukti dengan BM25…";
       answer.textContent="Menyusun bukti dan analisis…";
+      knowledgeAnswerSnapshot=null;knowledgeStatusSnapshot="";
       let generationId=null;
       try{
         if(!chatEngine){status.textContent="Menyiapkan model AI lokal untuk analisis…";await loadChatModel();}
@@ -1474,6 +1479,7 @@
       }
       finally{
         knowledgeBusy=false;
+        if(answer){knowledgeAnswerSnapshot=answer.cloneNode(true);knowledgeStatusSnapshot=status.textContent;}
         if(typeof generationId!=="undefined"&&isCurrentGeneration(generationId)){
           chatGenerating=false;activeGenerationEngine=null;activeGenerationWorkspace="";activeGenerationCancelled=false;activeGenerationFailureMessage="";
         }
@@ -3750,6 +3756,14 @@
 
   function bindDataWorkspace() {
     const fileInput = document.getElementById("dataFileInput");
+    const restoredInterpretation = document.getElementById("dataInterpretResult");
+    const restoredInterpretationStatus = document.getElementById("dataInterpretStatus");
+    if (restoredInterpretation && dataInterpretationMessages.length) {
+      restoredInterpretation.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
+      if (restoredInterpretationStatus) restoredInterpretationStatus.textContent = chatGenerating && activeGenerationWorkspace === "data"
+        ? "Model lokal masih menganalisis ringkasan agregat…"
+        : "Riwayat interpretasi sesi dipulihkan.";
+    }
     const columnSelect = document.getElementById("dataColumnSelect");
     const resetButton = document.getElementById("dataResetButton");
     const searchInput = document.getElementById("dataSearchInput");
