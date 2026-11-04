@@ -462,6 +462,8 @@ try {
     window.__loadedModels = [];
     window.__runtimeUnloadCalls = 0;
     window.__failRuntimeUnload = false;
+    window.__holdRuntimeUnload = false;
+    window.__releaseRuntimeUnload = null;
     window.__workspaceFailures = { coding: 1, text: 1 };
     window.__generationInterrupted = false;
     window.__crashDuringGeneration = false;
@@ -527,6 +529,9 @@ try {
             },
             unload: async () => {
               window.__runtimeUnloadCalls += 1;
+              if (window.__holdRuntimeUnload) {
+                await new Promise((resolve) => { window.__releaseRuntimeUnload = resolve; });
+              }
               if (window.__failRuntimeUnload) throw new Error("simulated runtime unload failure");
             }
           };
@@ -753,6 +758,34 @@ try {
     "The subsequent normal unload must invoke its own unload hook exactly once.");
   assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
     "The subsequent normal unload must leave the runtime registry empty.");
+
+  // Repeated unload requests during an in-flight cleanup must be idempotent.
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
+  await recovery.evaluate(() => { window.__holdRuntimeUnload = true; });
+  await recovery.locator("#chatUnloadButton").click();
+  await recovery.waitForFunction(() => window.__runtimeUnloadCalls === 5 && typeof window.__releaseRuntimeUnload === "function");
+  assert.equal(await recovery.locator("#chatUnloadButton").isDisabled(), true,
+    "The unload control must be disabled while runtime cleanup is pending.");
+  await recovery.evaluate(() => {
+    document.querySelector("#chatUnloadButton").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 5,
+    "A duplicate unload request must not invoke the runtime hook twice.");
+  await recovery.evaluate(() => {
+    window.__releaseRuntimeUnload();
+    window.__holdRuntimeUnload = false;
+  });
+  await recovery.waitForFunction(() => {
+    const button = document.querySelector("#chatLoadButton");
+    return button && !button.hidden && !button.disabled;
+  });
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[6].terminated), true,
+    "The in-flight unload must terminate its Worker exactly once.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "Duplicate unload requests must leave the Model Engine registry empty.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 5,
+    "The runtime unload hook must run exactly once for the session.");
   await recovery.close();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
