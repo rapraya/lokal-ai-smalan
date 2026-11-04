@@ -2165,10 +2165,11 @@
       syncChatControls();
       paintChatMessages();
     } catch (error) {
+      const failedRuntime = chatEngine;
       if (chatWorker) chatWorker.terminate();
       chatWorker = null;
       chatEngine = null;
-      if (modelEngine && chatEngine) modelEngine.clearRuntime(chatEngine);
+      if (modelEngine && failedRuntime) modelEngine.clearRuntime(failedRuntime);
       chatModelId = "";
       chatLoading = false;
       const progress = document.getElementById("chatProgress");
