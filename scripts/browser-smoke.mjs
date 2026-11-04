@@ -461,6 +461,7 @@ try {
     window.__webllmInitCount = 0;
     window.__loadedModels = [];
     window.__runtimeUnloadCalls = 0;
+    window.__failRuntimeUnload = false;
     window.__workspaceFailures = { coding: 1, text: 1 };
     window.__generationInterrupted = false;
     window.__crashDuringGeneration = false;
@@ -524,7 +525,10 @@ try {
               window.__generationInterrupted = true;
               if (window.__crashDuringGeneration && window.__rejectCrashGeneration) window.__rejectCrashGeneration(new Error("simulated worker termination"));
             },
-            unload: async () => { window.__runtimeUnloadCalls += 1; }
+            unload: async () => {
+              window.__runtimeUnloadCalls += 1;
+              if (window.__failRuntimeUnload) throw new Error("simulated runtime unload failure");
+            }
           };
         }
       `
@@ -713,6 +717,42 @@ try {
     "Each normal model session must invoke its own runtime unload hook exactly once.");
   assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
     "Unloading the replacement model must leave no active Model Engine runtime.");
+
+  // A rejected WebLLM unload hook must not leak the Worker or Model Engine registration.
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
+  await recovery.evaluate(() => { window.__failRuntimeUnload = true; });
+  await recovery.locator("#chatUnloadButton").click();
+  await recovery.waitForFunction(() => {
+    const button = document.querySelector("#chatLoadButton");
+    return button && !button.hidden && !button.disabled;
+  });
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 3,
+    "A failed unload hook must still be invoked exactly once.");
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[4].terminated), true,
+    "A rejected unload hook must not prevent Worker termination.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "A rejected unload hook must not leave a registered runtime.");
+  assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
+    "A rejected unload hook must restore the unloaded Chat controls.");
+
+  // Verify that the failed cleanup does not poison a subsequent fresh model session.
+  await recovery.evaluate(() => { window.__failRuntimeUnload = false; });
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), true,
+    "A fresh model session must load after a rejected unload hook.");
+  await recovery.locator("#chatUnloadButton").click();
+  await recovery.waitForFunction(() => {
+    const button = document.querySelector("#chatLoadButton");
+    return button && !button.hidden && !button.disabled;
+  });
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[5].terminated), true,
+    "The fresh session must also terminate cleanly.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 4,
+    "The subsequent normal unload must invoke its own unload hook exactly once.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "The subsequent normal unload must leave the runtime registry empty.");
   await recovery.close();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
