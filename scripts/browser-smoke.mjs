@@ -576,6 +576,16 @@ try {
   await recovery.locator("#codingRunButton").click();
   await recovery.waitForFunction(() => document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil."));
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/);
+  await recovery.locator("#codingInput").fill("Uji pembatalan generasi");
+  await recovery.locator("#codingRunButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#codingStopButton");
+    return stop && !stop.hidden && document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil.");
+  });
+  await recovery.locator("#codingStopButton").click();
+  await recovery.waitForFunction(() => /Proses dihentikan oleh pengguna/.test(document.querySelector("#codingStatus")?.textContent || ""));
+  assert.match(await recovery.locator("#codingOutput").innerText(), /Generasi dihentikan oleh pengguna/);
+  await recovery.evaluate(() => { window.__generationInterrupted = false; });
 
   await recovery.locator('.nav-link[data-page="text"]').click();
   await recovery.waitForSelector("#textForm");
@@ -588,6 +598,16 @@ try {
   await recovery.locator("#textRunButton").click();
   await recovery.waitForFunction(() => document.querySelector("#textOutput")?.textContent.includes("Jawaban uji berhasil."));
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/);
+  await recovery.locator("#textInput").fill("Uji pembatalan generasi");
+  await recovery.locator("#textRunButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#textStopButton");
+    return stop && !stop.hidden && document.querySelector("#textOutput")?.textContent.includes("Jawaban uji berhasil.");
+  });
+  await recovery.locator("#textStopButton").click();
+  await recovery.waitForFunction(() => /Proses dihentikan oleh pengguna/.test(document.querySelector("#textStatus")?.textContent || ""));
+  assert.match(await recovery.locator("#textOutput").innerText(), /Generasi dihentikan oleh pengguna/);
+  await recovery.evaluate(() => { window.__generationInterrupted = false; });
 
   await recovery.locator("#chatUnloadButton").click();
   await recovery.waitForFunction(() => {
