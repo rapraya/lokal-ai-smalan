@@ -25,13 +25,21 @@ try {
   assert.equal(await desktop.locator('[data-theme-choice="colorful"]').getAttribute("aria-checked"), "true");
 
   await desktop.locator("#menuToggle").click();
-  assert.match(await desktop.locator(".app-shell").getAttribute("class"), /sidebar-collapsed/);
-  assert.equal(await desktop.locator("#menuToggle").getAttribute("aria-expanded"), "false");
+  await desktop.waitForFunction(() => {
+    const shell = document.querySelector(".app-shell");
+    const toggle = document.querySelector("#menuToggle");
+    return shell?.classList.contains("sidebar-collapsed")
+      && toggle?.getAttribute("aria-expanded") === "false";
+  });
   assert.equal(await desktop.locator("#menuToggle").getAttribute("aria-label"), "Tampilkan sidebar");
 
   await desktop.locator("#menuToggle").click();
-  assert.doesNotMatch(await desktop.locator(".app-shell").getAttribute("class"), /sidebar-collapsed/);
-  assert.equal(await desktop.locator("#menuToggle").getAttribute("aria-expanded"), "true");
+  await desktop.waitForFunction(() => {
+    const shell = document.querySelector(".app-shell");
+    const toggle = document.querySelector("#menuToggle");
+    return !shell?.classList.contains("sidebar-collapsed")
+      && toggle?.getAttribute("aria-expanded") === "true";
+  });
 
   await desktop.reload({ waitUntil: "domcontentloaded" });
   assert.equal(await desktop.locator("body").getAttribute("data-theme"), "colorful", "Theme preference must persist across reloads.");
