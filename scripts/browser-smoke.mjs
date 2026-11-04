@@ -605,7 +605,7 @@ try {
   assert.equal(videoHasHorizontalOverflow, false, "Video Studio must not introduce horizontal page overflow on mobile.");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate, Image Studio transforms/exports, Audio Lab WAV editing, mocked Whisper ASR, and Indonesian TTS license/load/synthesis/WAV export/cancel/cleanup, and Video Studio metadata/frame PNG export/cleanup.");
+  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate and local model recovery, Coding/Text task-error isolation on the shared runtime, Image Studio transforms/exports, Audio Lab WAV editing, mocked Whisper ASR, Indonesian TTS license/load/synthesis/WAV export/cancel/cleanup, and Video Studio metadata/frame PNG export/cleanup.");
 } finally {
   await browser.close();
 }
