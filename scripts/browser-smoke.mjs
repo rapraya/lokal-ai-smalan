@@ -591,9 +591,13 @@ try {
   await recovery.locator("#chatInput").fill("Uji generasi Chat setelah pemulihan worker.");
   await recovery.locator("#chatSendButton").click();
   await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    return stop && !stop.hidden;
+  });
+  await recovery.waitForFunction(() => {
     const messages = document.querySelector("#chatMessages")?.innerText || "";
-    const send = document.querySelector("#chatSendButton");
-    return messages.includes("Jawaban uji berhasil.") && send && !send.disabled;
+    const stop = document.querySelector("#chatStopButton");
+    return messages.includes("Jawaban uji berhasil.") && stop && stop.hidden;
   });
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
     "A recovered worker must accept a fresh Chat generation without stale failure state.");
