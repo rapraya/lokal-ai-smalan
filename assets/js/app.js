@@ -2066,7 +2066,7 @@
     }
     if (unload) {
       unload.hidden = !activeChatEngine;
-      unload.disabled = chatUnloading;
+      unload.disabled = chatUnloading || chatGenerating;
     }
     if (select) select.disabled = chatLoading || !!activeChatEngine;
     if (providerSelect) providerSelect.disabled = chatGenerating || !!activeChatEngine;
