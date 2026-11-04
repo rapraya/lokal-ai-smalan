@@ -451,6 +451,7 @@ try {
   await recovery.addInitScript(() => {
     window.__fakeWorkers = [];
     window.__webllmInitCount = 0;
+    window.__loadedModels = [];
     window.__workspaceFailures = { coding: 1, text: 1 };
     window.__generationInterrupted = false;
     Object.defineProperty(navigator, "gpu", {
@@ -474,6 +475,7 @@ try {
       body: `
         export async function CreateWebWorkerMLCEngine(worker, model, options) {
           window.__webllmInitCount += 1;
+          window.__loadedModels.push(model);
           if (window.__webllmInitCount === 1) throw new Error("simulated model initialization failure");
           return {
             chat: { completions: { create: async (params) => {
@@ -616,6 +618,18 @@ try {
   });
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[2].terminated), true,
     "Normal model unload must terminate the worker.");
+  await recovery.locator("#chatModelSelect").selectOption("Llama-3.2-3B-Instruct-q4f16_1-MLC");
+  await recovery.locator("#chatLoadButton").click();
+  await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
+  assert.equal(await recovery.evaluate(() => window.__loadedModels.at(-1)), "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+    "Reloading after unload must initialize the newly selected model.");
+  await recovery.locator("#chatUnloadButton").click();
+  await recovery.waitForFunction(() => {
+    const button = document.querySelector("#chatLoadButton");
+    return button && !button.hidden && !button.disabled;
+  });
+  assert.equal(await recovery.evaluate(() => window.__fakeWorkers[3].terminated), true,
+    "Switching model must release the previous worker before the next session.");
   await recovery.close();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
