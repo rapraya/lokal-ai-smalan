@@ -1865,6 +1865,7 @@
     ].filter(Boolean).join("\n\n");
 
     chatGenerating = true;
+    beginActiveGeneration(chatEngine, "coding");
     codingMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
     codingMessages.push(assistantMessage);
@@ -1882,6 +1883,7 @@
         stream: true
       });
       for await (const chunk of stream) {
+        if (activeGenerationCancelled) break;
         const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta
           ? chunk.choices[0].delta.content || ""
           : "";
@@ -1890,18 +1892,27 @@
         if (output) output.textContent = assistantMessage.content;
         if (status) status.textContent = "Jawaban sedang diterima dari model lokal…";
       }
-      if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+      else if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
       if (output) output.textContent = assistantMessage.content;
-      if (status) status.textContent = "Selesai. Tinjau dan uji kode sebelum digunakan.";
+      if (status) status.textContent = activeGenerationCancelled ? "Proses dihentikan oleh pengguna." : "Selesai. Tinjau dan uji kode sebelum digunakan.";
       if (copyButton) copyButton.disabled = false;
     } catch (error) {
       const message = error && error.message ? error.message : "periksa resource perangkat";
-      assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + message;
+      if (activeGenerationCancelled) {
+        assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+        if (status) status.textContent = "Proses dihentikan oleh pengguna.";
+      } else {
+        assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + message;
+        if (status) status.textContent = "Generasi gagal: " + message;
+      }
       if (output) output.textContent = assistantMessage.content;
-      if (status) status.textContent = "Generasi gagal: " + message;
       // Keep workspace task failures local; the shared model runtime may still be healthy.
     } finally {
       chatGenerating = false;
+      activeGenerationEngine = null;
+      activeGenerationWorkspace = "";
+      activeGenerationCancelled = false;
       syncChatControls();
     }
   }
@@ -2222,6 +2233,7 @@
       return;
     }
     chatGenerating = true;
+    beginActiveGeneration(activeChatEngine, "chat");
     chatLastError = "";
     chatMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
@@ -2242,6 +2254,7 @@
         stream: true
       });
       for await (const chunk of stream) {
+        if (activeGenerationCancelled) break;
         const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta
           ? chunk.choices[0].delta.content || ""
           : "";
@@ -2250,15 +2263,22 @@
         if (answerNode) answerNode.textContent = assistantMessage.content;
         if (host) host.scrollTop = host.scrollHeight;
       }
-      if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+      else if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
       saveChatHistory();
     } catch (error) {
-      assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + (error && error.message ? error.message : "unknown error");
+      if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+      else {
+        assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + (error && error.message ? error.message : "unknown error");
+        chatLastError = "Generasi gagal: " + (error && error.message ? error.message : "periksa resource perangkat");
+      }
       if (answerNode) answerNode.textContent = assistantMessage.content;
-      chatLastError = "Generasi gagal: " + (error && error.message ? error.message : "periksa resource perangkat");
       saveChatHistory();
     } finally {
       chatGenerating = false;
+      activeGenerationEngine = null;
+      activeGenerationWorkspace = "";
+      activeGenerationCancelled = false;
       syncChatControls();
     }
   }
@@ -2577,6 +2597,7 @@
     ].filter(Boolean).join("\n\n");
 
     chatGenerating = true;
+    beginActiveGeneration(chatEngine, "text");
     textMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
     textMessages.push(assistantMessage);
@@ -2594,6 +2615,7 @@
         stream: true
       });
       for await (const chunk of stream) {
+        if (activeGenerationCancelled) break;
         const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta
           ? chunk.choices[0].delta.content || ""
           : "";
@@ -2602,18 +2624,27 @@
         if (output) output.textContent = assistantMessage.content;
         if (status) status.textContent = "Hasil sedang diterima dari model lokal…";
       }
-      if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+      else if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
       if (output) output.textContent = assistantMessage.content;
-      if (status) status.textContent = "Selesai. Periksa kembali hasil dan informasi penting sebelum digunakan.";
+      if (status) status.textContent = activeGenerationCancelled ? "Proses dihentikan oleh pengguna." : "Selesai. Periksa kembali hasil dan informasi penting sebelum digunakan.";
       if (copyButton) copyButton.disabled = false;
     } catch (error) {
       const message = error && error.message ? error.message : "periksa resource perangkat";
-      assistantMessage.content = "Terjadi kesalahan saat mengolah teks: " + message;
+      if (activeGenerationCancelled) {
+        assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
+        if (status) status.textContent = "Proses dihentikan oleh pengguna.";
+      } else {
+        assistantMessage.content = "Terjadi kesalahan saat mengolah teks: " + message;
+        if (status) status.textContent = "Proses gagal: " + message;
+      }
       if (output) output.textContent = assistantMessage.content;
-      if (status) status.textContent = "Proses gagal: " + message;
       // Keep workspace task failures local; the shared model runtime may still be healthy.
     } finally {
       chatGenerating = false;
+      activeGenerationEngine = null;
+      activeGenerationWorkspace = "";
+      activeGenerationCancelled = false;
       syncChatControls();
     }
   }
