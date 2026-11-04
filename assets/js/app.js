@@ -1558,16 +1558,21 @@
       if (status) status.textContent = "Menyusun rekomendasi dengan model lokal…";
       run.disabled = true;
       chatGenerating = true;
+      const generationId = beginActiveGeneration(chatEngine, "assistant");
+      syncChatControls();
       let answer = "";
       try {
         const stream = await chatEngine.chat.completions.create({ messages, temperature: 0.3, top_p: 0.85, max_tokens: 640, stream: true });
         for await (const chunk of stream) {
+          if (!isCurrentGeneration(generationId) || activeGenerationCancelled) break;
           const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta ? chunk.choices[0].delta.content || "" : "";
           if (delta) {
             answer += delta;
             if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n") + "\n\nLokal AI: " + answer;
           }
         }
+        if (!isCurrentGeneration(generationId)) return;
+        if (activeGenerationCancelled) answer += (answer ? "\n\n" : "") + getActiveGenerationStopNotice();
         if (!answer) answer = "Model tidak menghasilkan rekomendasi. Silakan coba lagi.";
         assistantMessages.push({ role: "assistant", content: answer });
         if (assistantMessages.length > 12) assistantMessages.splice(0, assistantMessages.length - 12);
@@ -1579,9 +1584,15 @@
         if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
         if (status) status.textContent = "Gagal membuat rekomendasi: " + (error && error.message ? error.message : "kesalahan model");
       } finally {
-        chatGenerating = false;
-        run.disabled = false;
-        syncChatControls();
+        if (isCurrentGeneration(generationId)) {
+          chatGenerating = false;
+          activeGenerationEngine = null;
+          activeGenerationWorkspace = "";
+          activeGenerationCancelled = false;
+          activeGenerationFailureMessage = "";
+          run.disabled = false;
+          syncChatControls();
+        }
       }
     });
     if (clear) clear.addEventListener("click", () => {
@@ -3263,15 +3274,20 @@
     if (button) button.disabled = true;
     if (questionInput) questionInput.disabled = true;
     chatGenerating = true;
+    const generationId = beginActiveGeneration(chatEngine, "data");
+    syncChatControls();
     let answer = "";
     try {
       const stream = await chatEngine.chat.completions.create({
         messages, temperature: 0.2, top_p: 0.85, max_tokens: 512, stream: true
       });
       for await (const chunk of stream) {
+        if (!isCurrentGeneration(generationId) || activeGenerationCancelled) break;
         const delta = chunk && chunk.choices && chunk.choices[0] && chunk.choices[0].delta ? chunk.choices[0].delta.content || "" : "";
         if (delta) { answer += delta; output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n") + "\n\nModel: " + answer; }
       }
+      if (!isCurrentGeneration(generationId)) return;
+      if (activeGenerationCancelled) answer += (answer ? "\n\n" : "") + getActiveGenerationStopNotice();
       if (!answer) answer = "Model tidak menghasilkan interpretasi. Coba ulangi.";
       dataInterpretationMessages.push({ role: "assistant", content: answer });
       output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
@@ -3282,10 +3298,16 @@
       output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
       status.textContent = "Interpretasi gagal: " + (error && error.message ? error.message : "kesalahan model");
     } finally {
-      chatGenerating = false;
-      if (button) button.disabled = false;
-      if (questionInput) questionInput.disabled = false;
-      syncChatControls();
+      if (isCurrentGeneration(generationId)) {
+        chatGenerating = false;
+        activeGenerationEngine = null;
+        activeGenerationWorkspace = "";
+        activeGenerationCancelled = false;
+        activeGenerationFailureMessage = "";
+        if (button) button.disabled = false;
+        if (questionInput) questionInput.disabled = false;
+        syncChatControls();
+      }
     }
   }
 
