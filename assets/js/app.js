@@ -2168,7 +2168,7 @@
       if (chatWorker) chatWorker.terminate();
       chatWorker = null;
       chatEngine = null;
-      if (modelEngine) modelEngine.clearRuntime();
+      if (modelEngine && chatEngine) modelEngine.clearRuntime(chatEngine);
       chatModelId = "";
       chatLoading = false;
       const progress = document.getElementById("chatProgress");
