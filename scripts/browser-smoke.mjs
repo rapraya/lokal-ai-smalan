@@ -460,6 +460,7 @@ try {
     window.__fakeWorkers = [];
     window.__webllmInitCount = 0;
     window.__loadedModels = [];
+    window.__runtimeUnloadCalls = 0;
     window.__workspaceFailures = { coding: 1, text: 1 };
     window.__generationInterrupted = false;
     window.__crashDuringGeneration = false;
@@ -523,7 +524,7 @@ try {
               window.__generationInterrupted = true;
               if (window.__crashDuringGeneration && window.__rejectCrashGeneration) window.__rejectCrashGeneration(new Error("simulated worker termination"));
             },
-            unload: async () => {}
+            unload: async () => { window.__runtimeUnloadCalls += 1; }
           };
         }
       `
@@ -690,6 +691,8 @@ try {
   });
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[2].terminated), true,
     "Normal model unload must terminate the worker.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 1,
+    "Normal model unload must invoke the WebLLM runtime unload hook before worker termination.");
   assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
     "Normal model unload must release the Model Engine runtime.");
   await recovery.locator("#chatModelSelect").selectOption("Llama-3.2-3B-Instruct-q4f16_1-MLC");
@@ -706,6 +709,8 @@ try {
   });
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[3].terminated), true,
     "Switching model must release the previous worker before the next session.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 2,
+    "Each normal model session must invoke its own runtime unload hook exactly once.");
   assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
     "Unloading the replacement model must leave no active Model Engine runtime.");
   await recovery.close();
