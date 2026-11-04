@@ -701,6 +701,32 @@ try {
   assert.match(await recovery.locator("#textOutput").innerText(), /Generasi dihentikan oleh pengguna/);
   await recovery.evaluate(() => { window.__generationInterrupted = false; });
 
+  // Assistant must register against the shared runtime so Chat can interrupt it safely.
+  await recovery.locator('.nav-link[data-page="assistant"]').click();
+  await recovery.waitForSelector("#assistantPlanButton");
+  await recovery.locator("#assistantPrompt").fill("Uji pembatalan generasi");
+  await recovery.locator("#assistantPlanButton").click();
+  await recovery.waitForFunction(() => {
+    const run = document.querySelector("#assistantPlanButton");
+    return run && run.disabled
+      && document.querySelector("#assistantResponse")?.textContent.includes("Jawaban uji berhasil.");
+  });
+  await recovery.locator('.nav-link[data-page="chat"]').click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    return stop && !stop.hidden && document.querySelector("#chatUnloadButton")?.disabled;
+  });
+  await recovery.locator("#chatStopButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    const send = document.querySelector("#chatSendButton");
+    return stop && stop.hidden && send && !send.disabled
+      && document.querySelector("#chatUnloadButton") && !document.querySelector("#chatUnloadButton").disabled;
+  });
+  await recovery.locator('.nav-link[data-page="assistant"]').click();
+  await recovery.waitForFunction(() => /dihentikan/i.test(document.querySelector("#assistantStatus")?.textContent || "")
+    && document.querySelector("#assistantResponse")?.textContent.includes("Generasi dihentikan oleh pengguna."));
+
   await recovery.locator("#chatUnloadButton").click();
   await recovery.waitForFunction(() => {
     const button = document.querySelector("#chatLoadButton");
