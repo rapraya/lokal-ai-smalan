@@ -726,6 +726,7 @@ try {
   await recovery.locator('.nav-link[data-page="assistant"]').click();
   await recovery.waitForFunction(() => /dihentikan/i.test(document.querySelector("#assistantStatus")?.textContent || "")
     && document.querySelector("#assistantResponse")?.textContent.includes("Generasi dihentikan oleh pengguna."));
+  await recovery.locator('.nav-link[data-page="chat"]').click();
 
   await recovery.locator("#chatUnloadButton").click();
   await recovery.waitForFunction(() => {
