@@ -37,6 +37,9 @@
   let chatModelId = "";
   let chatLoading = false;
   let chatGenerating = false;
+  let activeGenerationEngine = null;
+  let activeGenerationWorkspace = "";
+  let activeGenerationCancelled = false;
   let chatHistoryRestored = false;
   let chatLastError = "";
   const personalStorageKey = "lokal-ai-personal-v1";
@@ -1720,7 +1723,7 @@
           '<div class="chat-messages" id="chatMessages" aria-live="polite"></div>' +
           '<form class="chat-composer" id="chatComposer">' +
             '<textarea id="chatInput" rows="2" maxlength="8000" placeholder="Muat model lokal untuk mulai bertanya…" disabled></textarea>' +
-            '<div class="chat-composer-bottom"><span>Enter untuk baris baru · Ctrl + Enter untuk kirim</span><button id="chatSendButton" type="submit" disabled>Kirim ' + icon("arrow-up") + '</button></div>' +
+            '<div class="chat-composer-bottom"><span>Enter untuk baris baru · Ctrl + Enter untuk kirim</span><button id="chatStopButton" class="coding-clear-button" type="button" hidden>Hentikan</button><button id="chatSendButton" type="submit" disabled>Kirim ' + icon("arrow-up") + '</button></div>' +
           '</form>' +
         '</section>' +
       '</div>' +
@@ -1761,7 +1764,7 @@
             '<textarea id="codingInput" rows="3" maxlength="5000" placeholder="Contoh: Buat fungsi validasi formulir dengan pesan kesalahan yang mudah dipahami." required></textarea>' +
             '<label class="coding-field-label" for="codingContext">Konteks / kode terkait <span>Opsional</span></label>' +
             '<textarea id="codingContext" rows="8" maxlength="16000" placeholder="Tempelkan kode, pesan error, struktur data, atau kebutuhan teknis di sini. Hapus rahasia, token, dan data sensitif sebelum ditempelkan."></textarea>' +
-            '<div class="coding-actions"><button class="coding-clear-button" id="codingClearButton" type="button">Bersihkan</button><button class="coding-run-button" id="codingRunButton" type="submit" disabled>Jalankan AI Coding ' + icon("arrow") + '</button></div>' +
+            '<div class="coding-actions"><button class="coding-clear-button" id="codingClearButton" type="button">Bersihkan</button><button class="coding-clear-button" id="codingStopButton" type="button" hidden>Hentikan</button><button class="coding-run-button" id="codingRunButton" type="submit" disabled>Jalankan AI Coding ' + icon("arrow") + '</button></div>' +
           '</form>' +
           '<section class="coding-result" aria-live="polite"><div class="coding-result-head"><div><span class="section-kicker">MODEL RESPONSE</span><b>Hasil pengerjaan</b></div><button id="codingCopyButton" type="button" disabled>Salin hasil</button></div><pre id="codingOutput">Hasil AI Coding akan tampil di sini. Muat model lokal, lalu tulis instruksi untuk memulai.</pre><p class="coding-status" id="codingStatus" role="status">Belum ada proses yang dijalankan.</p></section>' +
         '</section>' +
@@ -1792,6 +1795,8 @@
       event.preventDefault();
       submitCodingTask();
     });
+    const stopButton = document.getElementById("codingStopButton");
+    if (stopButton) stopButton.addEventListener("click", cancelActiveGeneration);
     if (clearButton) clearButton.addEventListener("click", () => {
       codingMessages = [codingSystemMessage];
       const instruction = document.getElementById("codingInput");
@@ -1966,6 +1971,29 @@
     }
   }
 
+  function beginActiveGeneration(engine, workspace) {
+    activeGenerationEngine = engine;
+    activeGenerationWorkspace = workspace;
+    activeGenerationCancelled = false;
+  }
+
+  function cancelActiveGeneration() {
+    if (!chatGenerating || !activeGenerationEngine || activeGenerationCancelled) return;
+    if (typeof activeGenerationEngine.interruptGenerate !== "function") return;
+    activeGenerationCancelled = true;
+    try { activeGenerationEngine.interruptGenerate(); }
+    catch (error) {
+      activeGenerationCancelled = false;
+      const message = error && error.message ? error.message : "pembatalan tidak dapat diteruskan";
+      const status = document.getElementById(activeGenerationWorkspace === "chat" ? "chatEngineStatus" : activeGenerationWorkspace + "Status");
+      if (status) status.textContent = "Gagal menghentikan generasi: " + message;
+      return;
+    }
+    const status = document.getElementById(activeGenerationWorkspace === "chat" ? "chatEngineStatus" : activeGenerationWorkspace + "Status");
+    if (status) status.textContent = activeGenerationWorkspace === "chat" ? "Menghentikan generasi…" : "Menghentikan proses…";
+    syncChatControls();
+  }
+
   function syncChatControls() {
     const activeChatEngine = chatCloudEngine || chatEngine;
     const input = document.getElementById("chatInput");
@@ -1978,6 +2006,13 @@
     const cloudConsent = document.getElementById("chatCloudConsent");
     if (input) input.disabled = !activeChatEngine || chatGenerating || (Boolean(chatCloudEngine) && !cloudConsent?.checked);
     if (send) send.disabled = !activeChatEngine || chatGenerating || (Boolean(chatCloudEngine) && !cloudConsent?.checked);
+    ["chatStopButton", "codingStopButton", "textStopButton"].forEach((id) => {
+      const button = document.getElementById(id);
+      if (!button) return;
+      const canInterrupt = Boolean(activeGenerationEngine && typeof activeGenerationEngine.interruptGenerate === "function");
+      button.hidden = !chatGenerating || !canInterrupt;
+      button.disabled = activeGenerationCancelled || !canInterrupt;
+    });
 
     const codingInput = document.getElementById("codingInput");
     const codingRunButton = document.getElementById("codingRunButton");
@@ -2347,6 +2382,8 @@
     if (cloudConsent) cloudConsent.addEventListener("change", syncChatControls);
     if (loadButton) loadButton.addEventListener("click", loadSelectedChatProvider);
     if (unloadButton) unloadButton.addEventListener("click", unloadChatModel);
+    const stopButton = document.getElementById("chatStopButton");
+    if (stopButton) stopButton.addEventListener("click", cancelActiveGeneration);
     if (clearButton) clearButton.addEventListener("click", () => {
       chatMessages = [chatSystemMessage];
       try { localStorage.removeItem(chatHistoryKey); } catch (_) {}
@@ -2416,7 +2453,7 @@
             '<textarea id="textInput" rows="9" maxlength="18000" placeholder="Tuliskan tujuan, audiens, pokok gagasan, dan informasi yang harus dimasukkan ke dalam naskah." required></textarea>' +
             '<label class="coding-field-label" for="textExtra">Arahan tambahan <span>Opsional</span></label>' +
             '<textarea id="textExtra" rows="3" maxlength="3000" placeholder="Contoh: gunakan Bahasa Indonesia baku, pertahankan istilah teknis, atau batasi hasil maksimal 5 paragraf."></textarea>' +
-            '<div class="coding-actions"><button class="coding-clear-button" id="textClearButton" type="button">Bersihkan</button><button class="coding-run-button" id="textRunButton" type="submit" disabled>Jalankan Text AI ' + icon("arrow") + '</button></div>' +
+            '<div class="coding-actions"><button class="coding-clear-button" id="textClearButton" type="button">Bersihkan</button><button class="coding-clear-button" id="textStopButton" type="button" hidden>Hentikan</button><button class="coding-run-button" id="textRunButton" type="submit" disabled>Jalankan Text AI ' + icon("arrow") + '</button></div>' +
           '</form>' +
           '<section class="coding-result text-result" aria-live="polite"><div class="coding-result-head"><div><span class="section-kicker">MODEL RESPONSE</span><b>Hasil pengolahan teks</b></div><button id="textCopyButton" type="button" disabled>Salin hasil</button></div><pre id="textOutput">Hasil pengolahan teks akan tampil di sini. Muat model lokal, pilih tugas, lalu masukkan materi.</pre><p class="coding-status" id="textStatus" role="status">Belum ada proses yang dijalankan.</p></section>' +
         '</section>' +
@@ -2469,6 +2506,8 @@
       event.preventDefault();
       submitTextTask();
     });
+    const stopButton = document.getElementById("textStopButton");
+    if (stopButton) stopButton.addEventListener("click", cancelActiveGeneration);
     if (clearButton) clearButton.addEventListener("click", () => {
       textMessages = [textSystemMessage];
       const source = document.getElementById("textInput");
