@@ -593,6 +593,12 @@ try {
   await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "The model must be loadable again after a worker crash.");
+  // A hidden Stop control only proves the failed worker cannot be interrupted;
+  // wait until the shared generation lock is released and Chat is enabled.
+  await recovery.waitForFunction(() => {
+    const send = document.querySelector("#chatSendButton");
+    return send && !send.disabled;
+  });
   await recovery.evaluate(() => { window.__generationInterrupted = false; });
   await recovery.locator("#chatInput").fill("Uji generasi Chat setelah pemulihan worker.");
   await recovery.locator("#chatSendButton").click();
