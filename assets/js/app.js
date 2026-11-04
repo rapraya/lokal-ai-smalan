@@ -1550,7 +1550,7 @@
     const response = document.getElementById("assistantResponse");
     const status = document.getElementById("assistantStatus");
     if (response && assistantMessages.length) {
-      response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\\n\\n");
+      response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
       const latestAssistantMessage = [...assistantMessages].reverse().find((item) => item.role === "assistant");
       if (status && latestAssistantMessage && /Generasi dihentikan oleh pengguna/i.test(latestAssistantMessage.content)) {
         status.textContent = "Rekomendasi dihentikan.";
