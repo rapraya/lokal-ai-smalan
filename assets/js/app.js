@@ -1860,7 +1860,6 @@
     ].filter(Boolean).join("\n\n");
 
     chatGenerating = true;
-    chatLastError = "";
     codingMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
     codingMessages.push(assistantMessage);
@@ -2539,7 +2538,6 @@
     ].filter(Boolean).join("\n\n");
 
     chatGenerating = true;
-    chatLastError = "";
     textMessages.push({ role: "user", content: prompt });
     const assistantMessage = { role: "assistant", content: "" };
     textMessages.push(assistantMessage);
