@@ -452,6 +452,7 @@ try {
     window.__fakeWorkers = [];
     window.__webllmInitCount = 0;
     window.__workspaceFailures = { coding: 1, text: 1 };
+    window.__generationInterrupted = false;
     Object.defineProperty(navigator, "gpu", {
       configurable: true,
       value: { requestAdapter: async () => ({}) }
@@ -486,9 +487,17 @@ try {
               return {
                 async *[Symbol.asyncIterator]() {
                   yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
+                  if ((params.messages || []).some((message) => String(message.content || "").includes("Uji pembatalan generasi"))) {
+                    await new Promise((resolve) => {
+                      const waitForInterrupt = () => window.__generationInterrupted ? resolve() : setTimeout(waitForInterrupt, 5);
+                      waitForInterrupt();
+                    });
+                    if (!window.__generationInterrupted) yield { choices: [{ delta: { content: "Teks setelah pembatalan." } }] };
+                  }
                 }
               };
             } } },
+            interruptGenerate: () => { window.__generationInterrupted = true; },
             unload: async () => {}
           };
         }
@@ -521,6 +530,21 @@ try {
   await recovery.locator("#chatInput").fill("Uji pemulihan model");
   await recovery.locator("#chatSendButton").click();
   await recovery.waitForFunction(() => document.querySelector("#chatMessages")?.innerText.includes("Jawaban uji berhasil."));
+  await recovery.locator("#chatInput").fill("Uji pembatalan generasi");
+  await recovery.locator("#chatSendButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    return stop && !stop.hidden && document.querySelector("#chatMessages")?.innerText.includes("Jawaban uji berhasil.");
+  });
+  await recovery.locator("#chatStopButton").click();
+  await recovery.waitForFunction(() => {
+    const messages = document.querySelector("#chatMessages")?.innerText || "";
+    const send = document.querySelector("#chatSendButton");
+    return messages.includes("Generasi dihentikan oleh pengguna.") && send && !send.disabled;
+  });
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
+    "Cancelling a response must keep the shared local model runtime ready.");
+  await recovery.evaluate(() => { window.__generationInterrupted = false; });
   await recovery.evaluate(() => {
     const worker = window.__fakeWorkers[1];
     worker.dispatchEvent(new ErrorEvent("error", { message: "simulated worker crash" }));
