@@ -588,6 +588,15 @@ try {
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "The model must be loadable again after a worker crash.");
   await recovery.evaluate(() => { window.__generationInterrupted = false; });
+  await recovery.locator("#chatInput").fill("Uji generasi Chat setelah pemulihan worker.");
+  await recovery.locator("#chatSendButton").click();
+  await recovery.waitForFunction(() => {
+    const messages = document.querySelector("#chatMessages")?.innerText || "";
+    const send = document.querySelector("#chatSendButton");
+    return messages.includes("Jawaban uji berhasil.") && send && !send.disabled;
+  });
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
+    "A recovered worker must accept a fresh Chat generation without stale failure state.");
 
   // A task-level failure in Coding or Text must not mark the shared model as failed.
   await recovery.locator('.nav-link[data-page="coding"]').click();
