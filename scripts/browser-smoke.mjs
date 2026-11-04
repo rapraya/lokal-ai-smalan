@@ -454,6 +454,7 @@ try {
     window.__loadedModels = [];
     window.__workspaceFailures = { coding: 1, text: 1 };
     window.__generationInterrupted = false;
+    window.__crashDuringGeneration = false;
     Object.defineProperty(navigator, "gpu", {
       configurable: true,
       value: { requestAdapter: async () => ({}) }
@@ -486,9 +487,14 @@ try {
                 window.__workspaceFailures[workspace] -= 1;
                 throw new Error("simulated " + workspace + " task failure");
               }
+              let rejectCrashGeneration;
+              const crashGeneration = new Promise((_, reject) => { rejectCrashGeneration = reject; });
               return {
                 async *[Symbol.asyncIterator]() {
                   yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
+                  if ((params.messages || []).some((message) => String(message.content || "").includes("Uji crash worker"))) {
+                    await crashGeneration;
+                  }
                   if ((params.messages || []).some((message) => String(message.content || "").includes("Uji pembatalan generasi"))) {
                     await new Promise((resolve) => {
                       const waitForInterrupt = () => window.__generationInterrupted ? resolve() : setTimeout(waitForInterrupt, 5);
@@ -499,7 +505,10 @@ try {
                 }
               };
             } } },
-            interruptGenerate: () => { window.__generationInterrupted = true; },
+            interruptGenerate: () => {
+              window.__generationInterrupted = true;
+              if (window.__crashDuringGeneration && rejectCrashGeneration) rejectCrashGeneration(new Error("simulated worker termination"));
+            },
             unload: async () => {}
           };
         }
@@ -546,16 +555,28 @@ try {
   });
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
     "Cancelling a response must keep the shared local model runtime ready.");
-  await recovery.evaluate(() => { window.__generationInterrupted = false; });
+  await recovery.evaluate(() => {
+    window.__generationInterrupted = false;
+    window.__crashDuringGeneration = true;
+  });
+  await recovery.locator("#chatInput").fill("Uji crash worker");
+  await recovery.locator("#chatSendButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    return stop && !stop.hidden && document.querySelector("#chatMessages")?.innerText.includes("Jawaban uji berhasil.");
+  });
   await recovery.evaluate(() => {
     const worker = window.__fakeWorkers[1];
-    worker.dispatchEvent(new ErrorEvent("error", { message: "simulated worker crash" }));
+    worker.dispatchEvent(new ErrorEvent("error", { message: "simulated worker crash during generation" }));
   });
   await recovery.waitForFunction(() => {
     const status = document.querySelector("#chatEngineStatus");
     const button = document.querySelector("#chatLoadButton");
-    return status && /Worker model mengalami kesalahan/.test(status.textContent) && button && !button.disabled;
+    const messages = document.querySelector("#chatMessages")?.innerText || "";
+    return status && /Worker model mengalami kesalahan/.test(status.textContent)
+      && button && !button.disabled && messages.includes("worker model gagal");
   });
+  await recovery.evaluate(() => { window.__crashDuringGeneration = false; });
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
     "A crashed worker must clear the active model controls.");
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[1].terminated), true,
