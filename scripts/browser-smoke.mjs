@@ -666,6 +666,10 @@ try {
     const stop = document.querySelector("#codingStopButton");
     return stop && !stop.hidden && document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil.");
   });
+  assert.equal(await recovery.locator("#chatUnloadButton").isDisabled(), true,
+    "The shared local runtime must not be unloadable during Coding generation.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 0,
+    "A Coding generation must not trigger runtime cleanup.");
   await recovery.locator("#codingStopButton").click();
   await recovery.waitForFunction(() => /Proses dihentikan oleh pengguna/.test(document.querySelector("#codingStatus")?.textContent || ""));
   assert.match(await recovery.locator("#codingOutput").innerText(), /Generasi dihentikan oleh pengguna/);
@@ -688,6 +692,10 @@ try {
     const stop = document.querySelector("#textStopButton");
     return stop && !stop.hidden && document.querySelector("#textOutput")?.textContent.includes("Jawaban uji berhasil.");
   });
+  assert.equal(await recovery.locator("#chatUnloadButton").isDisabled(), true,
+    "The shared local runtime must not be unloadable during Text generation.");
+  assert.equal(await recovery.evaluate(() => window.__runtimeUnloadCalls), 0,
+    "A Text generation must not trigger runtime cleanup.");
   await recovery.locator("#textStopButton").click();
   await recovery.waitForFunction(() => /Proses dihentikan oleh pengguna/.test(document.querySelector("#textStatus")?.textContent || ""));
   assert.match(await recovery.locator("#textOutput").innerText(), /Generasi dihentikan oleh pengguna/);
