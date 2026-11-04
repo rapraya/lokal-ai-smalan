@@ -602,15 +602,30 @@ try {
   await recovery.evaluate(() => { window.__generationInterrupted = false; });
   await recovery.locator("#chatInput").fill("Uji generasi Chat setelah pemulihan worker.");
   await recovery.locator("#chatSendButton").click();
-  await recovery.waitForFunction(() => {
-    const stop = document.querySelector("#chatStopButton");
-    return stop && !stop.hidden;
-  });
-  await recovery.waitForFunction(() => {
-    const messages = document.querySelector("#chatMessages")?.innerText || "";
-    const stop = document.querySelector("#chatStopButton");
-    return messages.includes("Jawaban uji berhasil.") && stop && stop.hidden;
-  });
+  try {
+    await recovery.waitForFunction(() => {
+      const stop = document.querySelector("#chatStopButton");
+      return stop && !stop.hidden;
+    });
+    await recovery.waitForFunction(() => {
+      const messages = document.querySelector("#chatMessages")?.innerText || "";
+      const stop = document.querySelector("#chatStopButton");
+      return messages.includes("Jawaban uji berhasil.") && stop && stop.hidden;
+    });
+  } catch (error) {
+    const diagnostic = await recovery.evaluate(() => ({
+      status: document.querySelector("#chatEngineStatus")?.textContent,
+      sendDisabled: document.querySelector("#chatSendButton")?.disabled,
+      inputDisabled: document.querySelector("#chatInput")?.disabled,
+      inputValue: document.querySelector("#chatInput")?.value,
+      stopHidden: document.querySelector("#chatStopButton")?.hidden,
+      messages: document.querySelector("#chatMessages")?.innerText,
+      generationInterrupted: window.__generationInterrupted,
+      workerCount: window.__fakeWorkers.length,
+      workersTerminated: window.__fakeWorkers.map((worker) => worker.terminated)
+    }));
+    throw new Error("Recovered Chat generation diagnostic: " + JSON.stringify(diagnostic) + "; " + error.message);
+  }
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
     "A recovered worker must accept a fresh Chat generation without stale failure state.");
 
