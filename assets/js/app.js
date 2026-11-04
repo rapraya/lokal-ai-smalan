@@ -1298,13 +1298,14 @@
       knowledgeBusy=true;syncKnowledgeControls();
       status.textContent=knowledgeSemanticEnabled?"Menyiapkan bukti dengan semantik lokal dan BM25…":"Menyiapkan bukti dengan BM25…";
       answer.textContent="Menyusun bukti dan analisis…";
+      let generationId=null;
       try{
         if(!chatEngine){status.textContent="Menyiapkan model AI lokal untuk analisis…";await loadChatModel();}
         if(!chatEngine)throw new Error(chatLastError||"Model AI lokal belum berhasil dimuat. Periksa dukungan WebGPU dan koneksi internet.");
         const knowledgeEngine=chatEngine;
         if(!knowledgeEngine)throw new Error(chatLastError||"Model AI lokal belum berhasil dimuat.");
         chatGenerating=true;
-        const generationId=beginActiveGeneration(knowledgeEngine,"knowledge");
+        generationId=beginActiveGeneration(knowledgeEngine,"knowledge");
         syncKnowledgeControls();syncChatControls();
         let selected=[],semanticFallbackNotice="";
         if(mode==="summary"){
