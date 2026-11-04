@@ -489,6 +489,7 @@ try {
               }
               let rejectCrashGeneration;
               const crashGeneration = new Promise((_, reject) => { rejectCrashGeneration = reject; });
+              window.__rejectCrashGeneration = rejectCrashGeneration;
               return {
                 async *[Symbol.asyncIterator]() {
                   yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
@@ -507,7 +508,7 @@ try {
             } } },
             interruptGenerate: () => {
               window.__generationInterrupted = true;
-              if (window.__crashDuringGeneration && rejectCrashGeneration) rejectCrashGeneration(new Error("simulated worker termination"));
+              if (window.__crashDuringGeneration && window.__rejectCrashGeneration) window.__rejectCrashGeneration(new Error("simulated worker termination"));
             },
             unload: async () => {}
           };
