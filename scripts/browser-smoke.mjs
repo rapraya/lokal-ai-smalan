@@ -485,7 +485,12 @@ try {
         export async function CreateWebWorkerMLCEngine(worker, model, options) {
           window.__webllmInitCount += 1;
           window.__loadedModels.push(model);
-          if (window.__webllmInitCount === 1) throw new Error("simulated model initialization failure");
+          if (window.__webllmInitCount === 1) {
+            setTimeout(() => worker.dispatchEvent(new ErrorEvent("error", {
+              message: "simulated worker startup failure"
+            })), 0);
+            return new Promise(() => {});
+          }
           return {
             chat: { completions: { create: async (params) => {
               const system = params.messages?.[0]?.content || "";
