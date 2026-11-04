@@ -623,6 +623,7 @@ try {
   );
 
   // Data Analyst streams a response; verify Stop and history restoration after navigation.
+  await recovery.evaluate(() => { window.__generationInterrupted = false; });
   await recovery.locator('.nav-link[data-page="data"]').click();
   await recovery.waitForSelector("#dataFileInput");
   await recovery.locator("#dataFileInput").setInputFiles({
