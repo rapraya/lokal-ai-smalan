@@ -498,6 +498,13 @@ try {
           return {
             chat: { completions: { create: async (params) => {
               const system = params.messages?.[0]?.content || "";
+              if (!params.stream && system.includes("Jawab hanya berdasarkan kutipan dokumen")) {
+                return await new Promise((resolve) => {
+                  window.__resolveKnowledgeGeneration = () => resolve({
+                    choices: [{ message: { content: "Analisis uji selesai [S1]." } }]
+                  });
+                });
+              }
               const workspace = system.includes("Lokal AI Coding") ? "coding"
                 : system.includes("Text & Language") ? "text" : "";
               if (workspace && window.__workspaceFailures[workspace] > 0) {
@@ -525,6 +532,11 @@ try {
             } } },
             interruptGenerate: () => {
               window.__generationInterrupted = true;
+              if (window.__resolveKnowledgeGeneration) {
+                const resolve = window.__resolveKnowledgeGeneration;
+                window.__resolveKnowledgeGeneration = null;
+                resolve();
+              }
               if (window.__crashDuringGeneration && window.__rejectCrashGeneration) window.__rejectCrashGeneration(new Error("simulated worker termination"));
             },
             unload: async () => {
@@ -583,6 +595,60 @@ try {
   });
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
     "Cancelling a response must keep the shared local model runtime ready.");
+  // Knowledge uses a non-streaming completion; the mock resolves it only after interruptGenerate.
+  await recovery.locator('.nav-link[data-page="knowledge"]').click();
+  await recovery.waitForSelector("#knowledgeQuestionForm");
+  await recovery.locator("#knowledgeFile").setInputFiles({
+    name: "knowledge-stop-fixture.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("Kebijakan sekolah mengutamakan keselamatan peserta didik dan layanan yang transparan.")
+  });
+  await recovery.waitForFunction(() => document.querySelector("#knowledgeQuestion")?.disabled === false);
+  await recovery.locator("#knowledgeQuestion").fill("Apa prinsip utama kebijakan?");
+  await recovery.locator("#knowledgeAsk").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#knowledgeStopButton");
+    return stop && !stop.hidden && typeof window.__resolveKnowledgeGeneration === "function";
+  });
+  await recovery.locator("#knowledgeStopButton").click();
+  await recovery.waitForFunction(() =>
+    /Analisis dokumen dihentikan/.test(document.querySelector("#knowledgeStatus")?.textContent || "")
+    && document.querySelector("#knowledgeAnswer")?.textContent.includes("Generasi dihentikan oleh pengguna.")
+  );
+  await recovery.locator('.nav-link[data-page="home"]').click();
+  await recovery.locator('.nav-link[data-page="knowledge"]').click();
+  await recovery.waitForFunction(() =>
+    /Analisis dokumen dihentikan/.test(document.querySelector("#knowledgeStatus")?.textContent || "")
+    && document.querySelector("#knowledgeAnswer")?.textContent.includes("Generasi dihentikan oleh pengguna.")
+  );
+
+  // Data Analyst streams a response; verify Stop and history restoration after navigation.
+  await recovery.locator('.nav-link[data-page="data"]').click();
+  await recovery.waitForSelector("#dataFileInput");
+  await recovery.locator("#dataFileInput").setInputFiles({
+    name: "data-stop-fixture.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("kelas,jumlah\nX,10\nY,20\nZ,30\n")
+  });
+  await recovery.waitForFunction(() => document.querySelector("#dataAnalysis")?.hidden === false);
+  await recovery.locator("#dataInterpretQuestion").fill("Uji pembatalan generasi");
+  await recovery.locator("#dataInterpretButton").click();
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#dataInterpretStopButton");
+    return stop && !stop.hidden && (document.querySelector("#dataInterpretResult")?.textContent || "").includes("Jawaban uji berhasil.");
+  });
+  await recovery.locator("#dataInterpretStopButton").click();
+  await recovery.waitForFunction(() =>
+    /Interpretasi dihentikan/.test(document.querySelector("#dataInterpretStatus")?.textContent || "")
+    && document.querySelector("#dataInterpretResult")?.textContent.includes("Generasi dihentikan oleh pengguna.")
+  );
+  await recovery.locator('.nav-link[data-page="home"]').click();
+  await recovery.locator('.nav-link[data-page="data"]').click();
+  await recovery.waitForFunction(() =>
+    /Interpretasi dihentikan|Riwayat interpretasi sesi dipulihkan/.test(document.querySelector("#dataInterpretStatus")?.textContent || "")
+    && document.querySelector("#dataInterpretResult")?.textContent.includes("Generasi dihentikan oleh pengguna.")
+  );
+
   await recovery.evaluate(() => {
     window.__generationInterrupted = false;
     window.__crashDuringGeneration = true;
@@ -854,7 +920,7 @@ try {
   assert.equal(videoHasHorizontalOverflow, false, "Video Studio must not introduce horizontal page overflow on mobile.");
 
   assert.deepEqual(runtimeErrors, [], "The desktop and mobile journeys must not produce uncaught browser errors.");
-  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate and local model recovery, Coding/Text task-error isolation on the shared runtime, Image Studio transforms/exports, Audio Lab WAV editing, mocked Whisper ASR, Indonesian TTS license/load/synthesis/WAV export/cancel/cleanup, and Video Studio metadata/frame PNG export/cleanup.");
+  console.log("Browser smoke passed: desktop/mobile navigation, theme persistence, sidebar, AI Chat/cloud gate and local model recovery, mocked Knowledge non-stream cancellation and navigation restoration, mocked Data Analyst streaming cancellation and history restoration, Coding/Text task-error isolation on the shared runtime, Image Studio transforms/exports, Audio Lab WAV editing, mocked Whisper ASR, Indonesian TTS license/load/synthesis/WAV export/cancel/cleanup, and Video Studio metadata/frame PNG export/cleanup.");
 } finally {
   await browser.close();
 }
