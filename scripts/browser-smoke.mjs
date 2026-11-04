@@ -587,6 +587,7 @@ try {
   await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "The model must be loadable again after a worker crash.");
+  await recovery.evaluate(() => { window.__generationInterrupted = false; });
 
   // A task-level failure in Coding or Text must not mark the shared model as failed.
   await recovery.locator('.nav-link[data-page="coding"]').click();
