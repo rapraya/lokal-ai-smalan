@@ -36,6 +36,7 @@
   let chatWorker = null;
   let chatModelId = "";
   let chatLoading = false;
+  let chatUnloading = false;
   let chatGenerating = false;
   let activeGenerationEngine = null;
   let activeGenerationWorkspace = "";
@@ -2057,13 +2058,16 @@
     if (textRunButton) textRunButton.disabled = !chatEngine || chatGenerating || !textInput || !textInput.value.trim();
 
     if (load) {
-      load.disabled = chatLoading || !!activeChatEngine;
+      load.disabled = chatLoading || chatUnloading || !!activeChatEngine;
       load.hidden = !!activeChatEngine;
       load.textContent = chatLoading
         ? "Menyiapkan model…"
         : providerSelect?.value === "openai" ? "Hubungkan GPT" : "Muat model lokal";
     }
-    if (unload) unload.hidden = !activeChatEngine;
+    if (unload) {
+      unload.hidden = !activeChatEngine;
+      unload.disabled = chatUnloading;
+    }
     if (select) select.disabled = chatLoading || !!activeChatEngine;
     if (providerSelect) providerSelect.disabled = chatGenerating || !!activeChatEngine;
     if (cloudModelSelect) cloudModelSelect.disabled = chatGenerating || !!activeChatEngine;
@@ -2183,27 +2187,32 @@
   }
 
   async function unloadChatModel() {
-    if (chatGenerating) return;
-    if (chatCloudEngine) {
-      const runtimeToUnload = chatCloudEngine;
-      try { await runtimeToUnload.unload(); } catch (_) {}
-      chatCloudEngine = null;
-      chatCloudModelId = "";
-      if (modelEngine) modelEngine.clearRuntime(runtimeToUnload);
-      syncChatControls();
-      return;
-    }
-    if (!chatEngine) return;
-    const runtimeToUnload = chatEngine;
-    try {
-      await runtimeToUnload.unload();
-    } catch (_) {}
-    if (chatWorker) chatWorker.terminate();
-    chatWorker = null;
-    chatEngine = null;
-    if (modelEngine) modelEngine.clearRuntime(runtimeToUnload);
-    chatModelId = "";
+    if (chatGenerating || chatUnloading) return;
+    if (!chatCloudEngine && !chatEngine) return;
+    chatUnloading = true;
     syncChatControls();
+    const runtimeToUnload = chatCloudEngine || chatEngine;
+    const isCloudRuntime = Boolean(chatCloudEngine);
+    try {
+      try {
+        await runtimeToUnload.unload();
+      } catch (_) {}
+    } finally {
+      if (isCloudRuntime) {
+        if (chatCloudEngine === runtimeToUnload) {
+          chatCloudEngine = null;
+          chatCloudModelId = "";
+        }
+      } else if (chatEngine === runtimeToUnload) {
+        if (chatWorker) chatWorker.terminate();
+        chatWorker = null;
+        chatEngine = null;
+        chatModelId = "";
+      }
+      if (modelEngine) modelEngine.clearRuntime(runtimeToUnload);
+      chatUnloading = false;
+      syncChatControls();
+    }
   }
 
   async function loadSelectedChatProvider() {
