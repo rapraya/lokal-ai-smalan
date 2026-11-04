@@ -1301,7 +1301,11 @@
       try{
         if(!chatEngine){status.textContent="Menyiapkan model AI lokal untuk analisis…";await loadChatModel();}
         if(!chatEngine)throw new Error(chatLastError||"Model AI lokal belum berhasil dimuat. Periksa dukungan WebGPU dan koneksi internet.");
-        chatGenerating=true;syncKnowledgeControls();
+        const knowledgeEngine=chatEngine;
+        if(!knowledgeEngine)throw new Error(chatLastError||"Model AI lokal belum berhasil dimuat.");
+        chatGenerating=true;
+        const generationId=beginActiveGeneration(knowledgeEngine,"knowledge");
+        syncKnowledgeControls();syncChatControls();
         let selected=[],semanticFallbackNotice="";
         if(mode==="summary"){
           selected=selectKnowledgeSummarySources(knowledgePages,3,15);
@@ -1345,7 +1349,9 @@
           taskPrompt+="\nDokumen yang tidak memiliki kutipan terpilih untuk tugas ini: "+coverage.missing.map(doc=>doc.name).join(", ")+". Jangan membuat kesimpulan tentang isi dokumen tersebut.";
         }
         const messages=[{role:"system",content:systemPrompt},{role:"user",content:taskPrompt+"\n\nKUTIPAN LINTAS DOKUMEN:\n"+excerpts}];
-        const r=await chatEngine.chat.completions.create({messages,temperature:0.2,max_tokens:mode==="question"?850:1200});
+        const r=await knowledgeEngine.chat.completions.create({messages,temperature:0.2,max_tokens:mode==="question"?850:1200});
+        if(!isCurrentGeneration(generationId))return;
+        if(activeGenerationCancelled){status.textContent="Analisis dokumen dihentikan.";answer.textContent=getActiveGenerationStopNotice();return;}
         const response=r?.choices?.[0]?.message?.content||"Model tidak menghasilkan jawaban.";
         const auditSources=selected.map((page,index)=>({text:page.text.slice(0,excerptLimit),section:page.section,documentName:page.documentName,page:page.page,sourceNumber:index+1}));
         const supportAudit=verifyKnowledgeAnswerSupport(response,auditSources);
@@ -1460,8 +1466,18 @@
         const citationAudit=supportAudit.markerAudit;
         const citationNote=supportAudit.status==="supported"?"Pemeriksaan istilah tidak menemukan masalah sitasi yang jelas; validasi makna tetap wajib.":auditLabels[supportAudit.status]||"Periksa kutipan sumber secara manual.";
         status.textContent=semanticFallbackNotice+" Selesai. "+(knowledgeSemanticEnabled?"Peringkat menggabungkan semantik lokal dan BM25. ":"Peringkat menggunakan BM25. ")+citationNote+(citationAudit.missing?" Tidak ada penanda [S#].":"")+(citationAudit.invalid.length?" Sitasi tidak valid: "+citationAudit.invalid.map(index=>"S"+index).join(", ")+".":"");
-      }catch(err){answer.textContent="Gagal: "+err.message;status.textContent="Periksa model lokal lalu coba lagi.";}
-      finally{knowledgeBusy=false;chatGenerating=false;syncKnowledgeControls();}
+      }catch(err){
+        if(typeof generationId!=="undefined"&&isCurrentGeneration(generationId)&&activeGenerationCancelled){
+          answer.textContent=getActiveGenerationStopNotice();status.textContent="Analisis dokumen dihentikan.";
+        }else{answer.textContent="Gagal: "+err.message;status.textContent="Periksa model lokal lalu coba lagi.";}
+      }
+      finally{
+        knowledgeBusy=false;
+        if(typeof generationId!=="undefined"&&isCurrentGeneration(generationId)){
+          chatGenerating=false;activeGenerationEngine=null;activeGenerationWorkspace="";activeGenerationCancelled=false;activeGenerationFailureMessage="";
+        }
+        syncKnowledgeControls();syncChatControls();
+      }
     });
     renderKnowledgeDocumentList();syncKnowledgeControls();
   }
@@ -1580,9 +1596,16 @@
         if (status) status.textContent = "Rekomendasi selesai. Tidak ada tindakan yang dijalankan.";
         if (prompt) prompt.value = "";
       } catch (error) {
-        assistantMessages.pop();
-        if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
-        if (status) status.textContent = "Gagal membuat rekomendasi: " + (error && error.message ? error.message : "kesalahan model");
+        if (isCurrentGeneration(generationId) && activeGenerationCancelled) {
+          answer += (answer ? "\n\n" : "") + getActiveGenerationStopNotice();
+          assistantMessages.push({ role: "assistant", content: answer });
+          if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
+          if (status) status.textContent = "Proses dihentikan.";
+        } else {
+          assistantMessages.pop();
+          if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
+          if (status) status.textContent = "Gagal membuat rekomendasi: " + (error && error.message ? error.message : "kesalahan model");
+        }
       } finally {
         if (isCurrentGeneration(generationId)) {
           chatGenerating = false;
@@ -3294,9 +3317,16 @@
       status.textContent = "Jawaban selesai. Riwayat tersimpan sementara di sesi browser ini.";
       if (questionInput) questionInput.value = "";
     } catch (error) {
-      dataInterpretationMessages.pop();
-      output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
-      status.textContent = "Interpretasi gagal: " + (error && error.message ? error.message : "kesalahan model");
+      if (isCurrentGeneration(generationId) && activeGenerationCancelled) {
+        answer += (answer ? "\n\n" : "") + getActiveGenerationStopNotice();
+        dataInterpretationMessages.push({ role: "assistant", content: answer });
+        output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
+        status.textContent = "Interpretasi dihentikan.";
+      } else {
+        dataInterpretationMessages.pop();
+        output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
+        status.textContent = "Interpretasi gagal: " + (error && error.message ? error.message : "kesalahan model");
+      }
     } finally {
       if (isCurrentGeneration(generationId)) {
         chatGenerating = false;
