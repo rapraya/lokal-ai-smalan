@@ -493,10 +493,10 @@ try {
               return {
                 async *[Symbol.asyncIterator]() {
                   yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
-                  if ((params.messages || []).some((message) => String(message.content || "").includes("Uji crash worker"))) {
+                  if ([...(params.messages || [])].reverse().find((message) => message.role === "user")?.content?.includes("Uji crash worker")) {
                     await crashGeneration;
                   }
-                  if ((params.messages || []).some((message) => String(message.content || "").includes("Uji pembatalan generasi"))) {
+                  if ([...(params.messages || [])].reverse().find((message) => message.role === "user")?.content?.includes("Uji pembatalan generasi")) {
                     await new Promise((resolve) => {
                       const waitForInterrupt = () => window.__generationInterrupted ? resolve() : setTimeout(waitForInterrupt, 5);
                       waitForInterrupt();
