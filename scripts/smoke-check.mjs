@@ -514,6 +514,8 @@ assert.ok(app.includes("const worker = chatWorker;") &&
   app.includes("modelEngine.clearRuntime(failedRuntime)") &&
   app.includes('chatLastError = "Worker model mengalami kesalahan: " + message;'),
   "A failed WebLLM worker must release the broken runtime and restore the model controls for retry.");
+assert.ok(app.includes("if (modelEngine && chatEngine) modelEngine.clearRuntime(chatEngine);"),
+  "A failed local model startup must clear only its own runtime and preserve any unrelated active session.");
 assert.ok(app.includes("stream: true") && app.includes("for await (const chunk of stream)"),
   "Streaming response handling is missing.");
 assert.ok(app.includes("chatMessages.slice(0, -1).slice(-24)"),
