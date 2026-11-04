@@ -451,6 +451,7 @@ try {
   await recovery.addInitScript(() => {
     window.__fakeWorkers = [];
     window.__webllmInitCount = 0;
+    window.__workspaceFailures = { coding: 1, text: 1 };
     Object.defineProperty(navigator, "gpu", {
       configurable: true,
       value: { requestAdapter: async () => ({}) }
@@ -474,11 +475,20 @@ try {
           window.__webllmInitCount += 1;
           if (window.__webllmInitCount === 1) throw new Error("simulated model initialization failure");
           return {
-            chat: { completions: { create: async () => ({
-              async *[Symbol.asyncIterator]() {
-                yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
+            chat: { completions: { create: async (params) => {
+              const system = params.messages?.[0]?.content || "";
+              const workspace = system.includes("Lokal AI Coding") ? "coding"
+                : system.includes("Text & Language") ? "text" : "";
+              if (workspace && window.__workspaceFailures[workspace] > 0) {
+                window.__workspaceFailures[workspace] -= 1;
+                throw new Error("simulated " + workspace + " task failure");
               }
-            }) } },
+              return {
+                async *[Symbol.asyncIterator]() {
+                  yield { choices: [{ delta: { content: "Jawaban uji berhasil." } }] };
+                }
+              };
+            } } },
             unload: async () => {}
           };
         }
@@ -529,6 +539,32 @@ try {
   await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "The model must be loadable again after a worker crash.");
+
+  // A task-level failure in Coding or Text must not mark the shared model as failed.
+  await recovery.locator('.nav-link[data-page="coding"]').click();
+  await recovery.waitForSelector("#codingForm");
+  await recovery.locator("#codingInput").fill("Buat fungsi sederhana untuk uji isolasi.");
+  await recovery.locator("#codingRunButton").click();
+  await recovery.waitForFunction(() => /Generasi gagal: simulated coding task failure/.test(
+    document.querySelector("#codingStatus")?.textContent || ""));
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
+    "A Coding task error must not mark the shared model runtime as failed.");
+  await recovery.locator("#codingRunButton").click();
+  await recovery.waitForFunction(() => document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil."));
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/);
+
+  await recovery.locator('.nav-link[data-page="text"]').click();
+  await recovery.waitForSelector("#textForm");
+  await recovery.locator("#textInput").fill("Teks uji isolasi modul bahasa.");
+  await recovery.locator("#textRunButton").click();
+  await recovery.waitForFunction(() => /Proses gagal: simulated text task failure/.test(
+    document.querySelector("#textStatus")?.textContent || ""));
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
+    "A Text task error must not mark the shared model runtime as failed.");
+  await recovery.locator("#textRunButton").click();
+  await recovery.waitForFunction(() => document.querySelector("#textOutput")?.textContent.includes("Jawaban uji berhasil."));
+  assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/);
+
   await recovery.locator("#chatUnloadButton").click();
   await recovery.waitForFunction(() => {
     const button = document.querySelector("#chatLoadButton");
