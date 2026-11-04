@@ -2265,6 +2265,7 @@
       }
       if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
       else if (!assistantMessage.content) assistantMessage.content = "Model tidak menghasilkan teks untuk permintaan ini.";
+      if (answerNode) answerNode.textContent = assistantMessage.content;
       saveChatHistory();
     } catch (error) {
       if (activeGenerationCancelled) assistantMessage.content += (assistantMessage.content ? "\n\n" : "") + "[Generasi dihentikan oleh pengguna.]";
