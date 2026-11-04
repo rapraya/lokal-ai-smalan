@@ -598,7 +598,10 @@ try {
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/,
     "A Coding task error must not mark the shared model runtime as failed.");
   await recovery.locator("#codingRunButton").click();
-  await recovery.waitForFunction(() => document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil."));
+  await recovery.waitForFunction(() => {
+    const run = document.querySelector("#codingRunButton");
+    return run && !run.disabled && document.querySelector("#codingOutput")?.textContent.includes("Jawaban uji berhasil.");
+  });
   assert.match(await recovery.locator("#chatEngineStatus").innerText(), /Model siap/);
   await recovery.locator("#codingInput").fill("Uji pembatalan generasi");
   await recovery.locator("#codingRunButton").click();
