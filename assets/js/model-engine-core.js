@@ -76,6 +76,9 @@
     if (!validateClient(client)) throw new Error("Runtime tidak memenuhi kontrak chat.completions.");
     if (typeof modelId !== "string" || !modelId.trim()) throw new Error("Identitas model tidak valid.");
     const normalizedModelId = modelId.trim();
+    if (activeRuntime && activeRuntime.client !== client) {
+      throw new Error("Runtime lain masih aktif. Lepaskan sesi aktif sebelum mengganti provider.");
+    }
     if (localProvider && !provider.models.some((model) => model.id === normalizedModelId)) {
       throw new Error("Model lokal tidak terdaftar dalam katalog Model Engine.");
     }
