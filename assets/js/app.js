@@ -1594,7 +1594,9 @@
         assistantMessages.push({ role: "assistant", content: answer });
         if (assistantMessages.length > 12) assistantMessages.splice(0, assistantMessages.length - 12);
         if (response) response.textContent = assistantMessages.map((item) => (item.role === "user" ? "Kamu: " : "Lokal AI: ") + item.content).join("\n\n");
-        if (status) status.textContent = "Rekomendasi selesai. Tidak ada tindakan yang dijalankan.";
+        if (status) status.textContent = activeGenerationCancelled
+          ? "Rekomendasi dihentikan."
+          : "Rekomendasi selesai. Tidak ada tindakan yang dijalankan.";
         if (prompt) prompt.value = "";
       } catch (error) {
         if (isCurrentGeneration(generationId) && activeGenerationCancelled) {
@@ -3315,7 +3317,9 @@
       if (!answer) answer = "Model tidak menghasilkan interpretasi. Coba ulangi.";
       dataInterpretationMessages.push({ role: "assistant", content: answer });
       output.textContent = dataInterpretationMessages.map((item) => (item.role === "user" ? "Kamu: " : "Model: ") + item.content).join("\n\n");
-      status.textContent = "Jawaban selesai. Riwayat tersimpan sementara di sesi browser ini.";
+      status.textContent = activeGenerationCancelled
+        ? "Interpretasi dihentikan."
+        : "Jawaban selesai. Riwayat tersimpan sementara di sesi browser ini.";
       if (questionInput) questionInput.value = "";
     } catch (error) {
       if (isCurrentGeneration(generationId) && activeGenerationCancelled) {
