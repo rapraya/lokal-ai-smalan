@@ -577,6 +577,12 @@ try {
     return status && /Worker model mengalami kesalahan/.test(status.textContent)
       && button && !button.disabled && messages.includes("worker model gagal");
   });
+  // The worker error is reported before the interrupted stream necessarily settles.
+  // Wait for generation cleanup before attempting to reload and submit again.
+  await recovery.waitForFunction(() => {
+    const stop = document.querySelector("#chatStopButton");
+    return stop && stop.hidden;
+  });
   await recovery.evaluate(() => { window.__crashDuringGeneration = false; });
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
     "A crashed worker must clear the active model controls.");
