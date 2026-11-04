@@ -541,6 +541,8 @@ try {
   });
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
     "A failed initialization must not leave a phantom active model session.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "A failed initialization must not register an active Model Engine runtime.");
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers.length), 1);
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[0].terminated), true,
     "A failed initialization must terminate its worker.");
@@ -552,6 +554,8 @@ try {
   });
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "A retry after initialization failure must establish a usable runtime.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), true,
+    "A successful retry must register the active Model Engine runtime.");
   await recovery.locator("#chatInput").fill("Uji pemulihan model");
   await recovery.locator("#chatSendButton").click();
   await recovery.waitForFunction(() => document.querySelector("#chatMessages")?.innerText.includes("Jawaban uji berhasil."));
@@ -599,6 +603,8 @@ try {
   await recovery.evaluate(() => { window.__crashDuringGeneration = false; });
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), false,
     "A crashed worker must clear the active model controls.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "A crashed worker must release the active Model Engine runtime.");
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[1].terminated), true,
     "A crashed worker must be terminated.");
 
@@ -606,6 +612,8 @@ try {
   await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
   assert.equal(await recovery.locator("#chatUnloadButton").isVisible(), true,
     "The model must be loadable again after a worker crash.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), true,
+    "A recovered worker must register a fresh Model Engine runtime.");
   // A hidden Stop control only proves the failed worker cannot be interrupted;
   // wait until the shared generation lock is released and Chat is enabled.
   await recovery.waitForFunction(() => {
@@ -682,11 +690,15 @@ try {
   });
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[2].terminated), true,
     "Normal model unload must terminate the worker.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "Normal model unload must release the Model Engine runtime.");
   await recovery.locator("#chatModelSelect").selectOption("Llama-3.2-3B-Instruct-q4f16_1-MLC");
   await recovery.locator("#chatLoadButton").click();
   await recovery.waitForFunction(() => /Model siap/.test(document.querySelector("#chatEngineStatus")?.textContent || ""));
   assert.equal(await recovery.evaluate(() => window.__loadedModels.at(-1)), "Llama-3.2-3B-Instruct-q4f16_1-MLC",
     "Reloading after unload must initialize the newly selected model.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().activeModelId), "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+    "The Model Engine registry must track the newly selected model.");
   await recovery.locator("#chatUnloadButton").click();
   await recovery.waitForFunction(() => {
     const button = document.querySelector("#chatLoadButton");
@@ -694,6 +706,8 @@ try {
   });
   assert.equal(await recovery.evaluate(() => window.__fakeWorkers[3].terminated), true,
     "Switching model must release the previous worker before the next session.");
+  assert.equal(await recovery.evaluate(() => window.LokalAIModelEngine.getSnapshot().hasActiveRuntime), false,
+    "Unloading the replacement model must leave no active Model Engine runtime.");
   await recovery.close();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
