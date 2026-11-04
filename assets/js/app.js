@@ -1895,7 +1895,7 @@
       assistantMessage.content = "Terjadi kesalahan saat menghasilkan jawaban: " + message;
       if (output) output.textContent = assistantMessage.content;
       if (status) status.textContent = "Generasi gagal: " + message;
-      chatLastError = "Generasi AI Coding gagal: " + message;
+      // Keep workspace task failures local; the shared model runtime may still be healthy.
     } finally {
       chatGenerating = false;
       syncChatControls();
@@ -2574,7 +2574,7 @@
       assistantMessage.content = "Terjadi kesalahan saat mengolah teks: " + message;
       if (output) output.textContent = assistantMessage.content;
       if (status) status.textContent = "Proses gagal: " + message;
-      chatLastError = "Text & Language gagal: " + message;
+      // Keep workspace task failures local; the shared model runtime may still be healthy.
     } finally {
       chatGenerating = false;
       syncChatControls();
