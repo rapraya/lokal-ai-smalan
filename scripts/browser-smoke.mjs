@@ -650,6 +650,8 @@ try {
     && document.querySelector("#dataInterpretResult")?.textContent.includes("Generasi dihentikan oleh pengguna.")
   );
 
+  await recovery.locator('.nav-link[data-page="chat"]').click();
+  await recovery.waitForSelector("#chatInput");
   await recovery.evaluate(() => {
     window.__generationInterrupted = false;
     window.__crashDuringGeneration = true;
