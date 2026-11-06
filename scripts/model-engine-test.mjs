@@ -184,7 +184,7 @@ const cancellableStreamClient = engine.createOpenAIClient({
       if (emittedCancellationChunk) return;
       emittedCancellationChunk = true;
       controller.enqueue(new TextEncoder().encode(
-        'data: {"id":"chunk-cancel","choices":[{"delta":{"content":"Berhenti"},"finish_reason":null}]}\\n\\n'
+        'data: {"id":"chunk-cancel","choices":[{"delta":{"content":"Berhenti"},"finish_reason":null}]}\n\n'
       ));
     },
     cancel() {
