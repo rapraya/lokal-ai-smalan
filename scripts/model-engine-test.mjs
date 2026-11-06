@@ -176,6 +176,33 @@ assert.equal(streamedChunks.length, 2);
 assert.equal(streamedChunks[0].choices[0].delta.content, "Halo");
 assert.equal(streamedChunks[1].choices[0].delta.content, " GPT");
 
+let cancelledGatewayStream = false;
+const cancellableStreamClient = engine.createOpenAIClient({
+  fetch: async () => new Response(new ReadableStream({
+    pull(controller) {
+      controller.enqueue(new TextEncoder().encode(
+        'data: {"id":"chunk-cancel","choices":[{"delta":{"content":"Berhenti"},"finish_reason":null}]}\\n\\n'
+      ));
+    },
+    cancel() {
+      cancelledGatewayStream = true;
+    }
+  }), {
+    headers: { "content-type": "text/event-stream" }
+  })
+});
+const cancellableStream = await cancellableStreamClient.chat.completions.create({
+  model: "gpt-6.1-sol",
+  messages: [{ role: "user", content: "Uji pembatalan." }],
+  max_tokens: 256,
+  stream: true
+});
+for await (const chunk of cancellableStream) {
+  assert.equal(chunk.choices[0].delta.content, "Berhenti");
+  break;
+}
+assert.equal(cancelledGatewayStream, true, "Stopping a gateway stream early must cancel the underlying response reader.");
+
 const cloudClient = engine.createOpenAIClient({
   fetch: async () => Response.json({ choices: [{ message: { content: "cloud" } }] })
 });
@@ -189,4 +216,4 @@ assert.ok(!source.includes("localStorage"), "The provider registry must not stor
 assert.ok(!source.includes("api.openai.com"), "The browser client must call the same-origin gateway, not OpenAI directly.");
 assert.ok(source.includes('credentials: "same-origin"'), "Gateway requests must use same-origin authenticated browser credentials.");
 
-console.log("Model Engine tests passed: provider registry, local runtime, secure gateway discovery, GPT adapter, streaming, and lifecycle.");
+console.log("Model Engine tests passed: provider registry, local runtime, secure gateway discovery, GPT adapter, streaming cancellation, and lifecycle.");
