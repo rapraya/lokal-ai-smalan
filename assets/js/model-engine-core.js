@@ -155,10 +155,14 @@
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let streamCompleted = false;
     try {
       while (true) {
         const item = await reader.read();
-        if (item.done) break;
+        if (item.done) {
+          streamCompleted = true;
+          break;
+        }
         buffer += decoder.decode(item.value, { stream: true });
         buffer = buffer.replace(/\r\n/g, "\n");
         let boundary;
@@ -177,6 +181,9 @@
         }
       }
     } finally {
+      if (!streamCompleted) {
+        try { await reader.cancel(); } catch (_) {}
+      }
       reader.releaseLock();
     }
   }
