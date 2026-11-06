@@ -177,9 +177,12 @@ assert.equal(streamedChunks[0].choices[0].delta.content, "Halo");
 assert.equal(streamedChunks[1].choices[0].delta.content, " GPT");
 
 let cancelledGatewayStream = false;
+let emittedCancellationChunk = false;
 const cancellableStreamClient = engine.createOpenAIClient({
   fetch: async () => new Response(new ReadableStream({
     pull(controller) {
+      if (emittedCancellationChunk) return;
+      emittedCancellationChunk = true;
       controller.enqueue(new TextEncoder().encode(
         'data: {"id":"chunk-cancel","choices":[{"delta":{"content":"Berhenti"},"finish_reason":null}]}\\n\\n'
       ));
